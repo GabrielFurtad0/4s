@@ -1,0 +1,78 @@
+import { createFileRoute } from '@tanstack/react-router';
+import { useEffect, useRef, useState } from 'react';
+import { Bell, Building2, ChevronDown, ChevronsUpDown, CircleHelp, Command, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Search, Settings2, Smartphone, Sparkles, Truck, X } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { Backoffice } from '@/components/backoffice';
+import { Management } from '@/components/management';
+import { Seller } from '@/components/seller';
+import { createOrderApi, demoData, fetchWorkspaceData, reserveOrder, type AppData, type Order } from '@/lib/business';
+
+export const Route = createFileRoute('/')({
+  head: () => ({ meta: [
+    { title: 'Nexo — Gestão conectada' },
+    { name: 'description', content: 'Pedidos, importação e patrimônio em uma visão conectada. Demonstração interativa Nexo.' },
+    { property: 'og:title', content: 'Nexo — Gestão conectada' },
+    { property: 'og:description', content: 'Da venda em campo à conferência e ao patrimônio. Sua operação, conectada.' },
+    { property: 'og:type', content: 'website' },
+    { name: 'twitter:card', content: 'summary_large_image' },
+  ] }),
+  component: Index,
+});
+const modules = [
+  { id: 'orders', label: 'Mesa de conferência', icon: FileCheck2 },
+  { id: 'import', label: 'Importação', icon: Globe2 },
+  { id: 'property', label: 'Patrimônio', icon: Building2 },
+  { id: 'executive', label: 'Visão executiva', icon: LayoutDashboard },
+];
+function Index() {
+  const [data, setData] = useState<AppData>(demoData);
+  const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [module, setModule] = useState('orders');
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const [toast, setToast] = useState('');
+  const [info, setInfo] = useState<'settings' | 'help' | 'notifications' | 'profile' | null>(null);
+  const [globalSearch, setGlobalSearch] = useState(false);
+  const [query, setQuery] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const notify = (message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 4500); };
+
+  useEffect(() => {
+    fetchWorkspaceData(data.reconciled)
+      .then(remote => setData(remote))
+      .catch(() => {
+        // Fallback silencioso para demoData caso backend esteja offline
+      });
+  }, []);
+
+  const submit = (o: Order) => {
+    try {
+      const optimistic = reserveOrder(data, o);
+      setData(optimistic);
+      notify(`Pedido #${o.id} enviado para revisão. Estoque reservado.`);
+      createOrderApi(data, o)
+        .then(remote => {
+          setData(remote);
+        })
+        .catch(e => {
+          notify(e instanceof Error ? e.message : 'Salvo localmente (modo offline).');
+        });
+      return true;
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Confira o pedido.');
+      return false;
+    }
+  };
+
+  const shared = { data, update: setData, notify, submit };
+  useEffect(() => { const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setGlobalSearch(v => !v); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
+  return <div className="app-shell"><div className="environment-bar"><div className="environment-brand"><span className="brand-symbol"><span /></span><span>nexo<span className="environment-divider" />Workspace</span></div><div className="environment-switch"><Button variant="ghost" className={mode === 'desktop' ? 'selected' : ''} onClick={() => setMode('desktop')}><Monitor />Backoffice<span className="mode-person">Gabriel</span></Button><Button variant="ghost" className={mode === 'mobile' ? 'selected' : ''} onClick={() => setMode('mobile')}><Smartphone />Em campo<span className="mode-person">Carlos</span></Button></div><div className="environment-live"><span className="online-dot" />{data.backendConnected ? 'API conectada · Tempo real' : 'Demonstração interativa'}</div></div>
+  {mode === 'desktop' ? <div className="desktop-shell"><aside className={`app-sidebar ${collapsed ? 'collapsed' : ''} ${mobileMenu ? 'mobile-open' : ''}`}><div className="workspace-picker"><span className="workspace-icon"><Package size={18} /></span>{!collapsed && <><div><strong>Nexo Distribuidora</strong><p>Workspace de Gabriel</p></div><ChevronsUpDown size={14} /></>}</div><div className="sidebar-section-label">WORKSPACE</div><nav className="sidebar-nav">{modules.map(item => <Button key={item.id} variant="ghost" title={item.label} className={`sidebar-link ${module === item.id ? 'active' : ''}`} onClick={() => { setModule(item.id); setMobileMenu(false); }}><item.icon size={17} />{!collapsed && <><span>{item.label}</span>{item.id === 'orders' && <b>{data.orders.filter(o => o.status === 'AGUARDANDO_REVISAO').length}</b>}</>}</Button>)}</nav><div className="sidebar-bottom">{!collapsed && <div className="field-promo"><span className="field-promo-icon"><Smartphone size={20} /></span><h3>Sua operação, em campo.</h3><p>Vendas e backoffice.<br />Sempre conectados.</p><Button variant="ghost" onClick={() => setMode('mobile')}>Abrir app do vendedor<ChevronDown className="-rotate-90" size={14} /></Button></div>}<Button variant="ghost" className="sidebar-link" title="Configurações" onClick={() => setInfo('settings')}><Settings2 />{!collapsed && 'Configurações'}</Button><Button variant="ghost" className="sidebar-link" title="Central de ajuda" onClick={() => setInfo('help')}><CircleHelp />{!collapsed && 'Central de ajuda'}</Button><div className="sidebar-user"><Button variant="ghost" className="profile-button" onClick={() => setInfo('profile')}><span className="avatar">GF</span>{!collapsed && <div><strong>Gabriel Furtado</strong><p>Administrador</p></div>}</Button><Button variant="ghost" size="icon" className="collapse-button" title={collapsed ? 'Expandir menu' : 'Recolher menu'} aria-label={collapsed ? 'Expandir menu' : 'Recolher menu'} onClick={() => { setCollapsed(v => !v); setMobileMenu(false); }}>{collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}</Button></div></div></aside>{mobileMenu && <div className="sidebar-scrim" onClick={() => setMobileMenu(false)} />}
+  <div className="main-shell"><header className="main-header"><div className="flex items-center gap-3"><Button variant="ghost" size="icon" className="mobile-menu-toggle" aria-label="Abrir menu" onClick={() => setMobileMenu(v => !v)}><Menu /></Button><span className="breadcrumb-workspace">Workspace</span><span className="breadcrumb-slash">/</span><span>{modules.find(m => m.id === module)?.label}</span></div><div className="header-actions"><Button variant="ghost" className="global-search" onClick={() => setGlobalSearch(true)}><Search size={15} /><span>Buscar</span><kbd>⌘ K</kbd></Button><div className="header-separator" /><Button variant="ghost" size="icon" className="notification-button" aria-label="Notificações" title="Notificações" onClick={() => setInfo('notifications')}><Bell /><i /></Button><Button variant="ghost" className="avatar-button" aria-label="Perfil de Gabriel" onClick={() => setInfo('profile')}><span className="avatar">GF</span></Button></div></header><main className="main-content">{module === 'orders' ? <Backoffice {...shared} newOrder={() => setMode('mobile')} /> : <Management {...shared} module={module} />}</main><footer className="app-footer"><span><span className="online-dot" />Todos os sistemas operacionais</span><span>Nexo <span className="mx-2">·</span> Seu próximo passo, conectado.</span><span>v.1.0</span></footer></div></div> : <Seller {...shared} />}
+  {toast && <div className="toast-message" role="status"><span className="online-dot" />{toast}<Button variant="ghost" size="icon" aria-label="Fechar aviso" onClick={() => setToast('')}><X size={14} /></Button></div>}
+  <Dialog open={globalSearch} onOpenChange={setGlobalSearch}><DialogContent><DialogTitle>Buscar no workspace</DialogTitle><DialogDescription>Pedidos, clientes e módulos</DialogDescription><div className="search-field"><Search size={16} /><input autoFocus ref={searchRef} placeholder="O que você está procurando?" value={query} onChange={e => setQuery(e.target.value)} /></div><div className="space-y-1">{modules.filter(m => m.label.toLowerCase().includes(query.toLowerCase())).map(m => <Button variant="ghost" className="w-full justify-start" key={m.id} onClick={() => { setModule(m.id); setMode('desktop'); setGlobalSearch(false); }}><m.icon />{m.label}</Button>)}{data.clients.filter(c => query && c.name.toLowerCase().includes(query.toLowerCase())).map(c => <Button key={c.id} variant="ghost" className="w-full justify-start" onClick={() => { setMode('mobile'); setGlobalSearch(false); notify(`${c.name} disponível na agenda de clientes.`); }}><Smartphone />{c.name}</Button>)}</div></DialogContent></Dialog>
+  <Dialog open={Boolean(info)} onOpenChange={o => { if (!o) setInfo(null); }}><DialogContent><DialogTitle>{info === 'settings' ? 'Configurações do workspace' : info === 'help' ? 'Central de ajuda' : info === 'notifications' ? 'Notificações' : 'Gabriel Furtado'}</DialogTitle><DialogDescription>{info === 'settings' ? 'Nexo Distribuidora · Ambiente conectado ao Backend' : info === 'profile' ? 'Administrador · Workspace Nexo Distribuidora' : info === 'help' ? 'Contato e informações do ambiente' : 'Atualizações da sua operação'}</DialogDescription>{info === 'settings' ? <><div className="settings-row"><span>Moeda</span><strong>Real brasileiro · BRL</strong></div><div className="settings-row"><span>Localização</span><strong>São Paulo · Brasil</strong></div><div className="settings-row"><span>Backend API</span><strong>{data.backendConnected ? 'Conectado (Spring Boot :8085)' : 'Sessão local'}</strong></div><Button variant="outline" onClick={async () => { try { const fresh = await fetchWorkspaceData([]); setData(fresh); setInfo(null); notify('Dados recarregados do servidor.'); } catch { setData(demoData()); setInfo(null); notify('Demonstração reiniciada.'); } }}>Sincronizar com o servidor</Button></> : info === 'notifications' ? <><div className="attention-row"><FileCheck2 size={18} /><div><strong>{data.orders.filter(o => o.status === 'AGUARDANDO_REVISAO').length} pedidos aguardam conferência</strong><p>Confira os dados fiscais antes da emissão.</p></div></div><div className="attention-row"><Building2 size={18} /><div><strong>Reajuste em outubro</strong><p>Apartamento Vila Mariana · índice IPCA.</p></div></div></> : info === 'help' ? <><p className="text-sm text-muted-foreground leading-relaxed">Nexo · Gestão comercial, fiscal (pré-nota NF-e) e patrimonial integrada ao backend Spring Boot.</p><p className="text-sm text-muted-foreground">Todas as reservas de estoque, revisões de pré-nota, buscas de CNPJ e lotes de importação são persistidos no banco de dados.</p></> : <><div className="flex gap-3 items-center py-3"><span className="avatar">GF</span><div><strong>Gabriel Furtado</strong><p className="text-sm text-muted-foreground">Gestão comercial e patrimonial</p></div></div><div className="settings-row"><span>Permissão</span><strong>Administrador</strong></div></>}</DialogContent></Dialog>
+  </div>;
+}

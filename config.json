@@ -1,0 +1,24 @@
+{
+  "caminho_planilha": "Planilha de Estoques.xlsx",
+  "pasta_notas": "notas",
+  "pasta_backups": "backups",
+  "pastas_zips": ["zips", "notas", "."],
+  "mapeamento_abas": [
+    {
+      "aba": "FARINHA DE TRIGO",
+      "codigos": ["05", "5"],
+      "palavras_chave": ["tipo 1", "tipo1", "farinha de trigo tipo 1"]
+    },
+    {
+      "aba": "PRE MISTURA",
+      "codigos": ["02", "2"],
+      "palavras_chave": ["pre mistura", "pré mistura"],
+      "palavras_excluidas": ["doce", "pao doce", "pão doce"]
+    },
+    {
+      "aba": "PM PAO DOCE",
+      "codigos": ["03", "3"],
+      "palavras_chave": ["pao doce", "pão doce"]
+    }
+  ]
+}

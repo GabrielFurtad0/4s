@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Total Trigo — Estúdio Comparativo de Designs & Cores (4 Versões)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        h1, h2, h3, .font-display { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body id="page-body" class="bg-[#EDE6DB] min-h-screen flex flex-col items-center justify-start pb-8 transition-colors duration-300">
+
+    <!-- BARRA DE ESCOLHA DAS 4 VERSÕES DE DESIGN E CORES -->
+    <div class="w-full bg-stone-950 text-white border-b border-stone-800 px-4 py-3 sticky top-0 z-50 shadow-lg mb-4">
+        <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-2.5">
+            <div class="flex items-center gap-2">
+                <span class="text-lg">🌾</span>
+                <div>
+                    <div class="text-xs font-extrabold tracking-wide uppercase text-amber-400">Estúdio de Design & Cores — Total Trigo</div>
+                    <div id="theme-subtitle" class="text-[11px] text-stone-400">Versão 1: Identidade quente inspirada em trigo dourado, moagem e panificação</div>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-center gap-1.5 bg-stone-900 p-1 rounded-xl border border-stone-800">
+                <button type="button" onclick="applyDesign('trigo')" id="btn-theme-trigo" class="px-3 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 text-stone-950 transition cursor-pointer">
+                    🌾 1. Trigo & Ouro (Recomendado)
+                </button>
+                <button type="button" onclick="applyDesign('navy')" id="btn-theme-navy" class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-stone-300 hover:text-white transition cursor-pointer">
+                    🏦 2. Industrial Navy (ERP)
+                </button>
+                <button type="button" onclick="applyDesign('emerald')" id="btn-theme-emerald" class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-stone-300 hover:text-white transition cursor-pointer">
+                    🌿 3. Esmeralda (Alto Contraste Sol)
+                </button>
+                <button type="button" onclick="applyDesign('mono')" id="btn-theme-mono" class="px-3 py-1.5 rounded-lg text-[11px] font-bold text-stone-300 hover:text-white transition cursor-pointer">
+                    🖤 4. Minimalista Studio+
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MOLDURA DO SMARTPHONE -->
+    <div id="phone-shell" class="w-full max-w-md bg-[#FAF6F0] sm:rounded-3xl sm:shadow-2xl sm:border sm:border-[#D9CEBE] overflow-hidden flex flex-col h-[820px] relative transition-colors duration-300">
+
+        <!-- TOP BAR FIXA: Estoque Disponível dos 3 SKUs Reais da Total Trigo -->
+        <header id="app-topbar" class="bg-[#211813] text-[#FAF6F0] border-b border-[#382A21] px-4 py-3.5 shrink-0 transition-colors duration-300">
+            <div class="flex justify-between items-center mb-2.5">
+                <div class="flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                    <span id="topbar-title" class="text-[11px] font-bold uppercase tracking-wider text-amber-400">Estoque Disponível (Sacos 25kg)</span>
+                </div>
+                <span class="text-[11px] font-bold px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 border border-amber-400/30" id="header-orders-count">Fila Pré-Nota: 2</span>
+            </div>
+            <div class="grid grid-cols-3 gap-2 text-center">
+                <div id="sku-box-1" class="bg-[#2E221B] border border-[#45342A] rounded-xl py-1.5 px-2">
+                    <div class="text-[10px] text-[#C8B9A6] font-medium truncate">Farinha Tipo 1</div>
+                    <div class="text-sm font-extrabold text-amber-300"><span id="top-stock-1">2199</span> <span class="text-[10px] font-normal opacity-80">SA</span></div>
+                </div>
+                <div id="sku-box-2" class="bg-[#2E221B] border border-[#45342A] rounded-xl py-1.5 px-2">
+                    <div class="text-[10px] text-[#C8B9A6] font-medium truncate">Pré-Mistura</div>
+                    <div class="text-sm font-extrabold text-amber-300"><span id="top-stock-2">1714</span> <span class="text-[10px] font-normal opacity-80">SA</span></div>
+                </div>
+                <div id="sku-box-3" class="bg-[#2E221B] border border-[#45342A] rounded-xl py-1.5 px-2">
+                    <div class="text-[10px] text-[#C8B9A6] font-medium truncate">PM Pão Doce</div>
+                    <div class="text-sm font-extrabold text-amber-300"><span id="top-stock-3">170</span> <span class="text-[10px] font-normal opacity-80">SA</span></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- CONTEÚDO PRINCIPAL -->
+        <main class="flex-1 overflow-y-auto no-scrollbar pb-24">
+            <!-- TELA 1: AGENDA & RADAR -->
+            <section id="screen-1" class="p-4 space-y-3.5">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <h1 class="text-lg font-extrabold text-stone-900">Agenda & Radar</h1>
+                        <p class="text-xs text-stone-500">Toque na padaria para abrir a ficha 360º</p>
+                    </div>
+                    <button type="button" onclick="goToScreen(3)" id="btn-primary-top" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition cursor-pointer">
+                        ⚡ Pedido Rápido
+                    </button>
+                </div>
+
+                <search>
+                    <input type="search" id="search-client" oninput="renderAgenda()" placeholder="Buscar padaria por nome ou bairro (ex: Grajaú, Jabaquara)..." class="w-full bg-white border border-stone-200 rounded-xl px-3.5 py-2.5 text-xs focus:outline-none focus:ring-2 focus:ring-amber-500/40">
+                </search>
+
+                <div id="tab-bar" class="grid grid-cols-2 bg-[#E5DDD0] p-1 rounded-xl text-xs font-bold">
+                    <button type="button" onclick="filterAgenda('hoje')" id="tab-hoje" class="bg-[#211813] text-amber-300 py-2 rounded-lg shadow-sm transition cursor-pointer">
+                        Visitas do Dia (<span id="count-hoje">3</span>)
+                    </button>
+                    <button type="button" onclick="filterAgenda('radar')" id="tab-radar" class="text-stone-700 py-2 rounded-lg transition cursor-pointer">
+                        🔥 Alerta Recompra (<span id="count-radar">2</span>)
+                    </button>
+                </div>
+
+                <div id="agenda-list" class="space-y-3"></div>
+            </section>
+
+            <!-- TELA 2: FICHA 360º DO CLIENTE -->
+            <section id="screen-2" class="hidden p-4 space-y-4">
+                <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <span id="client-badge" class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">✓ Em dia</span>
+                            <h2 id="client-name" class="text-base font-extrabold text-stone-900 mt-1.5">Panificadora Jardim Eliana Ltda</h2>
+                            <p id="client-info" class="text-[11px] text-stone-500">CNPJ: 68.457.477/0001-34 • Contato: Sr. Carlos</p>
+                            <p id="client-address" class="text-[11px] text-stone-400 mt-0.5">📍 Av. Dona Belmira Marin, 4985 - Grajaú, SP</p>
+                        </div>
+                        <button type="button" onclick="goToScreen(3)" id="btn-primary-client" class="bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-sm shrink-0 cursor-pointer">
+                            + Tirar Pedido
+                        </button>
+                    </div>
+                    <div class="mt-3 pt-3 border-t border-stone-100 flex flex-wrap gap-2 text-xs">
+                        <span class="bg-stone-100 text-stone-700 px-2.5 py-1 rounded-lg">Pagto: <strong id="client-terms">Boleto 28 dias</strong></span>
+                        <span class="bg-stone-100 text-stone-700 px-2.5 py-1 rounded-lg">Ciclo: <strong id="client-cycle">A cada 20 dias</strong></span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
+                    <div class="flex justify-between items-center mb-3">
+                        <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-stone-500">Memória de Preço deste Cliente</h3>
+                        <span class="text-[10px] text-stone-400">Carrega na Tela 3</span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 text-center">
+                        <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                            <div class="text-[11px] text-stone-600 font-medium">Farinha Tipo 1</div>
+                            <div class="text-sm font-extrabold text-stone-900 mt-0.5" id="last-price-1">R$ 79,00</div>
+                            <div class="text-[10px] text-stone-400">Tab: R$ 85</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                            <div class="text-[11px] text-stone-600 font-medium">Pré-Mistura</div>
+                            <div class="text-sm font-extrabold text-stone-900 mt-0.5" id="last-price-2">R$ 75,00</div>
+                            <div class="text-[10px] text-stone-400">Tab: R$ 78</div>
+                        </div>
+                        <div class="p-2.5 rounded-xl bg-amber-50/60 border border-amber-200">
+                            <div class="text-[11px] text-stone-600 font-medium">PM Pão Doce</div>
+                            <div class="text-sm font-extrabold text-stone-900 mt-0.5" id="last-price-3">R$ 88,00</div>
+                            <div class="text-[10px] text-stone-400">Tab: R$ 92</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-2xl border border-stone-200 shadow-xs">
+                    <h3 class="text-[11px] font-extrabold uppercase tracking-wider text-stone-500 mb-2">Caderno de Anotações</h3>
+                    <div id="client-notes-list" class="space-y-2"></div>
+                </div>
+            </section>
+
+            <!-- TELA 3: PEDIDO EXPRESS & BREAKDOWN DE LUCRO -->
+            <section id="screen-3" class="hidden p-4 space-y-3.5">
+                <div class="flex justify-between items-center bg-white p-3.5 rounded-2xl border border-stone-200">
+                    <div>
+                        <span class="text-[10px] uppercase tracking-wider text-stone-400 font-bold">Cliente Selecionado</span>
+                        <h2 id="order-client-name" class="text-sm font-extrabold text-stone-900">Panificadora Jardim Eliana Ltda</h2>
+                    </div>
+                    <button type="button" onclick="goToScreen(1)" class="text-xs text-stone-500 underline cursor-pointer">Trocar</button>
+                </div>
+
+                <div class="space-y-2.5">
+                    <!-- SKU 1 -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-xs">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-stone-400">SKU-05 • NCM 11010010</span>
+                                <h3 class="font-extrabold text-sm text-stone-900">Farinha de Trigo Tipo 1 25Kg</h3>
+                                <span class="text-[11px] text-stone-500">Disp: <strong>2199 SA</strong> • Custo Lote: R$ 54,00</span>
+                            </div>
+                            <div class="text-right">
+                                <label class="text-[10px] text-stone-400 font-bold block">Preço (R$)</label>
+                                <input type="number" id="price-1" value="79.00" step="0.50" oninput="recalcOrder()" class="w-20 text-right font-extrabold text-sm border-b-2 border-stone-300 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-stone-100">
+                            <span class="text-xs text-stone-500">Subtotal: <strong id="sub-1" class="text-stone-900">R$ 0,00</strong></span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="changeQty(1, -5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">-5</button>
+                                <button type="button" onclick="changeQty(1, -1)" class="w-8 h-8 rounded-lg bg-stone-200 text-stone-900 font-bold text-sm cursor-pointer">-</button>
+                                <input type="number" id="qty-1" value="20" oninput="recalcOrder()" class="w-11 text-center font-extrabold text-sm bg-transparent">
+                                <button type="button" onclick="changeQty(1, 1)" class="w-8 h-8 rounded-lg bg-amber-600 text-white font-bold text-sm cursor-pointer">+</button>
+                                <button type="button" onclick="changeQty(1, 5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">+5</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SKU 2 -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-xs">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-stone-400">SKU-02 • NCM 11010010</span>
+                                <h3 class="font-extrabold text-sm text-stone-900">Farinha Pré-Mistura 25Kg</h3>
+                                <span class="text-[11px] text-stone-500">Disp: <strong>1714 SA</strong> • Custo Lote: R$ 49,50</span>
+                            </div>
+                            <div class="text-right">
+                                <label class="text-[10px] text-stone-400 font-bold block">Preço (R$)</label>
+                                <input type="number" id="price-2" value="75.00" step="0.50" oninput="recalcOrder()" class="w-20 text-right font-extrabold text-sm border-b-2 border-stone-300 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-stone-100">
+                            <span class="text-xs text-stone-500">Subtotal: <strong id="sub-2" class="text-stone-900">R$ 0,00</strong></span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="changeQty(2, -5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">-5</button>
+                                <button type="button" onclick="changeQty(2, -1)" class="w-8 h-8 rounded-lg bg-stone-200 text-stone-900 font-bold text-sm cursor-pointer">-</button>
+                                <input type="number" id="qty-2" value="10" oninput="recalcOrder()" class="w-11 text-center font-extrabold text-sm bg-transparent">
+                                <button type="button" onclick="changeQty(2, 1)" class="w-8 h-8 rounded-lg bg-amber-600 text-white font-bold text-sm cursor-pointer">+</button>
+                                <button type="button" onclick="changeQty(2, 5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">+5</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SKU 3 -->
+                    <div class="bg-white p-3.5 rounded-2xl border border-stone-200 shadow-xs">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <span class="text-[10px] font-bold text-stone-400">SKU-03 • NCM 11010010</span>
+                                <h3 class="font-extrabold text-sm text-stone-900">Pré-Mistura Pão Doce 25Kg</h3>
+                                <span class="text-[11px] text-stone-500">Disp: <strong>170 SA</strong> • Custo Lote: R$ 61,00</span>
+                            </div>
+                            <div class="text-right">
+                                <label class="text-[10px] text-stone-400 font-bold block">Preço (R$)</label>
+                                <input type="number" id="price-3" value="88.00" step="0.50" oninput="recalcOrder()" class="w-20 text-right font-extrabold text-sm border-b-2 border-stone-300 focus:outline-none">
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center pt-2 border-t border-stone-100">
+                            <span class="text-xs text-stone-500">Subtotal: <strong id="sub-3" class="text-stone-900">R$ 0,00</strong></span>
+                            <div class="flex items-center gap-1">
+                                <button type="button" onclick="changeQty(3, -5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">-5</button>
+                                <button type="button" onclick="changeQty(3, -1)" class="w-8 h-8 rounded-lg bg-stone-200 text-stone-900 font-bold text-sm cursor-pointer">-</button>
+                                <input type="number" id="qty-3" value="5" oninput="recalcOrder()" class="w-11 text-center font-extrabold text-sm bg-transparent">
+                                <button type="button" onclick="changeQty(3, 1)" class="w-8 h-8 rounded-lg bg-amber-600 text-white font-bold text-sm cursor-pointer">+</button>
+                                <button type="button" onclick="changeQty(3, 5)" class="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 font-bold text-xs cursor-pointer">+5</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- BREAKDOWN DE LUCRO -->
+                <div id="profit-card" class="bg-[#211813] text-white p-4 rounded-2xl transition-colors duration-300">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <span class="text-[11px] opacity-75 block">Valor Total do Pedido</span>
+                            <span id="order-total" class="text-xl font-extrabold">R$ 2.770,00</span>
+                        </div>
+                        <button type="button" onclick="document.getElementById('profit-breakdown').classList.toggle('hidden')" class="text-xs bg-white/10 hover:bg-white/20 text-white px-3 py-2 rounded-xl border border-white/15 transition cursor-pointer">
+                            👁️ Breakdown de Lucro
+                        </button>
+                    </div>
+                    <div id="profit-breakdown" class="hidden mt-4 pt-3 border-t border-white/15 text-xs space-y-1.5">
+                        <div class="flex justify-between opacity-80"><span>(+) Faturamento Bruto:</span><span id="bd-gross">R$ 2.770,00</span></div>
+                        <div class="flex justify-between opacity-80"><span>(-) CMV Lote Importação:</span><span id="bd-cmv">- R$ 1.880,00</span></div>
+                        <div class="flex justify-between opacity-80"><span>(-) Imposto Estimado NF-e (8%):</span><span id="bd-tax">- R$ 221,60</span></div>
+                        <div class="flex justify-between opacity-80"><span>(-) Custo Entrega:</span><span id="bd-shipping">- R$ 45,00</span></div>
+                        <div class="flex justify-between items-center pt-2 border-t border-white/20 font-extrabold text-sm">
+                            <span>(=) Lucro Líquido Real:</span>
+                            <div><span id="bd-profit" class="text-emerald-400">R$ 623,40</span> <span id="bd-margin" class="text-[11px] bg-emerald-950 text-emerald-300 px-1.5 py-0.5 rounded ml-1">23%</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="button" id="btn-submit-order" onclick="alert('Pedido enviado para a Mesa de Conferência (AGUARDANDO_REVISAO)!')" class="w-full bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-3.5 rounded-2xl shadow-md text-sm transition cursor-pointer">
+                    Confirmar Pedido → Enviar p/ Conferência NF-e
+                </button>
+            </section>
+        </main>
+
+        <!-- BARRA INFERIOR -->
+        <nav class="bg-white border-t border-stone-200 grid grid-cols-3 py-2 px-4 shrink-0 absolute bottom-0 w-full">
+            <button type="button" onclick="goToScreen(1)" id="nav-1" class="flex flex-col items-center py-1 text-amber-700 font-bold border-t-2 border-amber-600 -mt-[9px] cursor-pointer">
+                <span class="text-base">📅</span><span class="text-[11px] mt-0.5">1. Agenda</span>
+            </button>
+            <button type="button" onclick="goToScreen(2)" id="nav-2" class="flex flex-col items-center py-1 text-stone-400 font-medium cursor-pointer">
+                <span class="text-base">🏢</span><span class="text-[11px] mt-0.5">2. Cliente</span>
+            </button>
+            <button type="button" onclick="goToScreen(3)" id="nav-3" class="flex flex-col items-center py-1 text-stone-400 font-medium cursor-pointer">
+                <span class="text-base">📦</span><span class="text-[11px] mt-0.5">3. Pedido</span>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        const unitCosts = { 1: 54.00, 2: 49.50, 3: 61.00 };
+        let currentTabAgenda = 'hoje';
+        let currentTheme = 'trigo';
+
+        const clients = [
+            {
+                name: "Panificadora Jardim Eliana Ltda",
+                info: "CNPJ: 68.457.477/0001-34 • Contato: Sr. Carlos",
+                address: "📍 Av. Dona Belmira Marin, 4985 - Grajaú, SP",
+                time: "09:30",
+                region: "Grajaú",
+                daysSinceLastOrder: 22,
+                lastOrderValue: 3080,
+                terms: "Boleto 28 dias",
+                cycle: "A cada 20 dias",
+                status: "Em dia",
+                statusOk: true,
+                type: "ambos",
+                prices: [79.00, 75.00, 88.00],
+                notes: [
+                    { date: "Hoje", text: "Levar amostra da Pré-Mistura Pão Doce 25Kg na visita." },
+                    { date: "22 dias atrás", text: "Prefere entrega no período da manhã antes das 10h." }
+                ]
+            },
+            {
+                name: "Ind Com Panificação Jardim Mirian Ltda",
+                info: "CNPJ: 62.136.817/0001-49 • Contato: Marcos",
+                address: "📍 Avenida Cupecê, 5500 - Cidade Ademar, SP",
+                time: "11:00",
+                region: "Cidade Ademar",
+                daysSinceLastOrder: 11,
+                lastOrderValue: 4100,
+                terms: "Boleto 14/28 dias",
+                cycle: "A cada 15 dias",
+                status: "Em dia",
+                statusOk: true,
+                type: "hoje",
+                prices: [82.00, 76.00, 90.00],
+                notes: [{ date: "11 dias atrás", text: "Comprador Marcos atende fornecedores até às 11h30." }]
+            },
+            {
+                name: "Nova Belfort Pães e Doces Ltda EPP",
+                info: "CNPJ: 12.049.732/0001-55 • Contato: Fernanda",
+                address: "📍 Rua Santana, 668 - Vila São Pedro, SP",
+                time: "14:30",
+                region: "Vila São Pedro",
+                daysSinceLastOrder: 35,
+                lastOrderValue: 12300,
+                terms: "Boleto 28 dias",
+                cycle: "A cada 20 dias",
+                status: "1 Boleto Vencido",
+                statusOk: false,
+                type: "ambos",
+                prices: [80.00, 74.00, 86.00],
+                notes: [{ date: "35 dias atrás", text: "Compra 150 sacos de Tipo 1. Verificar boleto antes de faturar." }]
+            }
+        ];
+
+        function formatBRL(v) { return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }); }
+
+        function applyDesign(theme) {
+            currentTheme = theme;
+            const body = document.getElementById('page-body');
+            const shell = document.getElementById('phone-shell');
+            const topbar = document.getElementById('app-topbar');
+            const topTitle = document.getElementById('topbar-title');
+            const sub = document.getElementById('theme-subtitle');
+            const btnTop = document.getElementById('btn-primary-top');
+            const btnClient = document.getElementById('btn-primary-client');
+            const btnSubmit = document.getElementById('btn-submit-order');
+            const profitCard = document.getElementById('profit-card');
+
+            ['trigo', 'navy', 'emerald', 'mono'].forEach(k => {
+                document.getElementById('btn-theme-' + k).className = k === theme
+                    ? "px-3 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 text-stone-950 transition cursor-pointer"
+                    : "px-3 py-1.5 rounded-lg text-[11px] font-bold text-stone-300 hover:text-white transition cursor-pointer";
+            });
+
+            if (theme === 'trigo') {
+                sub.innerText = "Versão 1 (Trigo & Ouro): Identidade quente inspirada em trigo dourado, moagem e panificação";
+                body.className = "bg-[#EDE6DB] min-h-screen flex flex-col items-center justify-start pb-8 transition-colors duration-300";
+                shell.className = "w-full max-w-md bg-[#FAF6F0] sm:rounded-3xl sm:shadow-2xl sm:border sm:border-[#D9CEBE] overflow-hidden flex flex-col h-[820px] relative";
+                topbar.className = "bg-[#211813] text-[#FAF6F0] border-b border-[#382A21] px-4 py-3.5 shrink-0";
+                topTitle.className = "text-[11px] font-bold uppercase tracking-wider text-amber-400";
+                btnTop.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition cursor-pointer";
+                btnClient.className = "bg-amber-600 hover:bg-amber-500 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-sm shrink-0 cursor-pointer";
+                btnSubmit.className = "w-full bg-amber-600 hover:bg-amber-500 text-white font-extrabold py-3.5 rounded-2xl shadow-md text-sm transition cursor-pointer";
+                profitCard.className = "bg-[#211813] text-white p-4 rounded-2xl";
+            } else if (theme === 'navy') {
+                sub.innerText = "Versão 2 (Industrial Navy): Visual corporativo B2B em azul marinho profundo e azul royal";
+                body.className = "bg-slate-200 min-h-screen flex flex-col items-center justify-start pb-8 transition-colors duration-300";
+                shell.className = "w-full max-w-md bg-slate-50 sm:rounded-3xl sm:shadow-2xl sm:border sm:border-slate-300 overflow-hidden flex flex-col h-[820px] relative";
+                topbar.className = "bg-slate-900 text-white border-b border-slate-800 px-4 py-3.5 shrink-0";
+                topTitle.className = "text-[11px] font-bold uppercase tracking-wider text-sky-400";
+                btnTop.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition cursor-pointer";
+                btnClient.className = "bg-blue-600 hover:bg-blue-700 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-sm shrink-0 cursor-pointer";
+                btnSubmit.className = "w-full bg-blue-600 hover:bg-blue-700 text-white font-extrabold py-3.5 rounded-2xl shadow-md text-sm transition cursor-pointer";
+                profitCard.className = "bg-slate-900 text-white p-4 rounded-2xl";
+            } else if (theme === 'emerald') {
+                sub.innerText = "Versão 3 (Esmeralda & Campo): Alto contraste para leitura sob luz do sol forte na rua";
+                body.className = "bg-stone-200 min-h-screen flex flex-col items-center justify-start pb-8 transition-colors duration-300";
+                shell.className = "w-full max-w-md bg-[#F4F8F6] sm:rounded-3xl sm:shadow-2xl sm:border sm:border-emerald-300 overflow-hidden flex flex-col h-[820px] relative";
+                topbar.className = "bg-emerald-950 text-white border-b border-emerald-900 px-4 py-3.5 shrink-0";
+                topTitle.className = "text-[11px] font-bold uppercase tracking-wider text-emerald-300";
+                btnTop.className = "bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition cursor-pointer";
+                btnClient.className = "bg-emerald-700 hover:bg-emerald-600 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-sm shrink-0 cursor-pointer";
+                btnSubmit.className = "w-full bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold py-3.5 rounded-2xl shadow-md text-sm transition cursor-pointer";
+                profitCard.className = "bg-emerald-950 text-white p-4 rounded-2xl";
+            } else {
+                sub.innerText = "Versão 4 (Minimalista Studio+): Evolução refinada do protótipo monocromático aprovado";
+                body.className = "bg-neutral-200 min-h-screen flex flex-col items-center justify-start pb-8 transition-colors duration-300";
+                shell.className = "w-full max-w-md bg-neutral-50 sm:rounded-3xl sm:shadow-2xl sm:border sm:border-neutral-300 overflow-hidden flex flex-col h-[820px] relative";
+                topbar.className = "bg-white text-neutral-900 border-b border-neutral-200 px-4 py-3.5 shrink-0";
+                topTitle.className = "text-[11px] font-bold uppercase tracking-wider text-neutral-400";
+                btnTop.className = "bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-bold px-3.5 py-2 rounded-xl shadow-sm transition cursor-pointer";
+                btnClient.className = "bg-neutral-900 hover:bg-neutral-800 text-white text-xs font-extrabold px-3.5 py-2.5 rounded-xl shadow-sm shrink-0 cursor-pointer";
+                btnSubmit.className = "w-full bg-neutral-900 hover:bg-neutral-800 text-white font-extrabold py-3.5 rounded-2xl shadow-md text-sm transition cursor-pointer";
+                profitCard.className = "bg-neutral-900 text-white p-4 rounded-2xl";
+            }
+            renderAgenda();
+        }
+
+        function renderAgenda() {
+            const list = document.getElementById('agenda-list');
+            const q = (document.getElementById('search-client').value || '').toLowerCase();
+            list.innerHTML = '';
+            clients.forEach((c, idx) => {
+                const matchesTab = currentTabAgenda === 'hoje' ? (c.type === 'hoje' || c.type === 'ambos') : (c.type === 'radar' || c.type === 'ambos');
+                if (!matchesTab || (!c.name.toLowerCase().includes(q) && !c.region.toLowerCase().includes(q))) return;
+
+                const badge = c.statusOk
+                    ? `<span class="text-[11px] font-bold text-emerald-700 bg-emerald-50 px-2 py-1 rounded-lg border border-emerald-200">${c.status}</span>`
+                    : `<span class="text-[11px] font-bold text-red-700 bg-red-50 px-2 py-1 rounded-lg border border-red-200">${c.status}</span>`;
+
+                const card = document.createElement('div');
+                card.className = "bg-white p-4 rounded-2xl border border-stone-200 shadow-xs hover:border-amber-500 transition cursor-pointer";
+                card.onclick = () => selectClient(idx);
+                card.innerHTML = `
+                    <div class="flex justify-between items-start gap-2">
+                        <div>
+                            <span class="text-[11px] font-bold bg-amber-100 text-amber-900 px-2 py-0.5 rounded-md border border-amber-300">⏰ ${c.time} • ${c.region}</span>
+                            <h3 class="font-extrabold text-stone-900 text-sm mt-1.5">${c.name}</h3>
+                            <p class="text-[11px] text-stone-500 mt-0.5">Último pedido: há ${c.daysSinceLastOrder} dias (${formatBRL(c.lastOrderValue)})</p>
+                        </div>
+                        ${badge}
+                    </div>
+                    <div class="mt-3 pt-2.5 border-t border-stone-100 flex justify-between items-center text-xs">
+                        <span class="text-stone-500 truncate max-w-[230px]">📌 "${c.notes[0].text}"</span>
+                        <span class="font-bold text-stone-900">Abrir →</span>
+                    </div>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        function filterAgenda(tab) {
+            currentTabAgenda = tab;
+            renderAgenda();
+        }
+
+        function selectClient(idx) {
+            const c = clients[idx];
+            document.getElementById('client-name').innerText = c.name;
+            document.getElementById('client-info').innerText = c.info;
+            document.getElementById('client-address').innerText = c.address;
+            document.getElementById('order-client-name').innerText = c.name;
+            document.getElementById('last-price-1').innerText = formatBRL(c.prices[0]);
+            document.getElementById('last-price-2').innerText = formatBRL(c.prices[1]);
+            document.getElementById('last-price-3').innerText = formatBRL(c.prices[2]);
+            document.getElementById('price-1').value = c.prices[0].toFixed(2);
+            document.getElementById('price-2').value = c.prices[1].toFixed(2);
+            document.getElementById('price-3').value = c.prices[2].toFixed(2);
+
+            const notesList = document.getElementById('client-notes-list');
+            notesList.innerHTML = c.notes.map(n => `<div class="bg-stone-50 p-2.5 rounded-xl border border-stone-200 text-xs"><strong>${n.date}:</strong> ${n.text}</div>`).join('');
+            goToScreen(2);
+        }
+
+        function goToScreen(num) {
+            [1, 2, 3].forEach(i => document.getElementById('screen-' + i).classList.toggle('hidden', i !== num));
+            if (num === 3) recalcOrder();
+        }
+
+        function changeQty(sku, delta) {
+            const el = document.getElementById('qty-' + sku);
+            el.value = Math.max(0, (parseInt(el.value) || 0) + delta);
+            recalcOrder();
+        }
+
+        function recalcOrder() {
+            let gross = 0, cmv = 0;
+            [1, 2, 3].forEach(sku => {
+                const q = Math.max(0, parseInt(document.getElementById('qty-' + sku).value) || 0);
+                const p = Math.max(0, parseFloat(document.getElementById('price-' + sku).value) || 0);
+                gross += q * p;
+                cmv += q * unitCosts[sku];
+                document.getElementById('sub-' + sku).innerText = formatBRL(q * p);
+            });
+            const tax = gross * 0.08;
+            const ship = gross > 0 ? 45 : 0;
+            const profit = gross - cmv - tax - ship;
+            const margin = gross > 0 ? Math.round((profit / gross) * 100) : 0;
+            document.getElementById('order-total').innerText = formatBRL(gross);
+            document.getElementById('bd-gross').innerText = formatBRL(gross);
+            document.getElementById('bd-cmv').innerText = "- " + formatBRL(cmv);
+            document.getElementById('bd-tax').innerText = "- " + formatBRL(tax);
+            document.getElementById('bd-profit').innerText = formatBRL(profit);
+            document.getElementById('bd-margin').innerText = margin + "%";
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderAgenda();
+            recalcOrder();
+        });
+    </script>
+</body>
+</html>

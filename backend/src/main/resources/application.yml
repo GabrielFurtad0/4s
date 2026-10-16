@@ -1,0 +1,38 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: totaltrigo-erp-api
+  datasource:
+    url: jdbc:h2:file:./data/totaltrigo_db;DB_CLOSE_DELAY=-1;MODE=PostgreSQL
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+totaltrigo:
+  company:
+    corporate-name: "TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA"
+    cnpj: "09265201000195"
+    state-registration: "149932895118"
+    ibge-city-code: "3550308"
+    state: "SP"
+  fiscal:
+    provider: "FOCUS_NFE_SIMULATOR" # Opções: FOCUS_NFE_SIMULATOR, NUVEM_FISCAL
+    default-shipping-estimate: 45.00

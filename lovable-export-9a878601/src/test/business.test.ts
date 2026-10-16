@@ -1,0 +1,15 @@
+import { describe, expect, it } from 'vitest';
+import { available, financials, fiscalReady, initialData, invoiceOrder, marginLevel, reserveOrder, editOrder, type Order } from '../lib/business';
+const baseItem = { productId: 'A', quantity: 10, price: 120, cost: 62 };
+const order: Order = { id: 'test', clientId: 'rocha', items: [{ productId: 'A', quantity: 10, price: 120, cost: 62 }], status: 'AGUARDANDO_REVISAO', date: '10:00', payment: 'Boleto 28 dias', delivery: 'Amanhã Manhã', note: '', promotional: false };
+describe('Commercial rules', () => {
+  it('has exactly the 3 required SKU balances, costs and base prices', () => { expect(initialData.products.map(p => [p.physical, p.reserved, p.cost, p.price])).toEqual([[140, 0, 62, 120], [85, 0, 135, 250], [310, 0, 38, 70]]); });
+  it('reserves immediately without reducing physical stock', () => { const d = reserveOrder(structuredClone(initialData), order); expect(d.products[0]?.physical).toBe(140); expect(d.products[0]?.reserved).toBe(10); expect(d.products[0] ? available(d.products[0]) : -1).toBe(130); expect(d.orders[0]?.status).toBe('AGUARDANDO_REVISAO'); });
+  it('invoicing releases reservation and reduces physical stock once', () => { const d = invoiceOrder(reserveOrder(structuredClone(initialData), order), 'test'); expect(d.products[0]?.physical).toBe(130); expect(d.products[0]?.reserved).toBe(0); expect(d.orders[0]?.status).toBe('FATURADO'); expect(d.orders[0]?.key).toHaveLength(44); expect(() => invoiceOrder(d, 'test')).toThrow(); });
+  it('requires complete fiscal data before invoice', () => { const d = reserveOrder(structuredClone(initialData), { ...order, clientId: 'silva' }); expect(d.clients[1] ? fiscalReady(d.clients[1]) : true).toBe(false); expect(() => invoiceOrder(d, 'test')).toThrow(); });
+  it('uses 12 percent tax and 45 reais delivery', () => { expect(financials(order.items)).toEqual({ total: 1200, cost: 620, tax: 144, logistics: 45, profit: 391, margin: 391 / 1200 * 100 }); });
+  it('uses exact margin thresholds', () => { expect(marginLevel(25)).toBe('success'); expect(marginLevel(24.99)).toBe('warning'); expect(marginLevel(12)).toBe('warning'); expect(marginLevel(11.99)).toBe('danger'); });
+  it('blocks quantity exceeding available stock', () => { expect(() => reserveOrder(structuredClone(initialData), { ...order, items: [{ ...baseItem, quantity: 141 }] })).toThrow(); });
+  it('revising a pending order replaces its reservation', () => { const d = editOrder(reserveOrder(structuredClone(initialData), order), 'test', [{ ...baseItem, quantity: 20 }]); expect(d.products[0]?.reserved).toBe(20); expect(d.products[0]?.physical).toBe(140); });
+  it('promotional price preserves the client standard price', () => { const d = invoiceOrder(reserveOrder(structuredClone(initialData), { ...order, promotional: true, items: [{ ...baseItem, price: 100 }] }), 'test'); expect(d.clients[0]?.prices[0]).toBe(115); });
+});

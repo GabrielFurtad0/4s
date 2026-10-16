@@ -1,0 +1,16 @@
+{
+  "NotasJan26.zip": {
+    "caminho": "zips\\NotasJan26.zip",
+    "tamanho": 259760,
+    "mtime": 1791821701.6189008,
+    "data_extracao": "2026-10-13T22:40:49.511141",
+    "total_extraidos": 61
+  },
+  "exportacao_xml-20261013_200632_3786824_102656ad692a414199bf5b9ab710fcd1.zip": {
+    "caminho": "zips\\exportacao_xml-20261013_200632_3786824_102656ad692a414199bf5b9ab710fcd1.zip",
+    "tamanho": 149327,
+    "mtime": 1791941080.8564959,
+    "data_extracao": "2026-10-13T22:40:49.542401",
+    "total_extraidos": 35
+  }
+}
