@@ -236,7 +236,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </h1>
               </div>
 
-              {/* Barra de Busca + Botão Pré-cadastro CNPJ + Botão Visita */}
+              {/* Barra de Busca + Botão Agendar Visita (Tamanho Original) */}
               <div className="flex gap-2 items-center">
                 <div className="search-field flex-1">
                   <Search size={16} />
@@ -248,15 +248,6 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                   />
                 </div>
                 <Button
-                  variant="default"
-                  className="h-10 px-3 text-xs gap-1.5 shrink-0 bg-primary text-primary-foreground font-semibold shadow-xs"
-                  onClick={() => setQuickRegisterOpen(true)}
-                  title="Pré-cadastro rápido por CNPJ"
-                >
-                  <Plus size={15} />
-                  <span>+ CNPJ</span>
-                </Button>
-                <Button
                   variant="outline"
                   size="icon"
                   className="h-10 w-10 shrink-0"
@@ -264,7 +255,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                   title="Agendar visita"
                   onClick={() => setSchedule(true)}
                 >
-                  <CalendarDays size={16} />
+                  <Plus size={16} />
                 </Button>
               </div>
 
@@ -277,8 +268,8 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </Button>
               </div>
 
-              {/* Lista de Clientes - Toda a box do cliente é clicável para abrir a ficha */}
-              <div className="space-y-3">
+              {/* Lista de Clientes - Scroll independente da lista */}
+              <div className="client-scroll-area space-y-3">
                 {data.clients
                   .filter(
                     c =>
@@ -330,7 +321,25 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       </div>
                     </div>
                   ))}
+                {data.clients.filter(
+                  c =>
+                    (!radar || c.days >= c.cycle) &&
+                    `${c.name} ${c.neighborhood}`.toLowerCase().includes(search.toLowerCase()),
+                ).length === 0 && (
+                  <div className="text-center py-8 text-xs text-muted-foreground border border-dashed border-border/60 rounded-xl">
+                    Nenhum cliente encontrado para esta busca.
+                  </div>
+                )}
               </div>
+
+              {/* Botão de Pré-Cadastro por CNPJ na parte de baixo, em destaque e maior */}
+              <Button
+                className="w-full h-12 text-xs font-bold gap-2 mt-4 bg-primary text-primary-foreground shadow-md rounded-xl hover:opacity-95 transition-all"
+                onClick={() => setQuickRegisterOpen(true)}
+              >
+                <Plus size={18} />
+                <span>+ Pré-Cadastro de Cliente por CNPJ</span>
+              </Button>
             </>
           )}
 
