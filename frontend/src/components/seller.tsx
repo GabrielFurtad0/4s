@@ -227,17 +227,21 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
 
         <div className="seller-body">
           {/* TELA 1: AGENDA & RADAR */}
+          {/* TELA 1: AGENDA & RADAR */}
           {view === 'agenda' && (
             <>
-              <div className="eyebrow">SEXTA-FEIRA, 16 DE OUTUBRO</div>
-              <div className="mt-2 mb-4">
-                <h1>
-                  Bom dia, Sérgio <span className="text-muted-foreground">↗</span>
+              {/* Saudação Compacta — Ganho Expressivo de Espaço Vertical */}
+              <div className="flex items-baseline justify-between mt-1 mb-2.5">
+                <h1 className="text-base font-bold text-foreground tracking-tight m-0">
+                  Bom dia, Sérgio <span className="text-muted-foreground text-xs font-normal">↗</span>
                 </h1>
+                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
+                  Sex, 16 Out
+                </span>
               </div>
 
               {/* Barra de Busca + Botão Agendar Visita (Tamanho Original) */}
-              <div className="flex gap-2 items-center">
+              <div className="flex gap-2 items-center mb-3">
                 <div className="search-field flex-1">
                   <Search size={16} />
                   <input
@@ -259,7 +263,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </Button>
               </div>
 
-              <div className="segmented mt-4 mb-4">
+              <div className="segmented mb-3">
                 <Button variant="ghost" className={!radar ? 'selected' : ''} onClick={() => setRadar(false)}>
                   Visitas de hoje <span>{data.clients.length}</span>
                 </Button>
@@ -269,7 +273,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
               </div>
 
               {/* Lista de Clientes - Scroll independente da lista */}
-              <div className="client-scroll-area space-y-3">
+              <div className="client-scroll-area space-y-2.5 flex-1 min-h-0">
                 {data.clients
                   .filter(
                     c =>
@@ -301,7 +305,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                           {c.overdue ? '1 boleto vencido' : 'Em dia'}
                         </span>
                       </div>
-                      <div className="flex items-center justify-between my-2">
+                      <div className="flex items-center justify-between my-1.5">
                         <strong className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
                           {c.name}
                         </strong>
@@ -315,10 +319,6 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       {c.notes.at(-1) && (
                         <p className="visit-note">{c.notes.at(-1)?.split(' • ')[1]}</p>
                       )}
-                      <div className="flex items-center justify-between text-xs text-primary font-medium mt-3 pt-2 border-t border-border/40">
-                        <span>Abrir ficha completa</span>
-                        <ChevronRight size={14} />
-                      </div>
                     </div>
                   ))}
                 {data.clients.filter(
@@ -332,13 +332,13 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 )}
               </div>
 
-              {/* Botão de Pré-Cadastro por CNPJ na parte de baixo, em destaque e maior */}
+              {/* Botão de Pré-Cadastro por CNPJ — Próximo às abas inferiores, sem duplicar o '+' */}
               <Button
-                className="w-full h-12 text-xs font-bold gap-2 mt-4 bg-primary text-primary-foreground shadow-md rounded-xl hover:opacity-95 transition-all"
+                className="w-full h-11 text-xs font-bold gap-2 mt-2 mb-0.5 bg-primary text-primary-foreground shadow-sm rounded-xl hover:opacity-95 transition-all shrink-0"
                 onClick={() => setQuickRegisterOpen(true)}
               >
-                <Plus size={18} />
-                <span>+ Pré-Cadastro de Cliente por CNPJ</span>
+                <Plus size={16} />
+                <span>Pré-Cadastro de Cliente por CNPJ</span>
               </Button>
             </>
           )}
