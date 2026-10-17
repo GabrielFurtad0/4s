@@ -3,9 +3,11 @@ import {
   ArrowLeft,
   ArrowUpRight,
   Building2,
+  Calendar,
   CalendarDays,
   Check,
   CheckCheck,
+  CheckCircle2,
   ChevronRight,
   CreditCard,
   Eye,
@@ -17,6 +19,7 @@ import {
   Search,
   Send,
   ShoppingBag,
+  Smartphone,
   Sparkles,
   Truck,
   Users,
@@ -683,27 +686,54 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
 
       {/* Painel lateral informativo para modo Desktop */}
       <div className="seller-side-note">
-        <span className="eyebrow">4S EM CAMPO</span>
-        <h2>
-          Seu negócio.
-          <br />
-          Onde você estiver.
-        </h2>
-        <p className="text-muted-foreground">Sexta-feira, 16 de outubro</p>
-        <div className="seller-session">
-          <div className="flex-1">
-            <strong>Sérgio Furtado</strong>
-            <p>Vendas externas · São Paulo</p>
+        <div className="seller-side-badge">
+          <Smartphone size={13} />
+          <span>Simulador Field Sales</span>
+        </div>
+
+        <div className="seller-side-hero">
+          <h2>
+            Seu negócio.
+            <br />
+            <span>Onde você estiver.</span>
+          </h2>
+          <p>
+            Interface mobile simplificada para atendimento presencial, consulta de saldo em tempo real e emissão ágil de pedidos em campo.
+          </p>
+        </div>
+
+        <div className="seller-side-card">
+          <div className="flex items-center justify-between pb-3 border-b border-border/60">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-full bg-primary/10 text-primary font-bold text-xs flex items-center justify-center border border-primary/20">
+                SF
+              </div>
+              <div>
+                <strong className="text-xs font-semibold text-foreground block">Sérgio Furtado</strong>
+                <span className="text-[11px] text-muted-foreground">Vendas externas · São Paulo</span>
+              </div>
+            </div>
+            <span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
+              <span className="online-dot" /> Em rota
+            </span>
           </div>
-          <span className="online-dot" />
-        </div>
-        <div className="seller-route-line">
-          <MapPin />
-          <span>{data.clients.length} visitas na rota de hoje</span>
-        </div>
-        <div className="seller-route-line">
-          <Check />
-          <span>Estoque conectado à mesa de conferência</span>
+
+          <div className="space-y-2.5 pt-3">
+            <div className="seller-side-stat">
+              <MapPin size={14} className="text-primary shrink-0" />
+              <span>
+                <strong>{data.clients.length} visitas</strong> na rota de hoje
+              </span>
+            </div>
+            <div className="seller-side-stat">
+              <CheckCircle2 size={14} className="text-emerald-500 shrink-0" />
+              <span>Estoque conectado à conferência</span>
+            </div>
+            <div className="seller-side-stat">
+              <Calendar size={14} className="text-muted-foreground shrink-0" />
+              <span>Sexta-feira, 16 de outubro</span>
+            </div>
+          </div>
         </div>
       </div>
 
