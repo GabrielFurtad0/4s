@@ -113,34 +113,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
 
   return (
     <>
-      <PageHeading
-        eyebrow="OPERAÇÕES / PEDIDOS"
-        title="Mesa de conferência"
-        description="Do pedido em campo à nota emitida. Tudo sob controle."
-        action={
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              onClick={() => {
-                download(
-                  'Pedido;Cliente;Status;Total\n' +
-                    data.orders.map(o => `${o.id};${data.clients.find(c => c.id === o.clientId)?.name};${o.status};${financials(o.items).total.toFixed(2)}`).join('\n'),
-                  'pedidos-4s.csv',
-                  'text/csv',
-                );
-                notify('Relatório de pedidos exportado.');
-              }}
-            >
-              <ArrowDownToLine />
-              Exportar
-            </Button>
-            <Button onClick={newOrder} className="relative group overflow-hidden">
-              <Plus />
-              Novo pedido
-            </Button>
-          </div>
-        }
-      />
+      {/* Grid de Métricas Compacto com Spotlight e Contadores Animados */}
 
       {/* Grid de Métricas com Spotlight e Contadores Animados */}
       <div className="metric-grid">
@@ -338,7 +311,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
               </tr>
             </thead>
             <tbody>
-              {visible.slice((page - 1) * 6, page * 6).map(o => {
+              {visible.slice((page - 1) * 10, page * 10).map(o => {
                 const c = data.clients.find(c => c.id === o.clientId);
                 if (!c) return null;
                 const f = financials(o.items);
@@ -407,7 +380,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
 
         <div className="table-footer">
           <span>
-            Mostrando {visible.length ? (page - 1) * 6 + 1 : 0}–{Math.min(page * 6, visible.length)} de {visible.length} pedidos
+            Mostrando {visible.length ? (page - 1) * 10 + 1 : 0}–{Math.min(page * 10, visible.length)} de {visible.length} pedidos
           </span>
           <div className="flex items-center gap-2">
             <Button
@@ -424,7 +397,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
               variant="outline"
               size="icon"
               aria-label="Próxima página"
-              disabled={page * 6 >= visible.length}
+              disabled={page * 10 >= visible.length}
               onClick={() => setPage(p => p + 1)}
             >
               <ChevronRight />
