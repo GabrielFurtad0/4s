@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   ArrowUpRight,
+  Building2,
   CalendarDays,
   Check,
   CheckCheck,
@@ -10,6 +11,7 @@ import {
   Eye,
   EyeOff,
   FileText,
+  Loader2,
   MapPin,
   Plus,
   Search,
@@ -28,12 +30,16 @@ import {
   addClientNoteApi,
   available,
   financials,
+  formatCnpj,
+  lookupCnpjData,
   marginLevel,
   money,
   productLabel,
+  quickRegisterClientApi,
   scheduleVisitApi,
   type AppData,
   type Client,
+  type CnpjData,
   type Item,
   type Order,
 } from '@/lib/business';
@@ -75,6 +81,17 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const [payment, setPayment] = useState('Boleto 28 dias (1 parcela)');
   const [orderNote, setOrderNote] = useState('');
   const [promotional, setPromotional] = useState(false);
+
+  // Estado do Modal de Pré-cadastro rápido por CNPJ
+  const [quickRegisterOpen, setQuickRegisterOpen] = useState(false);
+  const [quickCnpj, setQuickCnpj] = useState('');
+  const [quickName, setQuickName] = useState('');
+  const [quickBuyer, setQuickBuyer] = useState('');
+  const [lookupResult, setLookupResult] = useState<CnpjData | null>(null);
+  const [lookingUp, setLookingUp] = useState(false);
+  const [savingClient, setSavingClient] = useState(false);
+
+  // Estado do Pop-up de confirmação do pedido
   const [successOrder, setSuccessOrder] = useState<{
     id: string;
     clientName: string;
@@ -121,6 +138,63 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     );
   };
 
+  const resetQuickForm = () => {
+    setQuickCnpj('');
+    setQuickName('');
+    setQuickBuyer('');
+    setLookupResult(null);
+    setLookingUp(false);
+    setSavingClient(false);
+  };
+
+  const handleLookupCnpj = async (cnpjToSearch: string) => {
+    const clean = cnpjToSearch.replace(/\D/g, '');
+    if (clean.length !== 14) return;
+    setLookingUp(true);
+    try {
+      const res = await lookupCnpjData(clean);
+      setLookupResult(res);
+      if (!quickName && res.name) {
+        setQuickName(res.name);
+      }
+      notify(`Dados fiscais de ${res.name} encontrados.`);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Não foi possível consultar o CNPJ.');
+    } finally {
+      setLookingUp(false);
+    }
+  };
+
+  const handleSaveQuickClient = async () => {
+    const clean = quickCnpj.replace(/\D/g, '');
+    if (clean.length !== 14) {
+      notify('Informe um CNPJ válido com 14 dígitos.');
+      return;
+    }
+    setSavingClient(true);
+    try {
+      const { nextData, client: created } = await quickRegisterClientApi(data, {
+        cnpj: quickCnpj,
+        name: quickName || lookupResult?.name,
+        corporateName: lookupResult?.corporateName,
+        neighborhood: lookupResult?.neighborhood,
+        buyer: quickBuyer || 'Comprador',
+        ie: lookupResult?.ie,
+        ibge: lookupResult?.ibge,
+      });
+      update(nextData);
+      setQuickRegisterOpen(false);
+      resetQuickForm();
+      fireConfetti();
+      notify(`Cliente ${created.name} cadastrado com sucesso!`);
+      openClient(created);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao cadastrar cliente.');
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
   const radarClients = data.clients.filter(c => c.days >= c.cycle);
 
   return (
@@ -156,33 +230,45 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
           {view === 'agenda' && (
             <>
               <div className="eyebrow">SEXTA-FEIRA, 16 DE OUTUBRO</div>
-              <div className="mt-2 mb-5">
+              <div className="mt-2 mb-4">
                 <h1>
                   Bom dia, Sérgio <span className="text-muted-foreground">↗</span>
                 </h1>
               </div>
-              <div className="flex gap-2">
+
+              {/* Barra de Busca + Botão Pré-cadastro CNPJ + Botão Visita */}
+              <div className="flex gap-2 items-center">
                 <div className="search-field flex-1">
                   <Search size={16} />
                   <input
                     aria-label="Buscar cliente ou bairro"
-                    placeholder="Cliente ou bairro"
+                    placeholder="Buscar cliente ou bairro..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
                   />
                 </div>
                 <Button
+                  variant="default"
+                  className="h-10 px-3 text-xs gap-1.5 shrink-0 bg-primary text-primary-foreground font-semibold shadow-xs"
+                  onClick={() => setQuickRegisterOpen(true)}
+                  title="Pré-cadastro rápido por CNPJ"
+                >
+                  <Plus size={15} />
+                  <span>+ CNPJ</span>
+                </Button>
+                <Button
                   variant="outline"
                   size="icon"
+                  className="h-10 w-10 shrink-0"
                   aria-label="Agendar visita"
                   title="Agendar visita"
                   onClick={() => setSchedule(true)}
                 >
-                  <Plus />
+                  <CalendarDays size={16} />
                 </Button>
               </div>
 
-              <div className="segmented mt-5 mb-5">
+              <div className="segmented mt-4 mb-4">
                 <Button variant="ghost" className={!radar ? 'selected' : ''} onClick={() => setRadar(false)}>
                   Visitas de hoje <span>{data.clients.length}</span>
                 </Button>
@@ -191,6 +277,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </Button>
               </div>
 
+              {/* Lista de Clientes - Toda a box do cliente é clicável para abrir a ficha */}
               <div className="space-y-3">
                 {data.clients
                   .filter(
@@ -199,7 +286,19 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       `${c.name} ${c.neighborhood}`.toLowerCase().includes(search.toLowerCase()),
                   )
                   .map(c => (
-                    <div className="visit-card" key={c.id}>
+                    <div
+                      className="visit-card"
+                      key={c.id}
+                      onClick={() => openClient(c)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          openClient(c);
+                        }
+                      }}
+                    >
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground flex items-center gap-1.5">
                           <CalendarDays size={13} />
@@ -211,20 +310,24 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                           {c.overdue ? '1 boleto vencido' : 'Em dia'}
                         </span>
                       </div>
-                      <Button variant="ghost" className="visit-title" onClick={() => openClient(c)}>
-                        {c.name}
-                        <ArrowUpRight size={17} />
-                      </Button>
+                      <div className="flex items-center justify-between my-2">
+                        <strong className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors">
+                          {c.name}
+                        </strong>
+                        <ArrowUpRight size={17} className="text-muted-foreground" />
+                      </div>
                       <div className="text-xs text-muted-foreground">
                         {c.days} dias sem comprar <span className="mx-1">·</span>{' '}
                         <span className="numeric">{money(c.lastTotal)}</span>
-                        {radar && <p className="mt-2 text-warning">Ciclo habitual: {c.cycle} dias</p>}
+                        {radar && <p className="mt-1 text-warning font-medium">Ciclo habitual: {c.cycle} dias</p>}
                       </div>
-                      <p className="visit-note">{c.notes.at(-1)?.split(' • ')[1]}</p>
-                      <Button variant="ghost" className="w-full justify-between text-xs" onClick={() => openClient(c)}>
-                        Abrir ficha do cliente
+                      {c.notes.at(-1) && (
+                        <p className="visit-note">{c.notes.at(-1)?.split(' • ')[1]}</p>
+                      )}
+                      <div className="flex items-center justify-between text-xs text-primary font-medium mt-3 pt-2 border-t border-border/40">
+                        <span>Abrir ficha completa</span>
                         <ChevronRight size={14} />
-                      </Button>
+                      </div>
                     </div>
                   ))}
               </div>
@@ -257,7 +360,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                   {client.neighborhood}, São Paulo · SP
                 </p>
               </div>
-              <Button className="w-full h-11 mb-6" onClick={startOrder}>
+              <Button className="w-full h-11 mb-6 text-sm font-semibold" onClick={startOrder}>
                 <Plus />
                 Tirar pedido
               </Button>
@@ -595,6 +698,118 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
         </div>
       </div>
 
+      {/* MODAL: Pré-cadastro rápido de novos clientes via CNPJ (BrasilAPI) */}
+      <Dialog
+        open={quickRegisterOpen}
+        onOpenChange={open => {
+          if (!open && !savingClient) {
+            setQuickRegisterOpen(false);
+            resetQuickForm();
+          }
+        }}
+      >
+        <DialogContent className="max-w-md p-6 space-y-4 rounded-2xl">
+          <div>
+            <DialogTitle className="text-lg font-bold flex items-center gap-2">
+              <Building2 className="text-primary" size={20} />
+              Pré-cadastro por CNPJ
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
+              Digite o CNPJ. O sistema busca automaticamente Razão Social, Bairro e Inscrição Estadual na Receita Federal / BrasilAPI.
+            </DialogDescription>
+          </div>
+
+          <div className="space-y-3 pt-1">
+            <label className="field-label">
+              CNPJ da Padaria / Cliente
+              <div className="flex gap-2">
+                <input
+                  className="form-input text-xs font-mono"
+                  placeholder="00.000.000/0000-00"
+                  value={quickCnpj}
+                  onChange={e => {
+                    const formatted = formatCnpj(e.target.value);
+                    setQuickCnpj(formatted);
+                    if (formatted.replace(/\D/g, '').length === 14) {
+                      handleLookupCnpj(formatted);
+                    }
+                  }}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="shrink-0 text-xs gap-1.5"
+                  disabled={lookingUp || quickCnpj.replace(/\D/g, '').length !== 14}
+                  onClick={() => handleLookupCnpj(quickCnpj)}
+                >
+                  {lookingUp ? <Loader2 className="animate-spin" size={14} /> : <Search size={14} />}
+                  Buscar
+                </Button>
+              </div>
+            </label>
+
+            {/* Card com os dados encontrados da Receita Federal */}
+            {lookupResult && (
+              <div className="bg-muted/40 border border-emerald-500/30 rounded-xl p-3.5 space-y-2 animate-in fade-in-50">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-bold text-emerald-700 dark:text-emerald-400 flex items-center gap-1.5">
+                    <Check className="w-3.5 h-3.5" />
+                    Dados encontrados na Receita
+                  </span>
+                  <span className="text-[10px] text-muted-foreground font-mono">IBGE: {lookupResult.ibge}</span>
+                </div>
+                <p className="text-xs font-semibold text-foreground leading-tight">{lookupResult.corporateName}</p>
+                <p className="text-[11px] text-muted-foreground">
+                  {lookupResult.neighborhood}, {lookupResult.city} - {lookupResult.state} · IE: {lookupResult.ie}
+                </p>
+              </div>
+            )}
+
+            <label className="field-label">
+              Nome Fantasia / Apelido no App (opcional)
+              <input
+                className="form-input text-xs"
+                placeholder={lookupResult?.name || 'Ex: Padaria Estrela'}
+                value={quickName}
+                onChange={e => setQuickName(e.target.value)}
+              />
+            </label>
+
+            <label className="field-label">
+              Nome do Comprador / Contato (opcional)
+              <input
+                className="form-input text-xs"
+                placeholder="Ex: Sr. Antônio / Marcos"
+                value={quickBuyer}
+                onChange={e => setQuickBuyer(e.target.value)}
+              />
+            </label>
+          </div>
+
+          <div className="flex gap-2 pt-2">
+            <Button
+              variant="outline"
+              className="flex-1 text-xs"
+              disabled={savingClient}
+              onClick={() => {
+                setQuickRegisterOpen(false);
+                resetQuickForm();
+              }}
+            >
+              Cancelar
+            </Button>
+            <Button
+              className="flex-1 font-semibold text-xs gap-1.5"
+              disabled={savingClient || quickCnpj.replace(/\D/g, '').length !== 14}
+              onClick={handleSaveQuickClient}
+            >
+              {savingClient ? <Loader2 className="animate-spin" size={14} /> : <Plus size={14} />}
+              Cadastrar e Abrir
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* MODAL: Feedback de Pedido Fechado (Sucesso) */}
       <Dialog
         open={Boolean(successOrder)}
@@ -662,7 +877,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
       <Dialog open={schedule} onOpenChange={setSchedule}>
         <DialogContent>
           <DialogTitle>Agendar visita</DialogTitle>
-          <DialogDescription>Cliente existente ou cadastro rápido sem dados fiscais.</DialogDescription>
+          <DialogDescription>Cliente existente ou agendamento rápido.</DialogDescription>
           <label className="field-label">
             Cliente
             <select
