@@ -59,19 +59,19 @@ export function SlidingTabs({
             data-tab-id={tab.id}
             onClick={() => onChange(tab.id)}
             className={cn(
-              'relative z-10 flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium transition-colors duration-200 cursor-pointer rounded-md',
+              'relative z-10 flex items-center gap-2 px-3.5 py-1.5 text-[13px] font-medium transition-colors duration-200 cursor-pointer rounded-md',
               isActive
-                ? 'text-primary font-semibold'
-                : 'text-muted-foreground hover:text-foreground',
+                ? 'text-primary font-bold'
+                : 'text-muted-foreground hover:text-foreground font-medium',
             )}
           >
             <span>{tab.label}</span>
             {typeof tab.count === 'number' && (
               <span
                 className={cn(
-                  'px-1.5 py-0.2 rounded-full text-[10px] font-mono tabular-nums transition-colors',
+                  'px-2 py-0.5 rounded-full text-[11px] font-mono font-bold tabular-nums transition-colors',
                   isActive
-                    ? 'bg-primary/10 text-primary font-bold'
+                    ? 'bg-primary/10 text-primary font-extrabold'
                     : 'bg-muted text-muted-foreground',
                 )}
               >

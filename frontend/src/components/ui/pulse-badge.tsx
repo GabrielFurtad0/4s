@@ -19,7 +19,7 @@ export function PulseBadge({
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-[11px] font-medium border transition-colors',
+        'inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold border transition-colors',
         isReady
           ? 'bg-emerald-500/10 text-emerald-600 border-emerald-500/20 dark:text-emerald-400 dark:border-emerald-500/30'
           : 'bg-amber-500/10 text-amber-600 border-amber-500/20 dark:text-amber-400 dark:border-amber-500/30',
@@ -42,7 +42,7 @@ export function PulseBadge({
       </span>
       <span>{label}</span>
       {sublabel && (
-        <span className="text-[10px] opacity-60 font-mono border-l border-current/20 pl-1.5 ml-0.5">
+        <span className="text-[11px] opacity-75 font-mono font-medium border-l border-current/25 pl-1.5 ml-0.5">
           {sublabel}
         </span>
       )}
