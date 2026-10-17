@@ -85,7 +85,7 @@ export function financials(items: Item[]) {
 }
 
 export const marginLevel = (margin: number) =>
-  margin >= 22 ? 'success' : margin >= 12 ? 'warning' : 'danger';
+  margin >= 15 ? 'success' : margin >= 8 ? 'warning' : 'danger';
 
 export const fiscalReady = (c: Client) => Boolean(c.cnpj && c.ie && c.ibge);
 
