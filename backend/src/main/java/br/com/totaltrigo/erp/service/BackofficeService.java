@@ -25,6 +25,7 @@ public class BackofficeService {
     private final ImportBatchRepository importBatchRepository;
     private final FieldSalesService fieldSalesService;
     private final NfeGatewayPort nfeGatewayPort;
+    private final ManagementExtensionService managementExtensionService;
 
     private final Map<Long, String> emittedXmlStore = new ConcurrentHashMap<>();
 
@@ -34,7 +35,8 @@ public class BackofficeService {
             ClientRepository clientRepository,
             ImportBatchRepository importBatchRepository,
             FieldSalesService fieldSalesService,
-            NfeGatewayPort nfeGatewayPort
+            NfeGatewayPort nfeGatewayPort,
+            @org.springframework.context.annotation.Lazy ManagementExtensionService managementExtensionService
     ) {
         this.orderRepository = orderRepository;
         this.productRepository = productRepository;
@@ -42,6 +44,7 @@ public class BackofficeService {
         this.importBatchRepository = importBatchRepository;
         this.fieldSalesService = fieldSalesService;
         this.nfeGatewayPort = nfeGatewayPort;
+        this.managementExtensionService = managementExtensionService;
     }
 
     @Transactional(readOnly = true)
@@ -181,6 +184,16 @@ public class BackofficeService {
 
         recalculateOrderFinancialSnapshots(order);
         Order saved = orderRepository.save(order);
+        if (managementExtensionService != null) {
+            managementExtensionService.logAudit(
+                    "Gabriel Furtado",
+                    "Backoffice & Fiscal",
+                    "REVISAO_PRE_NOTA",
+                    "Order",
+                    String.valueOf(orderId),
+                    "Pré-nota do Pedido #" + orderId + " revisada com recálculo de DQ/BQ e dados cadastrais."
+            );
+        }
         return fieldSalesService.toBackofficeOrderDto(saved);
     }
 
@@ -336,6 +349,20 @@ public class BackofficeService {
         }
 
         Order saved = orderRepository.save(order);
+
+        if (managementExtensionService != null) {
+            managementExtensionService.generateTitlesForOrder(saved, "Gabriel Furtado", "Backoffice & Fiscal");
+            managementExtensionService.logAudit(
+                    "Gabriel Furtado",
+                    "Backoffice & Fiscal",
+                    "EMISSAO_NFE",
+                    "Order",
+                    String.valueOf(saved.getId()),
+                    "NF-e #" + emissionResult.nfeNumber() + " emitida para " + client.getCorporateName() +
+                            " (Chave: " + emissionResult.accessKey() + "). Boletos bancários sobre BQ gerados automaticamente."
+            );
+        }
+
         return fieldSalesService.toBackofficeOrderDto(saved);
     }
 
@@ -347,7 +374,18 @@ public class BackofficeService {
             throw new IllegalStateException("Apenas pedidos FATURADOS podem avançar para ENTREGUE.");
         }
         order.setStatus(OrderStatus.ENTREGUE);
-        return fieldSalesService.toBackofficeOrderDto(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        if (managementExtensionService != null) {
+            managementExtensionService.logAudit(
+                    "Expedição",
+                    "Romaneio Cego",
+                    "ENTREGA_CONCLUIDA",
+                    "Order",
+                    String.valueOf(orderId),
+                    "Pedido #" + orderId + " marcado como entregue ao cliente."
+            );
+        }
+        return fieldSalesService.toBackofficeOrderDto(saved);
     }
 
     @Transactional
@@ -378,7 +416,19 @@ public class BackofficeService {
         if (order.getInvoiceData() != null) {
             order.getInvoiceData().setNfeStatus(NfeStatus.CANCELADA);
         }
-        return fieldSalesService.toBackofficeOrderDto(orderRepository.save(order));
+        Order saved = orderRepository.save(order);
+        if (managementExtensionService != null) {
+            managementExtensionService.cancelTitlesForOrder(order.getId(), "Gabriel Furtado", "Backoffice & Fiscal");
+            managementExtensionService.logAudit(
+                    "Gabriel Furtado",
+                    "Backoffice & Fiscal",
+                    "CANCELAMENTO_PEDIDO",
+                    "Order",
+                    String.valueOf(order.getId()),
+                    "Pedido #" + order.getId() + " cancelado (estoque e boletos em aberto estornados)."
+            );
+        }
+        return fieldSalesService.toBackofficeOrderDto(saved);
     }
 
     public String getOrderXml(Long orderId) {
@@ -484,7 +534,18 @@ public class BackofficeService {
             productRepository.save(product);
         }
 
-        return importBatchRepository.save(batch);
+        ImportBatch savedBatch = importBatchRepository.save(batch);
+        if (managementExtensionService != null) {
+            managementExtensionService.logAudit(
+                    "Gabriel Furtado",
+                    "Backoffice & Fiscal",
+                    "ENTRADA_LOTE_IMPORTACAO",
+                    "ImportBatch",
+                    String.valueOf(savedBatch.getId()),
+                    "Nacionalização do Lote " + savedBatch.getBatchCode() + " (" + totalQuantityAllSkus + " sacas, Custo Total Landed R$ " + totalLandedBrl + ")"
+            );
+        }
+        return savedBatch;
     }
 
     private void recalculateOrderFinancialSnapshots(Order order) {

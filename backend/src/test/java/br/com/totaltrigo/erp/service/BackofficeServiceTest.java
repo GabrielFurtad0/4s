@@ -49,6 +49,9 @@ class BackofficeServiceTest {
     @Mock
     private NfeGatewayPort nfeGatewayPort;
 
+    @Mock
+    private ManagementExtensionService managementExtensionService;
+
     @InjectMocks
     private BackofficeService backofficeService;
 

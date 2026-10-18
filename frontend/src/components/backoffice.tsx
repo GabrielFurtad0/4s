@@ -1,25 +1,39 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
+  AlertTriangle,
   ArrowDownToLine,
   ArrowRight,
   Ban,
+  Calendar,
   Check,
   CheckCheck,
+  CheckCircle2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   ClipboardList,
   Clock3,
+  CreditCard,
+  DollarSign,
+  Edit,
+  ExternalLink,
   FileCheck2,
   FileText,
+  History,
+  Landmark,
   Layers,
   Loader2,
   Package,
+  Plus,
+  Printer,
+  RefreshCw,
   Search,
   ShieldCheck,
   SlidersHorizontal,
   TriangleAlert,
   Truck,
+  Users,
+  XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -41,28 +55,62 @@ import {
   deliverOrderApi,
   deliverOrderLocal,
   editOrder,
+  fetchAuditLogsApi,
+  fetchClientPricesApi,
+  fetchManagementClientsApi,
+  fetchReceivablesApi,
+  fetchWorkspaceData,
   financials,
   fiscalReady,
+  formatCnpj,
   generatePickingApi,
   invoiceOrder,
   issueNfeApi,
   itemBq,
   itemDq,
+  lookupCnpjData,
   marginLevel,
   money,
   orderBaseValue,
   orderTotalBq,
   orderTotalDq,
+  payReceivableApi,
   productLabel,
   reviewOrderApi,
+  saveManagementClientApi,
+  updateClientPriceApi,
+  updateProductStockApi,
+  type AppData,
+  type AuditLog,
+  type Client,
   type Item,
   type Order,
+  type Product,
+  type ReceivableTitle,
 } from '@/lib/business';
 import { Metric } from './management';
 import type { SharedProps } from './seller';
 
-export function Backoffice({ data, update, notify }: SharedProps & { newOrder: () => void }) {
-  const [tab, setTab] = useState('all');
+export function Backoffice({
+  data,
+  update,
+  notify,
+  activeModule = 'orders',
+  userProfile = 'Gabriel Furtado · Backoffice & Fiscal',
+  newOrder,
+}: SharedProps & { newOrder: () => void; activeModule?: string; userProfile?: string }) {
+  if (activeModule === 'receivables') {
+    return <ReceivablesSection data={data} update={update} notify={notify} userProfile={userProfile} />;
+  }
+  if (activeModule === 'registrations') {
+    return <RegistrationsSection data={data} update={update} notify={notify} userProfile={userProfile} />;
+  }
+  if (activeModule === 'audit') {
+    return <AuditSection notify={notify} userProfile={userProfile} />;
+  }
+
+  const isExpedicao = userProfile === 'Expedição · Romaneio Cego';
+  const [tab, setTab] = useState(isExpedicao ? 'picking' : 'all');
   const [stockMode, setStockMode] = useState<'dual' | 'physical' | 'base'>('dual');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -210,20 +258,37 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
             </>
           }
         />
-        <Metric
-          label="Valor em conferência (DQ)"
-          value={<NumberTicker value={pendingValue} prefix="R$ " decimals={2} />}
-          icon={<ClipboardList />}
-          footer={
-            <>
-              <span className="text-muted-foreground">Estoque reservado (DQ) ·</span>{' '}
-              <NumberTicker
-                value={pending.reduce((a, o) => a + orderTotalDq(o.items), 0)}
-                suffix=" un."
-              />
-            </>
-          }
-        />
+        {isExpedicao ? (
+          <Metric
+            label="Volume a separar (DQ)"
+            value={<NumberTicker value={pending.reduce((a, o) => a + orderTotalDq(o.items), 0)} suffix=" sacas" />}
+            icon={<Truck />}
+            footer={
+              <>
+                <span className="text-muted-foreground">Peso total ·</span>{' '}
+                <NumberTicker
+                  value={pending.reduce((a, o) => a + orderTotalDq(o.items) * 25, 0)}
+                  suffix=" kg"
+                />
+              </>
+            }
+          />
+        ) : (
+          <Metric
+            label="Valor em conferência (DQ)"
+            value={<NumberTicker value={pendingValue} prefix="R$ " decimals={2} />}
+            icon={<ClipboardList />}
+            footer={
+              <>
+                <span className="text-muted-foreground">Estoque reservado (DQ) ·</span>{' '}
+                <NumberTicker
+                  value={pending.reduce((a, o) => a + orderTotalDq(o.items), 0)}
+                  suffix=" un."
+                />
+              </>
+            }
+          />
+        )}
         <Metric
           label="Prontos para faturar"
           value={<NumberTicker value={ready.length} padZeroes={2} />}
@@ -425,10 +490,10 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
                   Pedido <ChevronDown size={12} />
                 </th>
                 <th>Cliente</th>
-                <th>Valor total (DQ / BQ)</th>
-                <th>Cadastro fiscal</th>
+                <th>{isExpedicao ? 'Carga / Volume (DQ)' : 'Valor total (DQ / BQ)'}</th>
+                <th>{isExpedicao ? 'Destino / Rota' : 'Cadastro fiscal'}</th>
                 <th>Status</th>
-                <th />
+                <th>Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -438,6 +503,7 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
                 const f = financials(o.items);
                 const dq = orderTotalDq(o.items);
                 const bq = orderTotalBq(o.items);
+                const isBilled = effectiveStatus(o) === 'FATURADO' || effectiveStatus(o) === 'ENTREGUE';
                 return (
                   <tr key={o.id} onClick={() => openOrder(o)}>
                     <td>
@@ -460,14 +526,25 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
                       </div>
                     </td>
                     <td>
-                      <strong className="numeric">{money(f.total)}</strong>
-                      <p>
-                        DQ: {dq} un.
-                        {bq !== dq ? ` · BQ: ${bq} un.` : ''} · {o.payment}
-                      </p>
+                      {isExpedicao ? (
+                        <>
+                          <strong className="numeric text-foreground">{dq} sacas ({dq * 25} kg)</strong>
+                          <p className="text-[11px] text-muted-foreground">{o.delivery || 'Rota programada'}</p>
+                        </>
+                      ) : (
+                        <>
+                          <strong className="numeric">{money(f.total)}</strong>
+                          <p>
+                            DQ: {dq} un.
+                            {bq !== dq ? ` · BQ: ${bq} un.` : ''} · {o.payment}
+                          </p>
+                        </>
+                      )}
                     </td>
                     <td>
-                      {fiscalReady(c) ? (
+                      {isExpedicao ? (
+                        <span className="text-xs text-muted-foreground font-medium">{c.neighborhood}, {c.city || 'SP'}</span>
+                      ) : fiscalReady(c) ? (
                         <PulseBadge status="ready" label="Dados completos" sublabel="SEFAZ OK" />
                       ) : (
                         <PulseBadge status="pending" label="Dados pendentes" sublabel="BrasilAPI" />
@@ -475,9 +552,37 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
                     </td>
                     <td>{renderStatusBadge(o)}</td>
                     <td>
-                      <Button variant="ghost" size="icon" aria-label={`Revisar pedido ${o.id}`}>
-                        <ChevronRight />
-                      </Button>
+                      <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                        {isBilled && (
+                          <>
+                            {!isExpedicao && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 px-2 text-[11px] gap-1 shadow-xs"
+                                title="Imprimir DANFE (BQ)"
+                                onClick={() => window.open(`/api/backoffice/fiscal-documents/${o.id}/danfe.html`, '_blank')}
+                              >
+                                <Printer size={12} />
+                                DANFE
+                              </Button>
+                            )}
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 px-2 text-[11px] gap-1 shadow-xs"
+                              title="Imprimir Romaneio Cego (DQ)"
+                              onClick={() => window.open(`/api/backoffice/fiscal-documents/${o.id}/romaneio.html`, '_blank')}
+                            >
+                              <Truck size={12} />
+                              Romaneio
+                            </Button>
+                          </>
+                        )}
+                        <Button variant="ghost" size="icon" aria-label={`Revisar pedido ${o.id}`} onClick={() => openOrder(o)}>
+                          <ChevronRight />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 );
@@ -753,19 +858,21 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
 
                   {selected.note && <p className="review-note">{selected.note}</p>}
 
-                  {/* Profit Breakdown com o Anel Radial de Margem */}
-                  <div className="review-profit flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/40">
-                    <ProfitGauge margin={modalFin.margin} size={48} />
-                    <div className="flex flex-col">
-                      <span className="text-[10px] text-muted-foreground">Lucro líquido estimado</span>
-                      <strong className="numeric text-base text-foreground">
-                        {money(modalFin.profit)}
-                      </strong>
+                  {/* Profit Breakdown com o Anel Radial de Margem (Oculto para Perfil de Expedição) */}
+                  {!isExpedicao && (
+                    <div className="review-profit flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/40">
+                      <ProfitGauge margin={modalFin.margin} size={48} />
+                      <div className="flex flex-col">
+                        <span className="text-[10px] text-muted-foreground">Lucro líquido estimado</span>
+                        <strong className="numeric text-base text-foreground">
+                          {money(modalFin.profit)}
+                        </strong>
+                      </div>
+                      <span className={`status-badge ml-auto ${marginLevel(modalFin.margin)}`}>
+                        Margem: {modalFin.margin.toFixed(1)}%
+                      </span>
                     </div>
-                    <span className={`status-badge ml-auto ${marginLevel(modalFin.margin)}`}>
-                      Margem: {modalFin.margin.toFixed(1)}%
-                    </span>
-                  </div>
+                  )}
 
                   {(selectedEffectiveStatus === 'FATURADO' || selectedEffectiveStatus === 'ENTREGUE') && (
                     <div className="invoice-issued">
@@ -788,22 +895,25 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
                         />
                       </div>
                       <div className="flex gap-2 flex-wrap">
+                        {!isExpedicao && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => window.open(`/api/backoffice/fiscal-documents/${selected.id}/danfe.html`, '_blank')}
+                          >
+                            <Printer size={14} />
+                            Imprimir DANFE (BQ)
+                          </Button>
+                        )}
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => {
-                            download(
-                              `DANFE DEMONSTRATIVO — TOTAL TRIGO\nNF-e ${selected.invoice}\nChave: ${selected.key}\n${selectedClient.name}\n${selected.items
-                                .filter(i => itemBq(i) > 0)
-                                .map(i => `${itemBq(i)}x ${productLabel(data, i.productId)} — ${money(i.price)}`)
-                                .join('\n')}\nTotal Base (BQ): ${money(orderBaseValue(selected.items))}`,
-                              `DANFE-${selected.invoice}.txt`
-                            );
-                            notify('DANFE baixado.');
-                          }}
+                          className="gap-1.5"
+                          onClick={() => window.open(`/api/backoffice/fiscal-documents/${selected.id}/romaneio.html`, '_blank')}
                         >
-                          <DownloadIcon />
-                          Baixar DANFE demonstrativo
+                          <Truck size={14} />
+                          Imprimir Romaneio (DQ)
                         </Button>
                         {selected.xmlUrl && (
                           <Button variant="outline" size="sm" onClick={() => window.open(selected.xmlUrl, '_blank')}>
@@ -987,4 +1097,1122 @@ export function Backoffice({ data, update, notify }: SharedProps & { newOrder: (
 
 function DownloadIcon() {
   return <ArrowDownToLine size={14} />;
+}
+
+// ============================================================================
+// 1. SEÇÃO: CONTAS A RECEBER E BOLETOS SOBRE BQ (Sr. Sérgio)
+// ============================================================================
+
+function ReceivablesSection({
+  data,
+  update,
+  notify,
+  userProfile,
+}: {
+  data: AppData;
+  update: (next: AppData) => void;
+  notify: (message: string) => void;
+  userProfile?: string | undefined;
+}) {
+  const [titles, setTitles] = useState<ReceivableTitle[]>([]);
+  const [filter, setFilter] = useState<'ALL' | 'ABERTO' | 'VENCIDO' | 'PAGO'>('ALL');
+  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [payingId, setPayingId] = useState<number | null>(null);
+
+  const loadTitles = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchReceivablesApi(filter);
+      setTitles(res);
+    } catch {
+      notify('Não foi possível carregar os títulos a receber do servidor.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadTitles();
+  }, [filter]);
+
+  const handlePay = async (title: ReceivableTitle) => {
+    setPayingId(title.id);
+    try {
+      await payReceivableApi(title.id);
+      fireConfetti();
+      notify(`Baixa manual confirmada no boleto ${title.documentNumber}! Status do cliente recalculado.`);
+      await loadTitles();
+      // Atualiza também os dados gerais para sincronizar o status de crédito do cliente
+      const fresh = await fetchWorkspaceData(data.reconciled);
+      update(fresh);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao processar baixa do boleto.');
+    } finally {
+      setPayingId(null);
+    }
+  };
+
+  const totalBq = titles.reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalAberto = titles.filter(t => t.status === 'ABERTO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalVencido = titles.filter(t => t.status === 'VENCIDO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalPago = titles.filter(t => t.status === 'PAGO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
+
+  const visibleTitles = titles.filter(t => {
+    const q = search.toLowerCase();
+    return (
+      t.clientName.toLowerCase().includes(q) ||
+      t.documentNumber.toLowerCase().includes(q) ||
+      (t.notes && t.notes.toLowerCase().includes(q))
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Banner de Regra Oficial do Sr. Sérgio */}
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0">
+            <Landmark size={24} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">
+              Controle Oficial de Boletos Bancários sobre Qtd. Base (BQ)
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              <strong>Regra do Sr. Sérgio:</strong> O valor dos boletos bancários é calculado estritamente sobre a Base (BQ) = <span className="font-mono">soma(baseQuantity × unitSalePrice)</span>. A diferença comercial (DQ - BQ) nunca entra nos boletos!
+            </p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-xs" onClick={loadTitles} disabled={loading}>
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          Atualizar Títulos
+        </Button>
+      </div>
+
+      {/* Cards de Métricas de Contas a Receber */}
+      <div className="metric-grid">
+        <Metric
+          label="Total em Boletos (Base BQ)"
+          value={<NumberTicker value={totalBq} prefix="R$ " decimals={2} />}
+          icon={<CreditCard />}
+          footer={<span className="text-muted-foreground">{titles.length} boletos gerados</span>}
+        />
+        <Metric
+          label="A Receber (Em Aberto)"
+          value={<NumberTicker value={totalAberto} prefix="R$ " decimals={2} />}
+          icon={<Clock3 />}
+          footer={
+            <>
+              <span className="mini-dot warning-dot" />
+              {titles.filter(t => t.status === 'ABERTO').length} boletos a vencer
+            </>
+          }
+        />
+        <Metric
+          label="Boletos Vencidos"
+          value={<NumberTicker value={totalVencido} prefix="R$ " decimals={2} />}
+          icon={<AlertTriangle />}
+          footer={
+            <span className={totalVencido > 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
+              {titles.filter(t => t.status === 'VENCIDO').length} vencidos sem pagamento
+            </span>
+          }
+        />
+        <Metric
+          label="Total Liquidado / Pago"
+          value={<NumberTicker value={totalPago} prefix="R$ " decimals={2} />}
+          icon={<CheckCheck />}
+          footer={
+            <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
+              {titles.filter(t => t.status === 'PAGO').length} boletos compensados
+            </span>
+          }
+        />
+      </div>
+
+      {/* Tabela de Boletos com Filtros e Ação de Baixa Manual */}
+      <section className="orders-section">
+        <div className="orders-toolbar">
+          <SlidingTabs
+            tabs={[
+              { id: 'ALL', label: 'Todos os Boletos', count: titles.length },
+              { id: 'ABERTO', label: 'Em Aberto', count: titles.filter(t => t.status === 'ABERTO').length },
+              { id: 'VENCIDO', label: 'Vencidos', count: titles.filter(t => t.status === 'VENCIDO').length },
+              { id: 'PAGO', label: 'Pagos / Baixados', count: titles.filter(t => t.status === 'PAGO').length },
+            ]}
+            activeTab={filter}
+            onChange={t => setFilter(t as any)}
+          />
+
+          <div className="table-search flex-1 max-w-sm">
+            <Search size={16} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por cliente, documento ou NF-e..."
+              aria-label="Buscar boletos"
+            />
+          </div>
+        </div>
+
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Documento / Boleto</th>
+                <th>Cliente</th>
+                <th>Parcela</th>
+                <th>Valor Base (BQ)</th>
+                <th>Vencimento</th>
+                <th>Status</th>
+                <th>Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleTitles.map(t => {
+                const isPaid = t.status === 'PAGO';
+                const isOverdue = t.status === 'VENCIDO';
+                const clientMatch = data.clients.find(c => c.id === String(t.clientId));
+                return (
+                  <tr key={t.id}>
+                    <td>
+                      <strong className="numeric font-mono text-xs">{t.documentNumber}</strong>
+                      <p className="text-[11px] text-muted-foreground">
+                        {t.orderId ? `Ref. Pedido #${t.orderId}` : 'Ref. Faturamento anterior'}
+                      </p>
+                    </td>
+                    <td>
+                      <div>
+                        <strong>{t.clientName}</strong>
+                        <p className="text-[11px] text-muted-foreground">
+                          Crédito: {clientMatch?.overdue || isOverdue ? (
+                            <span className="text-destructive font-semibold">Boleto Vencido</span>
+                          ) : (
+                            <span className="text-emerald-600 font-semibold">Em dia</span>
+                          )}
+                        </p>
+                      </div>
+                    </td>
+                    <td>
+                      <span className="status-badge neutral text-[11px]">
+                        {t.installmentNumber} de {t.totalInstallments}
+                      </span>
+                    </td>
+                    <td>
+                      <strong className="numeric text-sm font-semibold text-foreground">
+                        {money(Number(t.amountBq))}
+                      </strong>
+                    </td>
+                    <td>
+                      <span className="numeric text-xs font-medium">
+                        {t.dueDate ? t.dueDate.split('-').reverse().join('/') : '-'}
+                      </span>
+                    </td>
+                    <td>
+                      {isPaid ? (
+                        <span className="status-badge success">
+                          <CheckCheck size={12} /> Pago
+                        </span>
+                      ) : isOverdue ? (
+                        <span className="status-badge danger">
+                          <AlertTriangle size={12} /> Vencido
+                        </span>
+                      ) : (
+                        <span className="status-badge warning">
+                          <Clock3 size={12} /> Em aberto
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {!isPaid ? (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs font-semibold gap-1.5 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
+                          disabled={payingId === t.id}
+                          onClick={() => handlePay(t)}
+                        >
+                          {payingId === t.id ? (
+                            <Loader2 size={13} className="animate-spin" />
+                          ) : (
+                            <CheckCircle2 size={13} />
+                          )}
+                          Confirmar Pagamento
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-muted-foreground flex items-center gap-1">
+                          <Check size={12} className="text-emerald-500" /> Baixado
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {visibleTitles.length === 0 && (
+            <div className="empty-state">
+              <CreditCard size={24} />
+              <strong>Nenhum boleto encontrado nesta visualização</strong>
+              <p>Os boletos são gerados automaticamente sobre o total BQ sempre que uma NF-e é emitida.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+// ============================================================================
+// 2. SEÇÃO: CADASTROS COMPLETOS, ESTOQUE DUAL E PREÇOS ACORDADOS
+// ============================================================================
+
+function RegistrationsSection({
+  data,
+  update,
+  notify,
+  userProfile,
+}: {
+  data: AppData;
+  update: (next: AppData) => void;
+  notify: (message: string) => void;
+  userProfile?: string | undefined;
+}) {
+  const [subTab, setSubTab] = useState<'clients' | 'products' | 'prices'>('clients');
+  const [clientSearch, setClientSearch] = useState('');
+  const [editingClient, setEditingClient] = useState<any | null>(null);
+  const [clientModalOpen, setClientModalOpen] = useState(false);
+  const [lookingUpCnpj, setLookingUpCnpj] = useState(false);
+  const [savingClient, setSavingClient] = useState(false);
+
+  // Edição de Produto / Estoque
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [productModalOpen, setProductModalOpen] = useState(false);
+  const [savingProduct, setSavingProduct] = useState(false);
+
+  // Memória de Preços
+  const [selectedPriceClient, setSelectedPriceClient] = useState<string>(data.clients[0]?.id ?? '1');
+  const [clientSkuPrices, setClientSkuPrices] = useState<any[]>([]);
+  const [editingSkuPrice, setEditingSkuPrice] = useState<{ productId: number; price: number } | null>(null);
+
+  const loadClientSkuPrices = async (cId: string) => {
+    try {
+      const prices = await fetchClientPricesApi(Number(cId));
+      setClientSkuPrices(prices);
+    } catch {
+      // Fallback local caso backend esteja offline
+      setClientSkuPrices([]);
+    }
+  };
+
+  useEffect(() => {
+    if (subTab === 'prices' && selectedPriceClient) {
+      loadClientSkuPrices(selectedPriceClient);
+    }
+  }, [subTab, selectedPriceClient]);
+
+  const handleLookupCnpj = async () => {
+    if (!editingClient?.cnpj) return;
+    const clean = editingClient.cnpj.replace(/\D/g, '');
+    if (clean.length !== 14) {
+      notify('Informe um CNPJ válido com 14 dígitos.');
+      return;
+    }
+    setLookingUpCnpj(true);
+    try {
+      const res = await lookupCnpjData(clean);
+      setEditingClient((prev: any) => ({
+        ...prev,
+        corporateName: res.corporateName || prev.corporateName,
+        tradeName: res.name || prev.tradeName,
+        street: res.street || prev.street,
+        neighborhood: res.neighborhood || prev.neighborhood,
+        city: res.city || prev.city,
+        state: res.state || prev.state,
+        stateRegistration: res.ie !== 'ISENTO' ? res.ie : prev.stateRegistration,
+        ibgeCityCode: res.ibge || prev.ibgeCityCode,
+      }));
+      notify(`Dados fiscais de ${res.name} encontrados na BrasilAPI.`);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Falha na consulta do CNPJ.');
+    } finally {
+      setLookingUpCnpj(false);
+    }
+  };
+
+  const handleSaveClient = async () => {
+    if (!editingClient) return;
+    setSavingClient(true);
+    try {
+      await saveManagementClientApi(editingClient);
+      const fresh = await fetchWorkspaceData(data.reconciled);
+      update(fresh);
+      setClientModalOpen(false);
+      fireConfetti();
+      notify('Cliente salvo com sucesso no banco de dados!');
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao salvar cliente.');
+    } finally {
+      setSavingClient(false);
+    }
+  };
+
+  const handleSaveProduct = async () => {
+    if (!editingProduct) return;
+    setSavingProduct(true);
+    try {
+      const dbId = editingProduct.dbId ?? Number(editingProduct.id);
+      await updateProductStockApi(dbId, {
+        name: editingProduct.name,
+        baseListPrice: Number(editingProduct.price),
+        currentLandedCost: Number(editingProduct.cost),
+        physicalStock: Number(editingProduct.physical),
+        baseStock: Number(editingProduct.baseStock ?? editingProduct.physical),
+      });
+      const fresh = await fetchWorkspaceData(data.reconciled);
+      update(fresh);
+      setProductModalOpen(false);
+      fireConfetti();
+      notify(`Produto ${editingProduct.name} e estoque dual atualizados!`);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao atualizar produto.');
+    } finally {
+      setSavingProduct(false);
+    }
+  };
+
+  const handleSavePriceAgreed = async (productId: number, price: number) => {
+    try {
+      await updateClientPriceApi(Number(selectedPriceClient), productId, price);
+      await loadClientSkuPrices(selectedPriceClient);
+      const fresh = await fetchWorkspaceData(data.reconciled);
+      update(fresh);
+      setEditingSkuPrice(null);
+      notify('Preço acordado atualizado na memória do cliente!');
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao salvar preço acordado.');
+    }
+  };
+
+  const filteredClients = data.clients.filter(c => {
+    const q = clientSearch.toLowerCase();
+    return c.name.toLowerCase().includes(q) || c.cnpj.includes(q) || c.neighborhood.toLowerCase().includes(q);
+  });
+
+  return (
+    <div className="space-y-6">
+      {/* Abas Superiores de Cadastros */}
+      <div className="flex items-center justify-between border-b border-border pb-3">
+        <div className="flex items-center gap-2">
+          <Button
+            variant={subTab === 'clients' ? 'default' : 'outline'}
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setSubTab('clients')}
+          >
+            <Users size={14} />
+            Clientes ({data.clients.length})
+          </Button>
+          <Button
+            variant={subTab === 'products' ? 'default' : 'outline'}
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setSubTab('products')}
+          >
+            <Package size={14} />
+            Produtos & Estoque Dual ({data.products.length})
+          </Button>
+          <Button
+            variant={subTab === 'prices' ? 'default' : 'outline'}
+            size="sm"
+            className="text-xs gap-1.5"
+            onClick={() => setSubTab('prices')}
+          >
+            <CreditCard size={14} />
+            Memória de Preços por Cliente
+          </Button>
+        </div>
+
+        {subTab === 'clients' && (
+          <Button
+            size="sm"
+            className="gap-1.5 text-xs bg-primary text-primary-foreground font-semibold"
+            onClick={() => {
+              setEditingClient({
+                corporateName: '',
+                tradeName: '',
+                cnpj: '',
+                stateRegistration: '',
+                ieIndicator: 'CONTRIBUINTE',
+                purchaseProfile: 'INDUSTRIALIZACAO',
+                street: '',
+                number: '',
+                neighborhood: '',
+                city: 'São Paulo',
+                state: 'SP',
+                ibgeCityCode: '3550308',
+                contactName: '',
+                phone: '',
+                defaultPaymentTerms: 'Boleto 28 dias',
+                averagePurchaseCycleDays: 20,
+                financialStatus: 'EM_DIA',
+              });
+              setClientModalOpen(true);
+            }}
+          >
+            <Plus size={14} />
+            + Novo Cliente
+          </Button>
+        )}
+      </div>
+
+      {/* SUB-ABA 1: CLIENTES */}
+      {subTab === 'clients' && (
+        <section className="orders-section">
+          <div className="orders-toolbar">
+            <div className="table-search flex-1 max-w-sm">
+              <Search size={16} />
+              <input
+                value={clientSearch}
+                onChange={e => setClientSearch(e.target.value)}
+                placeholder="Buscar cliente por nome, CNPJ ou bairro..."
+                aria-label="Buscar cliente"
+              />
+            </div>
+          </div>
+
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>Cliente / Razão Social</th>
+                  <th>CNPJ / IE</th>
+                  <th>Localização / Rota</th>
+                  <th>Contato / Telefone</th>
+                  <th>Condição de Pagamento</th>
+                  <th>Status de Crédito</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredClients.map(c => (
+                  <tr key={c.id}>
+                    <td>
+                      <strong>{c.name}</strong>
+                      <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
+                    </td>
+                    <td>
+                      <span className="font-mono text-xs">{c.cnpj || 'Sem CNPJ'}</span>
+                      <p className="text-[10px] text-muted-foreground">{c.ie ? `IE: ${c.ie}` : 'IE Pendente'}</p>
+                    </td>
+                    <td>
+                      <span className="text-xs">{c.neighborhood}, SP</span>
+                      <p className="text-[10px] text-muted-foreground">Ciclo: a cada {c.cycle} dias</p>
+                    </td>
+                    <td>
+                      <span className="text-xs">{c.buyer}</span>
+                      <p className="text-[10px] text-muted-foreground">{c.time || '10:00'}</p>
+                    </td>
+                    <td>
+                      <span className="status-badge neutral text-xs">Boleto 28 dias</span>
+                    </td>
+                    <td>
+                      {c.overdue ? (
+                        <span className="status-badge danger">
+                          <AlertTriangle size={12} /> Boleto Vencido
+                        </span>
+                      ) : (
+                        <span className="status-badge success">
+                          <CheckCheck size={12} /> Em dia
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7 text-xs gap-1"
+                        onClick={() => {
+                          setEditingClient({
+                            id: c.dbId ?? Number(c.id),
+                            corporateName: c.name,
+                            tradeName: c.name,
+                            cnpj: c.cnpj,
+                            stateRegistration: c.ie,
+                            ieIndicator: 'CONTRIBUINTE',
+                            purchaseProfile: 'INDUSTRIALIZACAO',
+                            neighborhood: c.neighborhood,
+                            city: 'São Paulo',
+                            state: 'SP',
+                            ibgeCityCode: c.ibge || '3550308',
+                            contactName: c.buyer,
+                            defaultPaymentTerms: 'Boleto 28 dias',
+                            averagePurchaseCycleDays: c.cycle,
+                            financialStatus: c.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
+                          });
+                          setClientModalOpen(true);
+                        }}
+                      >
+                        <Edit size={12} />
+                        Editar
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* SUB-ABA 2: PRODUTOS & ESTOQUE DUAL */}
+      {subTab === 'products' && (
+        <section className="orders-section">
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>SKU / Produto</th>
+                  <th>Preço Tabela Base (R$)</th>
+                  <th>Custo Landed (R$)</th>
+                  <th>Saldo Físico (DQ)</th>
+                  <th>Saldo Base (BQ)</th>
+                  <th>Margem Base</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.products.map(p => {
+                  const margin = p.price > 0 ? ((p.price - p.cost) / p.price) * 100 : 0;
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <div className="flex items-center gap-2.5">
+                          <span className={`sku-symbol sku-${p.id.toLowerCase()}`}>
+                            <Package size={18} />
+                          </span>
+                          <div>
+                            <strong>{p.name}</strong>
+                            <p className="text-[11px] text-muted-foreground">{p.skuCode} · NCM {p.ncm}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <strong className="numeric text-sm">{money(p.price)}</strong>
+                      </td>
+                      <td>
+                        <span className="numeric text-xs font-mono text-muted-foreground">{money(p.cost)}</span>
+                      </td>
+                      <td>
+                        <strong className="numeric text-sm text-foreground">{p.physical} sacas</strong>
+                        <p className="text-[10px] text-muted-foreground">Reservado: {p.reserved} un.</p>
+                      </td>
+                      <td>
+                        <strong className="numeric text-sm text-primary font-bold">
+                          {baseBalance(p)} sacas
+                        </strong>
+                        <p className="text-[10px] text-muted-foreground">Base oficial faturamento</p>
+                      </td>
+                      <td>
+                        <span className={`status-badge ${marginLevel(margin)}`}>
+                          {margin.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => {
+                            setEditingProduct({ ...p });
+                            setProductModalOpen(true);
+                          }}
+                        >
+                          <Edit size={12} />
+                          Ajustar Estoque / Preço
+                        </Button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* SUB-ABA 3: MEMÓRIA DE PREÇOS POR CLIENTE */}
+      {subTab === 'prices' && (
+        <section className="orders-section">
+          <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <label className="text-xs font-semibold text-foreground">
+                Selecione o Cliente:
+              </label>
+              <select
+                className="form-input text-xs font-semibold max-w-xs"
+                value={selectedPriceClient}
+                onChange={e => setSelectedPriceClient(e.target.value)}
+              >
+                {data.clients.map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.name} ({c.neighborhood})
+                  </option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Preços praticados pelo Sr. Sérgio no campo com histórico salvo por cliente.
+            </p>
+          </div>
+
+          <div className="table-scroll">
+            <table className="data-table">
+              <thead>
+                <tr>
+                  <th>SKU / Produto</th>
+                  <th>Preço Tabela Base</th>
+                  <th>Preço Acordado do Cliente</th>
+                  <th>Margem Acordada</th>
+                  <th>Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.products.map(p => {
+                  const clientObj = data.clients.find(c => c.id === selectedPriceClient);
+                  const pIdx = data.products.findIndex(pr => pr.id === p.id);
+                  const practicedPrice = clientObj?.prices[pIdx] ?? p.price;
+                  const isEditingThis = editingSkuPrice?.productId === (p.dbId ?? Number(p.id));
+                  const currentPrice = isEditingThis ? editingSkuPrice.price : practicedPrice;
+                  const margin = currentPrice > 0 ? ((currentPrice - p.cost) / currentPrice) * 100 : 0;
+
+                  return (
+                    <tr key={p.id}>
+                      <td>
+                        <strong>{p.name}</strong>
+                        <p className="text-[11px] text-muted-foreground">{p.skuCode}</p>
+                      </td>
+                      <td>
+                        <span className="numeric text-xs text-muted-foreground">{money(p.price)}</span>
+                      </td>
+                      <td>
+                        {isEditingThis ? (
+                          <input
+                            type="number"
+                            step="0.50"
+                            className="form-input numeric w-28 text-sm font-bold"
+                            value={editingSkuPrice.price}
+                            onChange={e =>
+                              setEditingSkuPrice({
+                                productId: p.dbId ?? Number(p.id),
+                                price: Number(e.target.value),
+                              })
+                            }
+                          />
+                        ) : (
+                          <strong className="numeric text-sm text-foreground">{money(practicedPrice)}</strong>
+                        )}
+                      </td>
+                      <td>
+                        <span className={`status-badge ${marginLevel(margin)}`}>
+                          {margin.toFixed(1)}%
+                        </span>
+                      </td>
+                      <td>
+                        {isEditingThis ? (
+                          <div className="flex items-center gap-2">
+                            <Button
+                              size="sm"
+                              className="h-7 text-xs bg-primary text-primary-foreground"
+                              onClick={() => handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price)}
+                            >
+                              Salvar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => setEditingSkuPrice(null)}
+                            >
+                              Cancelar
+                            </Button>
+                          </div>
+                        ) : (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() =>
+                              setEditingSkuPrice({
+                                productId: p.dbId ?? Number(p.id),
+                                price: practicedPrice,
+                              })
+                            }
+                          >
+                            <Edit size={12} />
+                            Ajustar Preço
+                          </Button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
+      {/* MODAL: CRIAR / EDITAR CLIENTE COM BRASILAPI */}
+      <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
+        <DialogContent className="max-w-xl">
+          <DialogTitle>
+            {editingClient?.id ? 'Editar Dados do Cliente' : 'Novo Cliente Total Trigo'}
+          </DialogTitle>
+          <DialogDescription>
+            Enriquecimento automático via BrasilAPI (CNPJ, Razão Social, IE e Endereço).
+          </DialogDescription>
+
+          <div className="space-y-3.5 my-2 text-xs">
+            {/* CNPJ com Busca BrasilAPI */}
+            <div className="flex gap-2 items-end">
+              <label className="flex-1 flex flex-col gap-1 font-semibold">
+                CNPJ (14 dígitos)
+                <input
+                  className="form-input font-mono"
+                  placeholder="00.000.000/0000-00"
+                  value={editingClient?.cnpj || ''}
+                  onChange={e =>
+                    setEditingClient((prev: any) => ({ ...prev, cnpj: formatCnpj(e.target.value) }))
+                  }
+                />
+              </label>
+              <Button
+                type="button"
+                variant="outline"
+                className="gap-1.5 h-9"
+                disabled={lookingUpCnpj}
+                onClick={handleLookupCnpj}
+              >
+                {lookingUpCnpj ? <Loader2 size={13} className="animate-spin" /> : <Search size={13} />}
+                Buscar na BrasilAPI
+              </Button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 font-semibold">
+                Razão Social
+                <input
+                  className="form-input"
+                  value={editingClient?.corporateName || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, corporateName: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Nome Fantasia
+                <input
+                  className="form-input"
+                  value={editingClient?.tradeName || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, tradeName: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex flex-col gap-1 font-semibold">
+                Inscrição Estadual (IE)
+                <input
+                  className="form-input"
+                  value={editingClient?.stateRegistration || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, stateRegistration: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Bairro / Rota
+                <input
+                  className="form-input"
+                  value={editingClient?.neighborhood || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, neighborhood: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Código IBGE Cidade
+                <input
+                  className="form-input font-mono"
+                  value={editingClient?.ibgeCityCode || '3550308'}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, ibgeCityCode: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex flex-col gap-1 font-semibold">
+                Contato / Comprador
+                <input
+                  className="form-input"
+                  value={editingClient?.contactName || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, contactName: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Condição Padrão
+                <select
+                  className="form-input"
+                  value={editingClient?.defaultPaymentTerms || 'Boleto 28 dias'}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, defaultPaymentTerms: e.target.value }))}
+                >
+                  <option value="Boleto 28 dias">Boleto 28 dias</option>
+                  <option value="Boleto 14/28 dias">Boleto 14/28 dias</option>
+                  <option value="Boleto 7/14/21/28 dias">Boleto 7/14/21/28 dias</option>
+                  <option value="Pix na Entrega">Pix na Entrega</option>
+                </select>
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Status de Crédito
+                <select
+                  className="form-input"
+                  value={editingClient?.financialStatus || 'EM_DIA'}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, financialStatus: e.target.value }))}
+                >
+                  <option value="EM_DIA">Em dia (Liberado)</option>
+                  <option value="BOLETO_VENCIDO">Boleto Vencido (Bloqueio)</option>
+                </select>
+              </label>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setClientModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button
+              disabled={savingClient || !editingClient?.corporateName}
+              onClick={handleSaveClient}
+            >
+              {savingClient ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              Salvar Cadastro
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: AJUSTE DE ESTOQUE DUAL E PREÇO DO PRODUTO */}
+      <Dialog open={productModalOpen} onOpenChange={setProductModalOpen}>
+        <DialogContent>
+          <DialogTitle>Ajustar Produto & Estoque Dual</DialogTitle>
+          <DialogDescription>
+            Altere preço de venda, custo landed e os saldos físico (DQ) e base (BQ).
+          </DialogDescription>
+
+          {editingProduct && (
+            <div className="space-y-3.5 my-2 text-xs">
+              <label className="flex flex-col gap-1 font-semibold">
+                Nome do Produto
+                <input
+                  className="form-input"
+                  value={editingProduct.name}
+                  onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })}
+                />
+              </label>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1 font-semibold">
+                  Preço Base de Tabela (R$)
+                  <input
+                    type="number"
+                    step="0.50"
+                    className="form-input numeric font-bold"
+                    value={editingProduct.price}
+                    onChange={e => setEditingProduct({ ...editingProduct, price: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 font-semibold">
+                  Custo Landed Médio (R$)
+                  <input
+                    type="number"
+                    step="0.10"
+                    className="form-input numeric font-bold"
+                    value={editingProduct.cost}
+                    onChange={e => setEditingProduct({ ...editingProduct, cost: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1 font-semibold">
+                  Saldo Físico no Galpão (DQ)
+                  <input
+                    type="number"
+                    className="form-input numeric font-bold text-foreground"
+                    value={editingProduct.physical}
+                    onChange={e => setEditingProduct({ ...editingProduct, physical: Number(e.target.value) })}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 font-semibold">
+                  Saldo Base Fiscal (BQ)
+                  <input
+                    type="number"
+                    className="form-input numeric font-bold text-primary"
+                    value={editingProduct.baseStock ?? editingProduct.physical}
+                    onChange={e => setEditingProduct({ ...editingProduct, baseStock: Number(e.target.value) })}
+                  />
+                </label>
+              </div>
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button variant="outline" onClick={() => setProductModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button disabled={savingProduct} onClick={handleSaveProduct}>
+              {savingProduct ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+              Salvar Alterações
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+// ============================================================================
+// 3. SEÇÃO: TRILHA DE AUDITORIA E LOGS DE OPERAÇÃO
+// ============================================================================
+
+function AuditSection({ notify, userProfile }: { notify: (message: string) => void; userProfile?: string | undefined }) {
+  const [logs, setLogs] = useState<AuditLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [search, setSearch] = useState('');
+
+  const loadLogs = async () => {
+    setLoading(true);
+    try {
+      const res = await fetchAuditLogsApi();
+      setLogs(res);
+    } catch {
+      notify('Não foi possível carregar a trilha de auditoria.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const getActionBadge = (actionType: string) => {
+    switch (actionType) {
+      case 'EMISSAO_NFE':
+        return <span className="status-badge success">NF-e Emitida</span>;
+      case 'REVISAO_PRE_NOTA':
+        return <span className="status-badge warning">Pré-Nota Revisada</span>;
+      case 'BAIXA_BOLETO':
+        return <span className="status-badge success">Baixa de Boleto</span>;
+      case 'CANCELAMENTO_PEDIDO':
+        return <span className="status-badge danger">Pedido Cancelado</span>;
+      case 'ENTRADA_LOTE_IMPORTACAO':
+        return <span className="status-badge neutral">Lote Nacionalizado</span>;
+      case 'AJUSTE_ESTOQUE_PRODUTO':
+        return <span className="status-badge warning">Ajuste de Estoque</span>;
+      default:
+        return <span className="status-badge neutral">{actionType}</span>;
+    }
+  };
+
+  const filteredLogs = logs.filter(l => {
+    const q = search.toLowerCase();
+    return (
+      l.actorName.toLowerCase().includes(q) ||
+      l.summary.toLowerCase().includes(q) ||
+      l.actionType.toLowerCase().includes(q)
+    );
+  });
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-muted/30 border border-border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0">
+            <ShieldCheck size={24} />
+          </div>
+          <div>
+            <h3 className="text-sm font-bold text-foreground">
+              Trilha de Auditoria & Conformidade Operacional
+            </h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Registro cronológico imutável de todas as ações de faturamento, emissão, revisão e baixa bancária para conferência do Sr. Sérgio e Gabriel.
+            </p>
+          </div>
+        </div>
+        <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-xs" onClick={loadLogs} disabled={loading}>
+          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+          Atualizar Logs
+        </Button>
+      </div>
+
+      <section className="orders-section">
+        <div className="orders-toolbar">
+          <div className="table-search flex-1 max-w-sm">
+            <Search size={16} />
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar por ator, ação ou resumo..."
+              aria-label="Buscar auditoria"
+            />
+          </div>
+          <span className="text-xs text-muted-foreground">
+            {filteredLogs.length} eventos registrados
+          </span>
+        </div>
+
+        <div className="table-scroll">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Data / Hora</th>
+                <th>Responsável / Papel</th>
+                <th>Tipo de Ação</th>
+                <th>Alvo / ID</th>
+                <th>Resumo da Operação</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredLogs.map(l => (
+                <tr key={l.id}>
+                  <td>
+                    <span className="numeric text-xs font-mono text-muted-foreground">
+                      {l.createdAt ? new Date(l.createdAt).toLocaleString('pt-BR') : 'Hoje'}
+                    </span>
+                  </td>
+                  <td>
+                    <strong>{l.actorName}</strong>
+                    <p className="text-[11px] text-muted-foreground">{l.actorRole}</p>
+                  </td>
+                  <td>{getActionBadge(l.actionType)}</td>
+                  <td>
+                    <span className="font-mono text-xs font-semibold">
+                      {l.targetEntity} #{l.targetId}
+                    </span>
+                  </td>
+                  <td>
+                    <p className="text-xs text-foreground font-medium">{l.summary}</p>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filteredLogs.length === 0 && (
+            <div className="empty-state">
+              <History size={24} />
+              <strong>Nenhum evento de auditoria encontrado</strong>
+              <p>Os eventos operacionais registrados no servidor aparecerão aqui.</p>
+            </div>
+          )}
+        </div>
+      </section>
+    </div>
+  );
 }

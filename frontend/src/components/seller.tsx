@@ -16,6 +16,7 @@ import {
   Loader2,
   MapPin,
   Plus,
+  RefreshCw,
   Search,
   Send,
   ShoppingBag,
@@ -23,6 +24,8 @@ import {
   Sparkles,
   Truck,
   Users,
+  Wifi,
+  WifiOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
@@ -34,6 +37,7 @@ import {
   available,
   financials,
   formatCnpj,
+  getOfflineOrdersQueue,
   lookupCnpjData,
   marginLevel,
   money,
@@ -43,6 +47,7 @@ import {
   productLabel,
   quickRegisterClientApi,
   scheduleVisitApi,
+  syncOfflineOrders,
   type AppData,
   type Client,
   type CnpjData,
@@ -55,6 +60,7 @@ export type SharedProps = {
   update: (next: AppData) => void;
   notify: (message: string) => void;
   submit: (order: Order) => boolean;
+  userProfile?: string | undefined;
 };
 
 const paymentTermsList = [
@@ -106,6 +112,39 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     total: number;
     itemsCount: number;
   } | null>(null);
+
+  // Fila Offline PWA do Sr. Sérgio
+  const [offlineQueue, setOfflineQueue] = useState<Order[]>(() => getOfflineOrdersQueue());
+  const [syncingOffline, setSyncingOffline] = useState(false);
+
+  useEffect(() => {
+    setOfflineQueue(getOfflineOrdersQueue());
+    const onOnline = () => {
+      handleSyncOfflineQueue();
+    };
+    window.addEventListener('online', onOnline);
+    return () => window.removeEventListener('online', onOnline);
+  }, []);
+
+  const handleSyncOfflineQueue = async () => {
+    setSyncingOffline(true);
+    try {
+      const res = await syncOfflineOrders(data);
+      update(res.nextData);
+      setOfflineQueue(getOfflineOrdersQueue());
+      if (res.syncedCount > 0) {
+        notify(`${res.syncedCount} pedido(s) sincronizado(s) com o servidor!`);
+      } else if (res.remainingCount > 0) {
+        notify(`${res.remainingCount} pedido(s) aguardando conexão estável.`);
+      } else {
+        notify('Fila offline já está atualizada.');
+      }
+    } catch {
+      notify('Falha ao sincronizar fila offline. Tentará novamente.');
+    } finally {
+      setSyncingOffline(false);
+    }
+  };
 
   useEffect(() => {
     if (!data.clients.some(c => c.id === clientId) && data.clients[0]) {
@@ -276,6 +315,31 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
         </header>
 
         <div className="seller-body">
+          {/* Banner PWA da Fila de Pedidos Offline */}
+          {offlineQueue.length > 0 && (
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-2.5 mb-3 flex items-center justify-between text-xs">
+              <div className="flex items-center gap-2">
+                <WifiOff size={16} className="text-amber-500 shrink-0" />
+                <div>
+                  <p className="font-semibold text-amber-700 dark:text-amber-400">
+                    {offlineQueue.length} {offlineQueue.length === 1 ? 'pedido gravado' : 'pedidos gravados'} offline
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">Salvo no dispositivo · aguardando envio</p>
+                </div>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                disabled={syncingOffline}
+                className="h-7 text-xs font-semibold gap-1 bg-background"
+                onClick={handleSyncOfflineQueue}
+              >
+                <RefreshCw size={12} className={syncingOffline ? 'animate-spin' : ''} />
+                {syncingOffline ? 'Enviando...' : 'Sincronizar'}
+              </Button>
+            </div>
+          )}
+
           {/* TELA 1: AGENDA & RADAR */}
           {/* TELA 1: AGENDA & RADAR */}
           {view === 'agenda' && (
@@ -771,6 +835,9 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       total: f.total,
                       itemsCount: totalItems,
                     });
+                    setTimeout(() => {
+                      setOfflineQueue(getOfflineOrdersQueue());
+                    }, 500);
                   }
                 }}
               >

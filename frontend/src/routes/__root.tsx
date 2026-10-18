@@ -84,14 +84,15 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { property: "og:title", content: "4S ERP — Total Trigo" },
       { property: "og:description", content: "Sistema 4S: Vendas em Campo, Mesa de Conferência NF-e e Gestão de Importação." },
       { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary_large_image" },
+      { name: "theme-color", content: "#1b4332" },
     ],
     links: [
       {
         rel: "stylesheet",
         href: appCss,
       },
-      { rel: "icon", href: "/logo-4s.jpg", type: "image/jpeg" },
+      { rel: "manifest", href: "/manifest.json" },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
       { rel: "apple-touch-icon", href: "/logo-4s.jpg" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },

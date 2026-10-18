@@ -423,9 +423,41 @@ export function toDbProductId(uiId: string, products?: Product[]): number {
   return Number(uiId) || 1;
 }
 
+export type UserRoleProfile =
+  | 'Sérgio Soares · Sócio & Rua'
+  | 'Gabriel Furtado · Backoffice & Fiscal'
+  | 'Expedição · Romaneio Cego';
+
+export const PROFILES_LIST: UserRoleProfile[] = [
+  'Sérgio Soares · Sócio & Rua',
+  'Gabriel Furtado · Backoffice & Fiscal',
+  'Expedição · Romaneio Cego',
+];
+
+export function getActiveProfile(): UserRoleProfile {
+  if (typeof window !== 'undefined') {
+    const saved = localStorage.getItem('totaltrigo_active_profile');
+    if (saved && (PROFILES_LIST as string[]).includes(saved)) {
+      return saved as UserRoleProfile;
+    }
+  }
+  return 'Gabriel Furtado · Backoffice & Fiscal';
+}
+
+export function setActiveProfile(profile: UserRoleProfile): void {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('totaltrigo_active_profile', profile);
+  }
+}
+
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+  const activeProfile = getActiveProfile();
+  const [actorName, actorRole] = activeProfile.split(' · ').map(s => s.trim());
+
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
+    'X-Actor-Name': actorName || 'Gabriel Furtado',
+    'X-Actor-Role': actorRole || 'Backoffice & Fiscal',
     ...((init?.headers as Record<string, string>) ?? {}),
   };
   const urls =
@@ -979,4 +1011,281 @@ export async function quickRegisterClientApi(
       client: fallbackClient,
     };
   }
+}
+
+// ============================================================================
+// Fila de Pedidos Offline (App de Rua do Sr. Sérgio)
+// ============================================================================
+
+const OFFLINE_QUEUE_KEY = 'totaltrigo_offline_queue';
+
+export function getOfflineOrdersQueue(): Order[] {
+  if (typeof window === 'undefined') return [];
+  try {
+    const raw = localStorage.getItem(OFFLINE_QUEUE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveOrderToOfflineQueue(order: Order): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const queue = getOfflineOrdersQueue();
+    const filtered = queue.filter(o => o.id !== order.id);
+    filtered.push(order);
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(filtered));
+  } catch {}
+}
+
+export function removeOrderFromOfflineQueue(orderId: string): void {
+  if (typeof window === 'undefined') return;
+  try {
+    const queue = getOfflineOrdersQueue().filter(o => o.id !== orderId);
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(queue));
+  } catch {}
+}
+
+export function clearOfflineOrdersQueue(): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.removeItem(OFFLINE_QUEUE_KEY);
+  } catch {}
+}
+
+export async function syncOfflineOrders(
+  data: AppData
+): Promise<{ syncedCount: number; nextData: AppData; remainingCount: number }> {
+  const queue = getOfflineOrdersQueue();
+  if (queue.length === 0) {
+    return { syncedCount: 0, nextData: data, remainingCount: 0 };
+  }
+
+  let count = 0;
+  let currentData = data;
+  const remaining: Order[] = [];
+
+  for (const order of queue) {
+    try {
+      currentData = await createOrderApi(currentData, order);
+      count++;
+    } catch {
+      remaining.push(order);
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(OFFLINE_QUEUE_KEY, JSON.stringify(remaining));
+  }
+
+  return { syncedCount: count, nextData: currentData, remainingCount: remaining.length };
+}
+
+// ============================================================================
+// Contas a Receber e Controle de Boletos sobre BQ (Sr. Sérgio)
+// ============================================================================
+
+export type ReceivableTitle = {
+  id: number;
+  orderId?: number | undefined;
+  clientId: number;
+  clientName: string;
+  documentNumber: string;
+  installmentNumber: number;
+  totalInstallments: number;
+  amountBq: number;
+  dueDate: string;
+  status: 'ABERTO' | 'PAGO' | 'VENCIDO' | 'CANCELADO';
+  paidAt?: string | undefined;
+  notes?: string | undefined;
+  createdAt: string;
+};
+
+export async function fetchReceivablesApi(status = 'ALL'): Promise<ReceivableTitle[]> {
+  try {
+    return await apiFetch<ReceivableTitle[]>(`/backoffice/management/receivables?status=${status}`);
+  } catch {
+    return [
+      {
+        id: 1,
+        clientId: 3,
+        clientName: 'NOVA BELFORT PAES E DOCES LTDA EPP',
+        documentNumber: 'BOL-NF012890-01',
+        installmentNumber: 1,
+        totalInstallments: 1,
+        amountBq: 12300,
+        dueDate: '2026-10-11',
+        status: 'VENCIDO',
+        notes: 'Boleto 28 dias ref. NF-e #12890 (Base BQ: R$ 12.300,00). Vencido há 7 dias.',
+        createdAt: '2026-09-13T10:00:00',
+      },
+      {
+        id: 2,
+        orderId: 1,
+        clientId: 1,
+        clientName: 'PANIFICADORA JARDIM ELIANA LTDA',
+        documentNumber: 'BOL-NF012926-01',
+        installmentNumber: 1,
+        totalInstallments: 1,
+        amountBq: 3080,
+        dueDate: '2026-10-24',
+        status: 'ABERTO',
+        notes: 'Boleto 28 dias ref. NF-e #12926. Parcela única calculada estritamente sobre BQ.',
+        createdAt: '2026-09-26T10:00:00',
+      },
+      {
+        id: 3,
+        orderId: 2,
+        clientId: 2,
+        clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
+        documentNumber: 'BOL-NF012928-01',
+        installmentNumber: 1,
+        totalInstallments: 2,
+        amountBq: 2050,
+        dueDate: '2026-10-21',
+        status: 'ABERTO',
+        notes: 'Boleto 14/28 dias (1/2) ref. NF-e #12928. Parcela 1 calculada sobre BQ.',
+        createdAt: '2026-10-07T10:00:00',
+      },
+      {
+        id: 4,
+        orderId: 2,
+        clientId: 2,
+        clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
+        documentNumber: 'BOL-NF012928-02',
+        installmentNumber: 2,
+        totalInstallments: 2,
+        amountBq: 2050,
+        dueDate: '2026-11-04',
+        status: 'ABERTO',
+        notes: 'Boleto 14/28 dias (2/2) ref. NF-e #12928. Parcela 2 calculada sobre BQ.',
+        createdAt: '2026-10-07T10:00:00',
+      },
+    ];
+  }
+}
+
+export async function payReceivableApi(titleId: number): Promise<ReceivableTitle> {
+  return await apiFetch<ReceivableTitle>(`/backoffice/management/receivables/${titleId}/pay`, {
+    method: 'POST',
+  });
+}
+
+// ============================================================================
+// Trilha de Auditoria e Logs de Operação
+// ============================================================================
+
+export type AuditLog = {
+  id: number;
+  actorName: string;
+  actorRole: string;
+  actionType: string;
+  targetEntity: string;
+  targetId?: string | undefined;
+  summary: string;
+  createdAt: string;
+};
+
+export async function fetchAuditLogsApi(): Promise<AuditLog[]> {
+  try {
+    return await apiFetch<AuditLog[]>('/backoffice/management/audit-logs');
+  } catch {
+    return [
+      {
+        id: 1,
+        actorName: 'Gabriel Furtado',
+        actorRole: 'Backoffice & Fiscal',
+        actionType: 'ENTRADA_LOTE_IMPORTACAO',
+        targetEntity: 'ImportBatch',
+        targetId: '1',
+        summary: 'Nacionalização do Lote IMP-2026-09-ARG (3.000 sacas com Custo Médio Ponderado)',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 2,
+        actorName: 'Gabriel Furtado',
+        actorRole: 'Backoffice & Fiscal',
+        actionType: 'EMISSAO_NFE',
+        targetEntity: 'Order',
+        targetId: '1',
+        summary: 'NF-e #12926 emitida para Jardim Eliana (Base BQ: R$ 3.080,00)',
+        createdAt: new Date().toISOString(),
+      },
+      {
+        id: 3,
+        actorName: 'Sérgio Soares',
+        actorRole: 'Sócio & Rua',
+        actionType: 'PEDIDO_NOVO',
+        targetEntity: 'Order',
+        targetId: '3',
+        summary: 'Pedido #3 lançado em campo para Jardim Mirian (55 sacas DQ / 55 sacas BQ)',
+        createdAt: new Date().toISOString(),
+      },
+    ];
+  }
+}
+
+// ============================================================================
+// Cadastros Completos e Ajustes de Estoque
+// ============================================================================
+
+export async function fetchManagementClientsApi(): Promise<any[]> {
+  return await apiFetch<any[]>('/backoffice/management/clients');
+}
+
+export async function saveManagementClientApi(client: any): Promise<any> {
+  if (client.id && typeof client.id === 'number') {
+    return await apiFetch<any>(`/backoffice/management/clients/${client.id}`, {
+      method: 'PUT',
+      body: JSON.stringify(client),
+    });
+  }
+  return await apiFetch<any>('/backoffice/management/clients', {
+    method: 'POST',
+    body: JSON.stringify(client),
+  });
+}
+
+export async function updateProductStockApi(
+  productId: number,
+  payload: {
+    name?: string;
+    shortName?: string;
+    baseListPrice?: number;
+    currentLandedCost?: number;
+    physicalStock?: number;
+    baseStock?: number;
+    ncm?: string;
+    cest?: string;
+    cBenef?: string;
+  }
+): Promise<any> {
+  return await apiFetch<any>(`/backoffice/management/products/${productId}`, {
+    method: 'PUT',
+    body: JSON.stringify(payload),
+  });
+}
+
+export async function fetchClientPricesApi(clientId: number): Promise<any[]> {
+  return await apiFetch<any[]>(`/backoffice/management/client-prices?clientId=${clientId}`);
+}
+
+export async function updateClientPriceApi(
+  clientId: number,
+  productId: number,
+  agreedPrice: number
+): Promise<any> {
+  return await apiFetch<any>('/backoffice/management/client-prices', {
+    method: 'PUT',
+    body: JSON.stringify({ clientId, productId, agreedPrice }),
+  });
+}
+
+// ============================================================================
+// Visão Executiva Real
+// ============================================================================
+
+export async function fetchExecutiveSummaryApi(): Promise<any> {
+  return await apiFetch<any>('/backoffice/management/executive-summary');
 }

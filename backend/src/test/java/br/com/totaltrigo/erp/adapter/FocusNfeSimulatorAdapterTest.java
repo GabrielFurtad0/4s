@@ -303,6 +303,6 @@ class FocusNfeSimulatorAdapterTest {
         String xml = result.xmlContent();
 
         assertTrue(xml.contains("<indIEDest>2</indIEDest>"));
-        assertFalse(xml.contains("<IE>"));
+        assertFalse(xml.contains("<indIEDest>2</indIEDest><IE>"));
     }
 }

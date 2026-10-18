@@ -316,4 +316,101 @@ public class ApiDtos {
             String notes,
             @NotEmpty List<ImportBatchItemRequest> items
     ) {}
+
+    public record ReceivableTitleDto(
+            Long id,
+            Long orderId,
+            Long clientId,
+            String clientName,
+            String documentNumber,
+            Integer installmentNumber,
+            Integer totalInstallments,
+            BigDecimal amountBq,
+            LocalDate dueDate,
+            String status,
+            LocalDateTime paidAt,
+            String notes,
+            LocalDateTime createdAt
+    ) {}
+
+    public record AuditLogDto(
+            Long id,
+            String actorName,
+            String actorRole,
+            String actionType,
+            String targetEntity,
+            String targetId,
+            String summary,
+            LocalDateTime createdAt
+    ) {}
+
+    public record SkuTurnoverDto(
+            Long productId,
+            String skuCode,
+            String name,
+            Integer physicalStock,
+            Integer baseStock,
+            int sacksSoldDq,
+            BigDecimal currentLandedCost,
+            BigDecimal baseListPrice
+    ) {}
+
+    public record ExecutiveSummaryDto(
+            BigDecimal grossRevenueReal,
+            BigDecimal netProfitReal,
+            BigDecimal averageMarginReal,
+            int sacksDispatchedDq,
+            int sacksBaseBq,
+            BigDecimal totalReceivableBq,
+            BigDecimal totalPaidBq,
+            BigDecimal totalOverdueBq,
+            BigDecimal stockValuationCost,
+            BigDecimal stockValuationSale,
+            List<SkuTurnoverDto> turnoverBySku,
+            List<Map<String, Object>> monthlyEvolution
+    ) {}
+
+    public record ClientManagementDto(
+            Long id,
+            String corporateName,
+            String tradeName,
+            String cnpj,
+            String stateRegistration,
+            IeIndicator ieIndicator,
+            PurchaseProfile purchaseProfile,
+            String zipCode,
+            String street,
+            String number,
+            String complement,
+            String neighborhood,
+            String city,
+            String state,
+            String ibgeCityCode,
+            String contactName,
+            String phone,
+            String defaultPaymentTerms,
+            Integer averagePurchaseCycleDays,
+            FinancialStatus financialStatus,
+            boolean isRegistrationComplete
+    ) {}
+
+    public record ProductUpdateDto(
+            String name,
+            String shortName,
+            BigDecimal baseListPrice,
+            BigDecimal currentLandedCost,
+            Integer physicalStock,
+            Integer baseStock,
+            String ncm,
+            String cest,
+            String cBenef,
+            BigDecimal estimatedTaxRate
+    ) {}
+
+    public record UpdateClientSkuPriceRequest(
+            @NotNull Long clientId,
+            @NotNull Long productId,
+            @NotNull BigDecimal agreedPrice
+    ) {}
 }
+

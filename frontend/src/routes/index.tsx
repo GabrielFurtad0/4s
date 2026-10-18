@@ -1,13 +1,26 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, Bell, ChevronDown, ChevronsUpDown, CircleHelp, Command, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, Smartphone, Sparkles, Truck, X } from 'lucide-react';
+import { ArrowDownToLine, Bell, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Backoffice } from '@/components/backoffice';
 import { Management } from '@/components/management';
 import { Seller } from '@/components/seller';
 import { FourSIcon, FourSLogo } from '@/components/logo';
-import { createOrderApi, demoData, fetchWorkspaceData, financials, reserveOrder, type AppData, type Order } from '@/lib/business';
+import {
+  createOrderApi,
+  demoData,
+  fetchWorkspaceData,
+  financials,
+  getActiveProfile,
+  PROFILES_LIST,
+  reserveOrder,
+  saveOrderToOfflineQueue,
+  setActiveProfile,
+  type AppData,
+  type Order,
+  type UserRoleProfile,
+} from '@/lib/business';
 import { CommandPalette } from '@/components/command-palette';
 
 export const Route = createFileRoute('/')({
@@ -26,13 +39,20 @@ type FontScale = 'normal' | 'large' | 'xlarge';
 
 const modules = [
   { id: 'orders', label: 'Mesa de conferência', icon: FileCheck2 },
+  { id: 'receivables', label: 'Boletos sobre BQ', icon: CreditCard },
+  { id: 'registrations', label: 'Cadastros & Estoque', icon: Users },
+  { id: 'audit', label: 'Trilha de auditoria', icon: ShieldCheck },
   { id: 'import', label: 'Importação', icon: Globe2 },
   { id: 'executive', label: 'Visão executiva', icon: LayoutDashboard },
 ];
 
 function Index() {
   const [data, setData] = useState<AppData>(demoData);
-  const [mode, setMode] = useState<'desktop' | 'mobile'>('desktop');
+  const [activeProfile, setActiveProfileState] = useState<UserRoleProfile>(getActiveProfile);
+  const [mode, setMode] = useState<'desktop' | 'mobile'>(() => {
+    const prof = getActiveProfile();
+    return prof.includes('Sérgio') ? 'mobile' : 'desktop';
+  });
   const [module, setModule] = useState('orders');
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -53,6 +73,20 @@ function Index() {
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notify = (message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 4500); };
 
+  const handleProfileChange = (newProfile: UserRoleProfile) => {
+    setActiveProfileState(newProfile);
+    setActiveProfile(newProfile);
+    if (newProfile === 'Expedição · Romaneio Cego') {
+      setMode('desktop');
+      setModule('orders');
+      notify('Perfil: Expedição (Romaneio Cego · Custos e margens ocultos)');
+    } else if (newProfile === 'Sérgio Soares · Sócio & Rua') {
+      notify('Perfil: Sr. Sérgio (Acesso ao App de Rua e Backoffice no notebook)');
+    } else {
+      notify('Perfil: Gabriel Furtado (Backoffice, Fiscal & Cadastros)');
+    }
+  };
+
   const updateFontScale = (scale: FontScale) => {
     setFontScale(scale);
     if (typeof window !== 'undefined') {
@@ -63,6 +97,12 @@ function Index() {
       }
     }
   };
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -89,7 +129,8 @@ function Index() {
           setData(remote);
         })
         .catch(e => {
-          notify(e instanceof Error ? e.message : 'Salvo localmente (modo offline).');
+          saveOrderToOfflineQueue(o);
+          notify('Gravado na fila offline do dispositivo. Sincronizará assim que houver conexão.');
         });
       return true;
     } catch (e) {
@@ -135,6 +176,19 @@ function Index() {
           </Button>
         </div>
         <div className="environment-right">
+          <div className="flex items-center gap-1.5 bg-background/80 border border-border/70 rounded-md px-2 py-1 text-xs">
+            <span className="text-muted-foreground text-[11px] font-medium hidden sm:inline">Perfil:</span>
+            <select
+              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
+              value={activeProfile}
+              aria-label="Perfil operacional ativo"
+              onChange={e => handleProfileChange(e.target.value as UserRoleProfile)}
+            >
+              <option value="Gabriel Furtado · Backoffice & Fiscal">Gabriel Furtado (Backoffice)</option>
+              <option value="Sérgio Soares · Sócio & Rua">Sérgio Soares (Sócio & Rua)</option>
+              <option value="Expedição · Romaneio Cego">Expedição (Romaneio Cego)</option>
+            </select>
+          </div>
           <div className="font-scale-control" role="group" aria-label="Tamanho da letra (Conforto visual)">
             <Button
               variant="ghost"
@@ -182,7 +236,7 @@ function Index() {
                 <>
                   <div>
                     <strong>Total Trigo 4S</strong>
-                    <p>Workspace de Gabriel</p>
+                    <p>{activeProfile.split(' · ')[0]}</p>
                   </div>
                   <ChevronsUpDown size={14} />
                 </>
@@ -234,11 +288,13 @@ function Index() {
               </Button>
               <div className="sidebar-user">
                 <Button variant="ghost" className="profile-button" onClick={() => setInfo('profile')}>
-                  <span className="avatar">GF</span>
+                  <span className="avatar">
+                    {activeProfile.includes('Sérgio') ? 'SS' : activeProfile.includes('Expedição') ? 'EX' : 'GF'}
+                  </span>
                   {!collapsed && (
                     <div>
-                      <strong>Gabriel Furtado</strong>
-                      <p>Administrador</p>
+                      <strong>{activeProfile.split(' · ')[0]}</strong>
+                      <p>{activeProfile.split(' · ')[1] || 'Operador'}</p>
                     </div>
                   )}
                 </Button>
@@ -317,15 +373,26 @@ function Index() {
                 <Button
                   variant="ghost"
                   className="avatar-button"
-                  aria-label="Perfil de Gabriel"
+                  aria-label="Perfil de usuário"
                   onClick={() => setInfo('profile')}
                 >
-                  <span className="avatar">GF</span>
+                  <span className="avatar">
+                    {activeProfile.includes('Sérgio') ? 'SS' : activeProfile.includes('Expedição') ? 'EX' : 'GF'}
+                  </span>
                 </Button>
               </div>
             </header>
             <main className="main-content">
-              {module === 'orders' ? <Backoffice {...shared} newOrder={() => setMode('mobile')} /> : <Management {...shared} module={module} />}
+              {['orders', 'receivables', 'registrations', 'audit'].includes(module) ? (
+                <Backoffice
+                  {...shared}
+                  activeModule={module}
+                  userProfile={activeProfile}
+                  newOrder={() => setMode('mobile')}
+                />
+              ) : (
+                <Management {...shared} module={module} userProfile={activeProfile} />
+              )}
             </main>
             <footer className="app-footer">
               <span><span className="online-dot" />Todos os sistemas operacionais</span>
@@ -335,7 +402,7 @@ function Index() {
           </div>
         </div>
       ) : (
-        <Seller {...shared} />
+        <Seller {...shared} userProfile={activeProfile} />
       )}
 
       {toast && (
