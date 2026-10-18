@@ -23,6 +23,7 @@ __pycache__/
 .venv/
 env/
 venv/
+automacao-planilha/backups/*.xlsx
 
 # IDE & System
 .idea/
