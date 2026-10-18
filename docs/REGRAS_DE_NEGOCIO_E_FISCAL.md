@@ -49,37 +49,43 @@ Toda a cadeia de suprimentos, faturamento eletrônico (NF-e 4.00) e planilha de 
 
 ---
 
-## 🧮 Custo Landed Cost de Importação
+## 🧮 Custo Landed Cost de Importação e Custo Médio Ponderado (CMP)
 
-Os trigos da Total Trigo são importados principalmente do Mercosul (Argentina e Uruguai). O custo internalizado de cada saca no galpão é calculado pela seguinte composição:
+Os trigos da Total Trigo são importados principalmente do Mercosul (Argentina e Uruguai). O custo internalizado de cada lote de importação no galpão é calculado pela seguinte composição:
 
 $$\text{Total Landed (R\$)} = (\text{FOB USD} \times \text{PTAX}) + \text{Frete Internacional} + \text{Impostos Importação} + \text{Despesas Aduaneiras}$$
 
-### Rateio por SKU e Saco de 25 kg
+### 1. Rateio por SKU e Saco de 25 kg do Novo Lote
 $$\text{Custo Unitário Landed (Saco)} = \frac{\text{Custo Landed Rateado do SKU (R\$)}}{\text{Quantidade de Sacas Importadas}}$$
 
-Esse valor alimenta diretamente a coluna `current_landed_cost` na tabela `products`, servindo de piso para a calculadora de margem do vendedor na rua.
+### 2. Regra de Entrada de Lote: Custo Médio Ponderado e Equivalência BQ = DQ
+* **Equivalência na Entrada**: No momento do recebimento físico e fiscal da importação no armazém, **`BQ = DQ`** (`baseQuantity` = `deliveredQuantity`). Todas as sacas desembarcadas entram integralmente no estoque físico e contábil.
+* **Cálculo do Custo Médio Ponderado (CMP)**: O sistema recalcula atomicamente o custo unitário do produto (`current_landed_cost`) ponderando o saldo remanescente em estoque com a nova remessa:
+  $$\text{CMP} = \frac{(\text{Estoque Físico Anterior} \times \text{Custo Unitário Anterior}) + (\text{Quantidade Nova} \times \text{Custo Unitário Landed Novo})}{\text{Estoque Físico Anterior} + \text{Quantidade Nova}}$$
+
+Esse valor atualizado alimenta a coluna `current_landed_cost` na tabela `products`, servindo de piso para a calculadora de margem do vendedor na rua.
 
 ---
 
 ## 📈 Formação de Preço e Metodologia de Margem Líquida
 
-Para cada pedido gerado pelo vendedor de campo, o sistema calcula a rentabilidade líquida em tempo real:
+Para cada pedido gerado pelo vendedor de campo, o sistema calcula a rentabilidade líquida em tempo real, considerando a distinção operacional validada pelo Sr. Sérgio entre **`DQ`** (`deliveredQuantity` — sacas físicas entregues) e **`BQ`** (`baseQuantity` — sacas base faturadas):
 
 ### 1. Composição de Custos por Pedido
-* **Receita Bruta**: $\sum (\text{Quantidade} \times \text{Preço Unitário Negociado})$
-* **CMV (Custo da Mercadoria Vendida)**: $\sum (\text{Quantidade} \times \text{currentLandedCost})$
-* **Custo de Frete de Entrega**: Fixo estimado em `R$ 45,00` por entrega urbana na Zona Sul de SP.
+* **Receita Bruta**: $\sum (\text{BQ} \times \text{Preço Unitário Negociado})$
+* **CMV (Custo da Mercadoria Vendida)**: $\sum (\text{DQ} \times \text{currentLandedCost})$ *(baixa no estoque real entregue)*
+* **Custo de Frete de Entrega**: **`R$ 4,00 por saca entregue (DQ)`**
+  $$\text{Custo de Frete} = \text{DQ Total} \times \text{R\$} 4,00$$
 * **Carga Tributária Efetiva Estimada**: `8,00%` da Receita Bruta (ICMS efetivo 7% + PIS/COFINS proporcional).
 
 ### 2. Lucro Líquido Real e Margem Líquida
-$$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete} - \text{Impostos}$$
+$$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete (DQ} \times 4,00) - \text{Impostos}$$
 $$\text{Margem Líquida (\%)} = \left(\frac{\text{Lucro Líquido}}{\text{Receita Bruta}}\right) \times 100$$
 
-### 3. Semáforo de Margem no App do Vendedor
-* 🟢 **Margem Saudável (Margem ≥ 20%)**: Venda aprovada automaticamente sem restrições.
-* 🟡 **Margem Atenção (12% ≤ Margem < 20%)**: Venda permitida, mas destaca alerta de concessão de desconto.
-* 🔴 **Margem Crítica (Margem < 12%)**: Alerta vermelho; exige confirmação expressa do sócio para evitar prejuízo operacional.
+### 3. Semáforo Oficial de Margem Líquida (Validado pelo Sr. Sérgio)
+* 🟢 **Verde (Excelente — Margem ≥ 20%)**: Rentabilidade excelente. Venda aprovada automaticamente sem restrições comerciais.
+* 🟡 **Amarelo (Atenção / Negociação — 7% ≤ Margem < 20%)**: Margem intermediária aceitável para clientes estratégicos ou grandes volumes; destaca alerta visual de negociação.
+* 🔴 **Vermelho (Crítica — Margem < 7%)**: Rentabilidade perigosa abaixo do piso operacional; exige justificativa e confirmação expressa do sócio para evitar prejuízo.
 
 ---
 
@@ -95,3 +101,10 @@ A SEFAZ rejeita notas fiscais que contenham divergências no destinatário. A pl
    * Exigência rigorosa de 7 dígitos numéricos (ex: `3550308` para São Paulo, `3547809` para Santo André). O preenchimento é automatizado via **BrasilAPI**.
 3. **Chave de Acesso da NF-e (44 Dígitos)**:
    * Estruturada rigorosamente com o código da UF (`35`), data de emissão, CNPJ emitente (`09265201000195`), modelo (`55`), série (`001`), número sequencial e dígito verificador módulo 11.
+
+---
+
+## 📚 Estudos Técnicos Complementares
+* 📑 [**Estudo Técnico NF-e SEFAZ A1**](ESTUDO_TECNICO_NFE_SEFAZ_A1.md): Aposentadoria do Emissor Sebrae, emissão direta gratuita no Spring Boot via `java-nfe` e Certificado A1.
+* 🏦 [**Estudo Técnico API Sicredi**](ESTUDO_TECNICO_API_SICREDI.md): Emissão de boletos híbridos (Código de Barras + Pix) calculados estritamente sobre a `BQ`.
+

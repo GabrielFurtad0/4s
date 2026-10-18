@@ -46,12 +46,12 @@ A solução digitaliza e sincroniza de ponta a ponta a operação comercial e fi
 - **Fechamento de Pedido em 3 Toques**: Foco em extrema velocidade, ergonomia e usabilidade para negociações em campo.
 - **Memória de Preço por Cliente**: Exibição imediata da última condição comercial praticada para preservar margens e histórico.
 - **Pré-Cadastro com Autocompletar de CNPJ**: Digitação dos 14 dígitos com preenchimento automático de Razão Social, Nome Fantasia, Bairro e Município.
-- **Cálculo Visual de Margem Operacional**: Sinalização dinâmica por cores conforme os limiares de rentabilidade:
-  - 🟢 **Verde (Margem Excelente)**: $\ge 12\%$
-  - 🟡 **Amarelo (Margem de Alerta)**: $8\%$ a $11.99\%$
-  - 🔴 **Vermelho (Margem Crítica)**: $< 8\%$
-- **Condições Flexíveis de Pagamento**: Parcelamento em múltiplos boletos faturados periodicamente (ex.: 7, 14, 21, 28 dias).
-- **Esclarecimento Logístico (FOB vs. CIF)**: Indicadores com explicações contextuais para modalidades de entrega (*Retirada no Galpão* vs. *Entrega Própria da Distribuidora*).
+- **Cálculo Visual de Margem Operacional**: Sinalização dinâmica por cores conforme os limiares de rentabilidade oficiais validados:
+  - 🟢 **Verde (Excelente)**: $\ge 20\%$
+  - 🟡 **Amarelo (Atenção / Negociação)**: $7\%$ a $19.99\%$
+  - 🔴 **Vermelho (Crítica)**: $< 7\%$
+- **Condições Flexíveis de Pagamento & Sicredi**: Parcelamento em múltiplos boletos faturados periodicamente (ex.: 7, 14, 21, 28 dias), calculados estritamente sobre a Quantidade Base (**`BQ`**).
+- **Logística 100% Entregue (CIF Próprio)**: Todas as vendas de rua são entregues diretamente no cliente com custo de frete operacional rateado em **`R$ 4,00 por saca entregue (DQ)`** (o termo FOB aplica-se exclusivamente à compra internacional na Calculadora de Importação).
 
 ### 🖥️ 2. Backoffice & Mesa de Pré-Nota (*Fiscal & Operações*)
 - **Fila de Pedidos `AGUARDANDO_REVISAO`**: Triagem e auditoria de pedidos recebidos da rua antes da autorização fiscal.
@@ -166,6 +166,8 @@ Guias técnicos e operacionais disponíveis na pasta [`docs/`](docs/) com versõ
 | Documento | Versão Markdown | Versão Web HTML (Interativa) |
 | :--- | :---: | :---: |
 | 📚 **Central de Documentação (Portal Hub)** | [`docs/README.md`](docs/README.md) | 🌐 [**index.html**](docs/index.html) |
+| 📑 **Estudo Técnico: Emissão NF-e SEFAZ A1** | [`docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md`](docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md) | 🌐 *Markdown Técnico* |
+| 🏦 **Estudo Técnico: Cobrança API Sicredi (BQ)** | [`docs/ESTUDO_TECNICO_API_SICREDI.md`](docs/ESTUDO_TECNICO_API_SICREDI.md) | 🌐 *Markdown Técnico* |
 | 🏗️ **Arquitetura do Sistema & Diagramas** | [`docs/ARQUITETURA_DO_SISTEMA.md`](docs/ARQUITETURA_DO_SISTEMA.md) | 🌐 [**ARQUITETURA_DO_SISTEMA.html**](docs/ARQUITETURA_DO_SISTEMA.html) |
 | 📱 **Manual Operacional do ERP & Vendas** | [`docs/MANUAL_OPERACIONAL_ERP.md`](docs/MANUAL_OPERACIONAL_ERP.md) | 🌐 [**MANUAL_OPERACIONAL_ERP.html**](docs/MANUAL_OPERACIONAL_ERP.html) |
 | 📊 **Manual da Automação da Planilha** | [`docs/MANUAL_DE_USO_PLANILHA.md`](docs/MANUAL_DE_USO_PLANILHA.md) | 🌐 [**MANUAL_DE_USO_PLANILHA.html**](docs/MANUAL_DE_USO_PLANILHA.html) |
