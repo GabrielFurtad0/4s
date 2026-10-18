@@ -1,5 +1,6 @@
 package br.com.totaltrigo.erp.adapter;
 
+import br.com.totaltrigo.erp.domain.enums.IeIndicator;
 import br.com.totaltrigo.erp.domain.model.Client;
 import br.com.totaltrigo.erp.domain.model.Order;
 import br.com.totaltrigo.erp.domain.model.OrderItem;
@@ -80,13 +81,42 @@ public class FocusNfeSimulatorAdapter implements NfeGatewayPort {
         return (mod == 0 || mod == 1) ? 0 : (11 - mod);
     }
 
-    private String buildTotalTrigoNfeXml(Order order, String nNF, String cNF, String cDV, String chNFe, String nProt) {
+    public String buildTotalTrigoNfeXml(Order order, String nNF, String cNF, String cDV, String chNFe, String nProt) {
         Client c = order.getClient();
         String dhEmi = OffsetDateTime.now().format(DateTimeFormatter.ISO_OFFSET_DATE_TIME);
         String cleanDoc = c.getCnpj() != null ? c.getCnpj().replaceAll("\\D", "") : "";
         String docTag = cleanDoc.length() == 11
                 ? "<CPF>" + cleanDoc + "</CPF>"
                 : "<CNPJ>" + cleanDoc + "</CNPJ>";
+
+        boolean isInternal = c.getState() == null || "SP".equalsIgnoreCase(c.getState().trim());
+        String idDest = isInternal ? "1" : "2";
+
+        // Destinatário IE e indIEDest:
+        // 1 se tiver IE numérica válida e não for ISENTO, 2 se ISENTO, 9 se não contribuinte/CPF
+        String rawIe = c.getStateRegistration() != null ? c.getStateRegistration().trim() : "";
+        String cleanIe = rawIe.replaceAll("\\D", "");
+
+        String indIEDest;
+        boolean isCpf = cleanDoc.length() == 11;
+        boolean isIsento = "ISENTO".equalsIgnoreCase(rawIe) || c.getIeIndicator() == IeIndicator.ISENTO;
+        boolean hasNumericIe = !cleanIe.isEmpty() && !"ISENTO".equalsIgnoreCase(rawIe);
+
+        if (isIsento) {
+            indIEDest = "2";
+        } else if (hasNumericIe && !isCpf && c.getIeIndicator() != IeIndicator.NAO_CONTRIBUINTE) {
+            indIEDest = "1";
+        } else if (hasNumericIe && c.getIeIndicator() == IeIndicator.CONTRIBUINTE) {
+            indIEDest = "1";
+        } else {
+            indIEDest = "9";
+        }
+
+        String ieXml = "1".equals(indIEDest) ? "<IE>" + cleanIe + "</IE>" : "";
+
+        BigDecimal totalVProd = BigDecimal.ZERO;
+        BigDecimal totalVBC = BigDecimal.ZERO;
+        BigDecimal totalVICMS = BigDecimal.ZERO;
 
         StringBuilder detBuilder = new StringBuilder();
         int itemIdx = 1;
@@ -99,54 +129,160 @@ public class FocusNfeSimulatorAdapter implements NfeGatewayPort {
                     .multiply(new BigDecimal(item.getQuantity()))
                     .setScale(2, RoundingMode.HALF_UP);
 
-            String cfop = "SP".equalsIgnoreCase(c.getState()) ? p.getDefaultCfopInternal() : p.getDefaultCfopInterstate();
+            String cfop = isInternal ? p.getDefaultCfopInternal() : p.getDefaultCfopInterstate();
+
+            // Redução de base de cálculo (Art. 3º Anexo III do RICMS/SP - Farinha de Trigo):
+            // Carga tributária efetiva de 7.00% com alíquota nominal de 12.00% -> Base = 58.33% do vProd
+            BigDecimal vBC = vProd.multiply(new BigDecimal("0.5833")).setScale(2, RoundingMode.HALF_UP);
+            BigDecimal vICMS = vBC.multiply(new BigDecimal("0.12")).setScale(2, RoundingMode.HALF_UP);
+
+            totalVProd = totalVProd.add(vProd);
+            totalVBC = totalVBC.add(vBC);
+            totalVICMS = totalVICMS.add(vICMS);
 
             detBuilder.append("<det nItem=\"").append(itemIdx++).append("\">")
                     .append("<prod>")
-                    .append("<cProd>").append(p.getErpCode()).append("</cProd>")
-                    .append("<cEAN>SEM GTIN</cEAN>")
-                    .append("<xProd>").append(p.getName()).append("</xProd>")
+                    .append("<cProd>").append(escapeXml(p.getErpCode())).append("</cProd>")
+                    .append("<cEAN/>")
+                    .append("<xProd>").append(escapeXml(p.getName())).append("</xProd>")
                     .append("<NCM>").append(p.getNcm()).append("</NCM>")
-                    .append("<cBenef>").append(p.getcBenef() != null ? p.getcBenef() : "SP020390").append("</cBenef>")
                     .append("<CFOP>").append(cfop).append("</CFOP>")
-                    .append("<uCom>").append(p.getUnitOfMeasure()).append("</uCom>")
+                    .append("<uCom>SACAS</uCom>")
                     .append("<qCom>").append(qCom).append("</qCom>")
                     .append("<vUnCom>").append(vUnCom).append("</vUnCom>")
                     .append("<vProd>").append(vProd).append("</vProd>")
-                    .append("<uTrib>").append(p.getUnitOfMeasure()).append("</uTrib>")
+                    .append("<cEANTrib/>")
+                    .append("<uTrib>SACAS</uTrib>")
                     .append("<qTrib>").append(qCom).append("</qTrib>")
                     .append("<vUnTrib>").append(vUnCom).append("</vUnTrib>")
                     .append("<indTot>1</indTot>")
                     .append("</prod>")
+                    .append("<imposto>")
+                    .append("<ICMS>")
+                    .append("<ICMS20>")
+                    .append("<orig>0</orig>")
+                    .append("<CST>20</CST>")
+                    .append("<modBC>3</modBC>")
+                    .append("<pRedBC>58.33</pRedBC>")
+                    .append("<vBC>").append(vBC).append("</vBC>")
+                    .append("<pICMS>12.0000</pICMS>")
+                    .append("<vICMS>").append(vICMS).append("</vICMS>")
+                    .append("</ICMS20>")
+                    .append("</ICMS>")
+                    .append("<PIS><PISNT><CST>09</CST></PISNT></PIS>")
+                    .append("<COFINS><COFINSNT><CST>09</CST></COFINSNT></COFINS>")
+                    .append("</imposto>")
                     .append("</det>");
         }
 
-        BigDecimal vNF = order.getGrossTotal().setScale(2, RoundingMode.HALF_UP);
+        String notes = order.getNotesForInvoiceOrDriver();
+        String infCpl = "REDUCAO DE 7% ANEXO III ARTIGO 3 DO RICMS" +
+                (notes != null && !notes.trim().isEmpty() ? " - " + notes.trim() : "");
 
         return "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" +
                 "<nfeProc versao=\"4.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\">" +
                 "<NFe xmlns=\"http://www.portalfiscal.inf.br/nfe\">" +
                 "<infNFe Id=\"NFe" + chNFe + "\" versao=\"4.00\">" +
-                "<ide><cUF>35</cUF><cNF>" + cNF + "</cNF><natOp>Venda Dentro do Estado</natOp><mod>55</mod><serie>1</serie>" +
-                "<nNF>" + nNF + "</nNF><dhEmi>" + dhEmi + "</dhEmi><tpNF>1</tpNF><cMunFG>3550308</cMunFG><cDV>" + cDV + "</cDV></ide>" +
-                "<emit><CNPJ>09265201000195</CNPJ><xNome>TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA</xNome>" +
-                "<enderEmit><xLgr>Rua Marco Aurelio Marliani</xLgr><nro>59</nro><xBairro>Jardim Almeida Prado</xBairro>" +
-                "<cMun>3550308</cMun><xMun>Sao Paulo</xMun><UF>SP</UF><CEP>04854170</CEP></enderEmit><IE>149932895118</IE><CRT>3</CRT></emit>" +
-                "<dest>" + docTag + "<xNome>" + c.getCorporateName() + "</xNome>" +
-                "<enderDest><xLgr>" + (c.getStreet() != null ? c.getStreet() : "") + "</xLgr>" +
-                "<nro>" + (c.getNumber() != null ? c.getNumber() : "S/N") + "</nro>" +
-                "<xBairro>" + (c.getNeighborhood() != null ? c.getNeighborhood() : "") + "</xBairro>" +
-                "<cMun>" + c.getIbgeCityCode() + "</cMun><xMun>" + (c.getCity() != null ? c.getCity() : "Sao Paulo") + "</xMun>" +
+                "<ide>" +
+                "<cUF>35</cUF>" +
+                "<cNF>" + cNF + "</cNF>" +
+                "<natOp>VENDA</natOp>" +
+                "<mod>55</mod>" +
+                "<serie>1</serie>" +
+                "<nNF>" + nNF + "</nNF>" +
+                "<dhEmi>" + dhEmi + "</dhEmi>" +
+                "<tpNF>1</tpNF>" +
+                "<idDest>" + idDest + "</idDest>" +
+                "<cMunFG>3550308</cMunFG>" +
+                "<tpImp>1</tpImp>" +
+                "<tpEmis>1</tpEmis>" +
+                "<cDV>" + cDV + "</cDV>" +
+                "<tpAmb>2</tpAmb>" +
+                "<finNFe>1</finNFe>" +
+                "<indFinal>1</indFinal>" +
+                "<indPres>0</indPres>" +
+                "<procEmi>0</procEmi>" +
+                "<verProc>4S-ERP-1.0</verProc>" +
+                "</ide>" +
+                "<emit>" +
+                "<CNPJ>09265201000195</CNPJ>" +
+                "<xNome>TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA</xNome>" +
+                "<xFant>TOTAL TRIGO</xFant>" +
+                "<enderEmit>" +
+                "<xLgr>Rua Marco Aurelio Marliani</xLgr>" +
+                "<nro>59</nro>" +
+                "<xCpl>SUBSL</xCpl>" +
+                "<xBairro>Jardim Almeida Prado</xBairro>" +
+                "<cMun>3550308</cMun>" +
+                "<xMun>Sao Paulo</xMun>" +
+                "<UF>SP</UF>" +
+                "<CEP>04854170</CEP>" +
+                "<cPais>1058</cPais>" +
+                "<xPais>BRASIL</xPais>" +
+                "</enderEmit>" +
+                "<IE>149932895118</IE>" +
+                "<IM>59829524</IM>" +
+                "<CNAE>4691500</CNAE>" +
+                "<CRT>3</CRT>" +
+                "</emit>" +
+                "<dest>" +
+                docTag +
+                "<xNome>" + escapeXml(c.getCorporateName()) + "</xNome>" +
+                "<enderDest>" +
+                "<xLgr>" + escapeXml(c.getStreet() != null ? c.getStreet() : "") + "</xLgr>" +
+                "<nro>" + escapeXml(c.getNumber() != null ? c.getNumber() : "S/N") + "</nro>" +
+                (c.getComplement() != null && !c.getComplement().trim().isEmpty() ? "<xCpl>" + escapeXml(c.getComplement().trim()) + "</xCpl>" : "") +
+                "<xBairro>" + escapeXml(c.getNeighborhood() != null ? c.getNeighborhood() : "") + "</xBairro>" +
+                "<cMun>" + c.getIbgeCityCode() + "</cMun>" +
+                "<xMun>" + escapeXml(c.getCity() != null ? c.getCity() : "Sao Paulo") + "</xMun>" +
                 "<UF>" + (c.getState() != null ? c.getState() : "SP") + "</UF>" +
-                "<CEP>" + (c.getZipCode() != null ? c.getZipCode().replaceAll("\\D", "") : "04000000") + "</CEP></enderDest>" +
-                "<IE>" + (c.getStateRegistration() != null ? c.getStateRegistration() : "ISENTO") + "</IE></dest>" +
+                "<CEP>" + (c.getZipCode() != null ? c.getZipCode().replaceAll("\\D", "") : "04000000") + "</CEP>" +
+                "<cPais>1058</cPais>" +
+                "<xPais>BRASIL</xPais>" +
+                "</enderDest>" +
+                "<indIEDest>" + indIEDest + "</indIEDest>" +
+                ieXml +
+                "</dest>" +
                 detBuilder +
-                "<total><ICMSTot><vProd>" + vNF + "</vProd><vNF>" + vNF + "</vNF></ICMSTot></total>" +
-                "<infAdic><infCpl>REDUCAO DE 7% ANEXO III ARTIGO 3 DO RICMS - " +
-                (order.getNotesForInvoiceOrDriver() != null ? order.getNotesForInvoiceOrDriver() : "") + "</infCpl></infAdic>" +
+                "<total>" +
+                "<ICMSTot>" +
+                "<vBC>" + totalVBC.setScale(2, RoundingMode.HALF_UP) + "</vBC>" +
+                "<vICMS>" + totalVICMS.setScale(2, RoundingMode.HALF_UP) + "</vICMS>" +
+                "<vICMSDeson>0.00</vICMSDeson>" +
+                "<vFCP>0.00</vFCP>" +
+                "<vBCST>0.00</vBCST>" +
+                "<vST>0.00</vST>" +
+                "<vFCPST>0.00</vFCPST>" +
+                "<vFCPSTRet>0.00</vFCPSTRet>" +
+                "<vProd>" + totalVProd.setScale(2, RoundingMode.HALF_UP) + "</vProd>" +
+                "<vFrete>0.00</vFrete>" +
+                "<vSeg>0.00</vSeg>" +
+                "<vDesc>0.00</vDesc>" +
+                "<vII>0.00</vII>" +
+                "<vIPI>0.00</vIPI>" +
+                "<vIPIDevol>0.00</vIPIDevol>" +
+                "<vPIS>0.00</vPIS>" +
+                "<vCOFINS>0.00</vCOFINS>" +
+                "<vOutro>0.00</vOutro>" +
+                "<vNF>" + totalVProd.setScale(2, RoundingMode.HALF_UP) + "</vNF>" +
+                "<vTotTrib>0.00</vTotTrib>" +
+                "</ICMSTot>" +
+                "</total>" +
+                "<transp><modFrete>0</modFrete></transp>" +
+                "<pag><detPag><indPag>1</indPag><tPag>15</tPag><vPag>" + totalVProd.setScale(2, RoundingMode.HALF_UP) + "</vPag></detPag></pag>" +
+                "<infAdic><infCpl>" + escapeXml(infCpl) + "</infCpl></infAdic>" +
                 "</infNFe></NFe>" +
                 "<protNFe versao=\"4.00\" xmlns=\"http://www.portalfiscal.inf.br/nfe\"><infProt>" +
                 "<chNFe>" + chNFe + "</chNFe><nProt>" + nProt + "</nProt><cStat>100</cStat><xMotivo>Autorizado o uso da NF-e</xMotivo>" +
                 "</infProt></protNFe></nfeProc>";
+    }
+
+    private String escapeXml(String value) {
+        if (value == null) return "";
+        return value.replace("&", "&amp;")
+                .replace("<", "&lt;")
+                .replace(">", "&gt;")
+                .replace("\"", "&quot;")
+                .replace("'", "&apos;");
     }
 }
