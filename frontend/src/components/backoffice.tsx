@@ -90,6 +90,7 @@ import {
 } from '@/lib/business';
 import { Metric } from './management';
 import type { SharedProps } from './seller';
+import { openPrintableDanfe, openPrintableRomaneio } from '@/lib/documentPrint';
 
 export function Backoffice({
   data,
@@ -552,16 +553,16 @@ export function Backoffice({
                     </td>
                     <td>{renderStatusBadge(o)}</td>
                     <td>
-                      <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                         {isBilled && (
                           <>
                             {!isExpedicao && (
                               <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-7 px-2 text-[11px] gap-1 shadow-xs"
+                                className="order-action-pill shadow-xs"
                                 title="Imprimir DANFE (BQ)"
-                                onClick={() => window.open(`/api/backoffice/fiscal-documents/${o.id}/danfe.html`, '_blank')}
+                                onClick={() => openPrintableDanfe(o, c, data.products)}
                               >
                                 <Printer size={12} />
                                 DANFE
@@ -570,16 +571,22 @@ export function Backoffice({
                             <Button
                               variant="outline"
                               size="sm"
-                              className="h-7 px-2 text-[11px] gap-1 shadow-xs"
+                              className="order-action-pill shadow-xs"
                               title="Imprimir Romaneio Cego (DQ)"
-                              onClick={() => window.open(`/api/backoffice/fiscal-documents/${o.id}/romaneio.html`, '_blank')}
+                              onClick={() => openPrintableRomaneio(o, c, data.products)}
                             >
                               <Truck size={12} />
                               Romaneio
                             </Button>
                           </>
                         )}
-                        <Button variant="ghost" size="icon" aria-label={`Revisar pedido ${o.id}`} onClick={() => openOrder(o)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="order-row-chevron"
+                          aria-label={`Revisar pedido ${o.id}`}
+                          onClick={() => openOrder(o)}
+                        >
                           <ChevronRight />
                         </Button>
                       </div>
@@ -900,7 +907,7 @@ export function Backoffice({
                             variant="outline"
                             size="sm"
                             className="gap-1.5"
-                            onClick={() => window.open(`/api/backoffice/fiscal-documents/${selected.id}/danfe.html`, '_blank')}
+                            onClick={() => openPrintableDanfe(selected, selectedClient, data.products)}
                           >
                             <Printer size={14} />
                             Imprimir DANFE (BQ)
@@ -910,7 +917,7 @@ export function Backoffice({
                           variant="outline"
                           size="sm"
                           className="gap-1.5"
-                          onClick={() => window.open(`/api/backoffice/fiscal-documents/${selected.id}/romaneio.html`, '_blank')}
+                          onClick={() => openPrintableRomaneio(selected, selectedClient, data.products)}
                         >
                           <Truck size={14} />
                           Imprimir Romaneio (DQ)
