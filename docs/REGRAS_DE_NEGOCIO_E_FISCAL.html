@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Regras Fiscais & ICMS — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="if (typeof renderMathInElement !== 'undefined') { renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\[', right: '\\]', display: true}], throwOnError: false }); }"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Fiscal & ICMS</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — Legislação e Custos</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="index.html" class="btn-header primary">
+        🏠 Hub de Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html" class="active">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Tributário & Controladoria</span>
+            <span>/</span>
+            <span>Regras Fiscais & ICMS</span>
+          </div>
+          <h1 class="doc-title">⚖️ Manual Fiscal, Tributário e Regras de Negócio</h1>
+          <p class="doc-lead">
+            Parametrização do Regime Normal (CRT=3), ICMS CST 20 com Redução de Base de Cálculo de 41,67% (carga efetiva 7% conf. Art. 3º do Anexo III do RICMS/SP), CFOPs, NCMs e metodologia de cálculo de Landed Cost de importação.
+          </p>
+        </div>
+
+        <h2>🏛️ Dados Tributários da Empresa</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Parâmetro</th>
+                <th>Valor Oficial</th>
+                <th>Detalhamento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Razão Social</strong></td>
+                <td>TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA</td>
+                <td>Empresa atacadista distribuidora de trigo</td>
+              </tr>
+              <tr>
+                <td><strong>CNPJ</strong></td>
+                <td><code>09.265.201/0001-95</code></td>
+                <td>Inscrita na Receita Federal do Brasil</td>
+              </tr>
+              <tr>
+                <td><strong>Inscrição Estadual (SP)</strong></td>
+                <td><code>149.932.895.118</code></td>
+                <td>Contribuinte ICMS Ativo na SEFAZ SP</td>
+              </tr>
+              <tr>
+                <td><strong>Regime Tributário (CRT)</strong></td>
+                <td><span class="badge badge-primary">CRT = 3 (Regime Normal)</span></td>
+                <td>Apuração por Lucro Presumido / Real</td>
+              </tr>
+              <tr>
+                <td><strong>Código IBGE Município</strong></td>
+                <td><code>3550308</code> (São Paulo - SP)</td>
+                <td>Rua Marco Aurélio Marliani, 59 - Jd. Almeida Prado</td>
+              </tr>
+              <tr>
+                <td><strong>CNAE Principal</strong></td>
+                <td><code>46.32-0-01</code></td>
+                <td>Comércio atacadista de cereais e farinhas beneficiadas</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>📑 Regime de ICMS no Estado de São Paulo</h2>
+        <p>A comercialização atacadista de derivados da moagem do trigo possui benefício fiscal com alíquota reduzida no Estado de São Paulo:</p>
+
+        <h3>1. ICMS CST 20 — Redução de Base de Cálculo</h3>
+        <ul>
+          <li><strong>CST ICMS</strong>: <code>20</code> (Operação com redução de base de cálculo);</li>
+          <li><strong>Percentual de Redução</strong>: <code>41,67%</code>;</li>
+          <li><strong>Alíquota Nominal SP</strong>: <code>12,00%</code>;</li>
+          <li><strong>Carga Efetiva Tributária</strong>: <code>7,00%</code>;</li>
+          <li><strong>Fundamentação Legal</strong>: Artigo 3º, Inciso XVI do Anexo III do RICMS/SP (Decreto nº 45.490/2000);</li>
+          <li><strong>Código de Benefício Fiscal (<code>cBenef</code>)</strong>: <code>SP020390</code>.</li>
+        </ul>
+
+        <div class="callout tip">
+          <div class="callout-title">📐 Memória de Cálculo da Carga Efetiva</div>
+          <p>$$\text{Carga Efetiva} = 12\% \times (1 - 0,4167) = 7,00\%$$</p>
+        </div>
+
+        <h3>2. Códigos Fiscais de Operações e Prestações (CFOP)</h3>
+        <ul>
+          <li><strong><code>5102</code></strong>: Venda de mercadoria adquirida ou recebida de terceiros (Operações internas dentro do Estado de SP);</li>
+          <li><strong><code>6102</code></strong>: Venda de mercadoria adquirida ou recebida de terceiros (Operações interestaduais).</li>
+        </ul>
+
+        <h2>🌾 Catálogo Fiscal dos 3 SKUs Oficiais</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Código NF-e</th>
+                <th>Descrição Comercial</th>
+                <th>NCM</th>
+                <th>CEST</th>
+                <th>cBenef</th>
+                <th>CFOP</th>
+                <th>Embalagem</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-primary">SKU-05</span></td>
+                <td><code>0000200000001</code> (ou <code>05</code>)</td>
+                <td>Farinha de Trigo Tipo 1 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704400</code></td>
+                <td><code>SP020390</code></td>
+                <td><code>5102</code></td>
+                <td>Saco 25 kg</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-wheat">SKU-02</span></td>
+                <td><code>PA02980502603</code> (ou <code>02</code>)</td>
+                <td>Farinha de Trigo Pré-Mistura 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704600</code></td>
+                <td><code>SP020390</code></td>
+                <td><code>5102</code></td>
+                <td>Saco 25 kg</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">SKU-03</span></td>
+                <td><code>0002960502503</code> (ou <code>03</code>)</td>
+                <td>Pré-Mistura Pão Doce 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704600</code></td>
+                <td><code>SP020390</code></td>
+                <td><code>5102</code></td>
+                <td>Saco 25 kg</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>🧮 Metodologia de Custo Landed Cost de Importação</h2>
+        <p>Para carretas de trigo importadas do Mercosul (Argentina/Uruguai), o custo total internalizado no galpão é composto por:</p>
+
+        <div class="callout note">
+          <div class="callout-title">💵 Equação de Landed Cost Total</div>
+          <p>$$\text{Total Landed (R\$)} = (\text{FOB USD} \times \text{PTAX}) + \text{Frete Internacional} + \text{Impostos Importação} + \text{Despesas Aduaneiras}$$</p>
+        </div>
+
+        <p>O custo unitário de cada saca de 25 kg é calculado pelo rateio proporcional:</p>
+        <p>$$\text{Custo Unitário Landed (Saco)} = \frac{\text{Custo Landed Rateado do SKU (R\$)}}{\text{Quantidade de Sacas Importadas}}$$</p>
+
+        <h2>📈 Formação de Preço e Margem Líquida Real</h2>
+        <p>No momento em que o vendedor lança o pedido na rua, o sistema calcula a rentabilidade líquida considerando:</p>
+        <ul>
+          <li><strong>Receita Bruta</strong>: Quantidade de sacas × Preço unitário faturado;</li>
+          <li><strong>CMV (Custo da Mercadoria Vendida)</strong>: Quantidade de sacas × Custo Landed histórico;</li>
+          <li><strong>Frete de Entrega</strong>: Custo fixo estimado de <code>R$ 45,00</code> por entrega na Zona Sul de SP;</li>
+          <li><strong>Impostos Estimados</strong>: <code>8,00%</code> da Receita Bruta (ICMS efetivo de 7% + PIS/COFINS).</li>
+        </ul>
+
+        <div class="callout tip">
+          <div class="callout-title">💰 Equações de Lucro e Margem</div>
+          <p>$$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete} - \text{Impostos}$$</p>
+          <p>$$\text{Margem Líquida (\%)} = \left(\frac{\text{Lucro Líquido}}{\text{Receita Bruta}}\right) \times 100$$</p>
+        </div>
+
+        <h3>Semáforo de Rentabilidade no Aplicativo</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 180px;">Semáforo</th>
+                <th style="width: 220px;">Faixa de Margem Líquida</th>
+                <th>Diretriz Comercial</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-success">🟢 Verde (Saudável)</span></td>
+                <td><code style="font-size: 13px; font-weight: 700; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 6px;">Margem ≥ 20,0%</code></td>
+                <td>Pedido aprovado automaticamente sem travas comerciais</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-wheat">🟡 Amarelo (Atenção)</span></td>
+                <td><code style="font-size: 13px; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A; padding: 4px 10px; border-radius: 6px;">12,0% ≤ Margem &lt; 20,0%</code></td>
+                <td>Permitido, mas alerta o vendedor sobre desconto excessivo</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-danger">🔴 Vermelho (Crítico)</span></td>
+                <td><code style="font-size: 13px; font-weight: 700; color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; padding: 4px 10px; border-radius: 6px;">Margem &lt; 12,0%</code></td>
+                <td>Bloqueio de segurança; exige autorização expressa do sócio</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>🛡️ Validações Cadastrais Obrigatórias para NF-e</h2>
+        <ol>
+          <li><strong>Indicador de Inscrição Estadual (<code>indIEDest</code>)</strong>:
+            <ul>
+              <li><code>1</code>: Contribuinte ICMS (IE validada na SEFAZ);</li>
+              <li><code>2</code>: Contribuinte Isento;</li>
+              <li><code>9</code>: Não Contribuinte (Consumidor Final).</li>
+            </ul>
+          </li>
+          <li><strong>Código de Município IBGE (<code>cMun</code>)</strong>: Exatamente 7 dígitos numéricos válidos.</li>
+          <li><strong>Chave de Acesso de 44 Dígitos</strong>: Com dígito verificador módulo 11 gerado conforme o MOC.</li>
+        </ol>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

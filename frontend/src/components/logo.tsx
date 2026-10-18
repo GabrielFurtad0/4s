@@ -1,82 +1,33 @@
 import React from 'react';
 
-export function FourSIcon({ size = 28, className = '' }: { size?: number; className?: string }) {
+export function FourSIcon({
+  size = 28,
+  className = '',
+}: {
+  size?: number;
+  className?: string;
+}) {
+  const borderRadius = Math.max(4, Math.round(size * 0.22));
   return (
-    <svg
+    <img
+      src="/logo-4s.jpg"
+      alt="Logo 4S ERP"
       width={size}
       height={size}
-      viewBox="0 0 48 48"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-      className={className}
-      aria-label="Ícone 4S"
-    >
-      <defs>
-        <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#5E43F3" />
-          <stop offset="55%" stopColor="#4338CA" />
-          <stop offset="100%" stopColor="#1E1B4B" />
-        </linearGradient>
-        <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
-          <stop offset="0%" stopColor="#FBBF24" />
-          <stop offset="100%" stopColor="#F59E0B" />
-        </linearGradient>
-        <filter id="subtleGlow" x="-15%" y="-15%" width="130%" height="130%">
-          <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodColor="#1E1B4B" floodOpacity="0.45" />
-        </filter>
-      </defs>
-
-      {/* Squircle base */}
-      <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
-
-      {/* Inset border highlight */}
-      <rect
-        x="0.75"
-        y="0.75"
-        width="46.5"
-        height="46.5"
-        rx="11.25"
-        stroke="rgba(255,255,255,0.22)"
-        strokeWidth="1.5"
-      />
-
-      {/* 4S Intertwined Monogram */}
-      <g filter="url(#subtleGlow)">
-        {/* Stroke of '4' diagonal and crossbar */}
-        <path
-          d="M20 12.5L10.5 27.5H24.5"
-          stroke="#FFFFFF"
-          strokeWidth="3.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-        {/* Vertical stem of '4' */}
-        <path
-          d="M20.5 12.5V35.5"
-          stroke="#FFFFFF"
-          strokeWidth="3.6"
-          strokeLinecap="round"
-        />
-
-        {/* 'S' intertwined in warm gold/amber (wheat tone) */}
-        <path
-          d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30"
-          stroke="url(#goldGrad)"
-          strokeWidth="3.6"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        />
-
-        {/* Golden wheat grain accent spark */}
-        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
-      </g>
-    </svg>
+      className={`shrink-0 select-none object-cover shadow-xs border border-white/10 ${className}`}
+      style={{
+        width: `${size}px`,
+        height: `${size}px`,
+        borderRadius: `${borderRadius}px`,
+      }}
+      loading="eager"
+    />
   );
 }
 
 export function FourSLogo({
   size = 28,
-  subtitle = 'Total Trigo',
+  subtitle,
   className = '',
 }: {
   size?: number;

@@ -159,17 +159,19 @@ O sistema opera com catálogo padronizado em embalagens industriais de 25 kg (`S
 
 ---
 
-## 📖 Documentação Completa
+## 📖 Documentação Completa (Versões Markdown e HTML)
 
-Guias técnicos e operacionais disponíveis na pasta [`docs/`](docs/):
+Guias técnicos e operacionais disponíveis na pasta [`docs/`](docs/) com versões interativas em HTML:
 
-* 📚 [**Central de Documentação (Sumário)**](docs/README.md)
-* 🏗️ [**Arquitetura do Sistema & Diagrama de Dados**](docs/ARQUITETURA_DO_SISTEMA.md)
-* 📱 [**Manual Operacional do ERP & Força de Vendas**](docs/MANUAL_OPERACIONAL_ERP.md)
-* 📊 [**Manual de Uso da Automação de Planilha**](docs/MANUAL_DE_USO_PLANILHA.md)
-* ⚖️ [**Manual de Regras Fiscais, ICMS e SKUs**](docs/REGRAS_DE_NEGOCIO_E_FISCAL.md)
-* 🛠️ [**Guia de Implantação e Setup de Desenvolvimento**](docs/GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.md)
-* 📑 [**PRD e Arquitetura de Expansão (BPMN To-Be)**](docs/PRD_E_ARQUITETURA_EXPANSAO.md)
+| Documento | Versão Markdown | Versão Web HTML (Interativa) |
+| :--- | :---: | :---: |
+| 📚 **Central de Documentação (Portal Hub)** | [`docs/README.md`](docs/README.md) | 🌐 [**index.html**](docs/index.html) |
+| 🏗️ **Arquitetura do Sistema & Diagramas** | [`docs/ARQUITETURA_DO_SISTEMA.md`](docs/ARQUITETURA_DO_SISTEMA.md) | 🌐 [**ARQUITETURA_DO_SISTEMA.html**](docs/ARQUITETURA_DO_SISTEMA.html) |
+| 📱 **Manual Operacional do ERP & Vendas** | [`docs/MANUAL_OPERACIONAL_ERP.md`](docs/MANUAL_OPERACIONAL_ERP.md) | 🌐 [**MANUAL_OPERACIONAL_ERP.html**](docs/MANUAL_OPERACIONAL_ERP.html) |
+| 📊 **Manual da Automação da Planilha** | [`docs/MANUAL_DE_USO_PLANILHA.md`](docs/MANUAL_DE_USO_PLANILHA.md) | 🌐 [**MANUAL_DE_USO_PLANILHA.html**](docs/MANUAL_DE_USO_PLANILHA.html) |
+| ⚖️ **Regras Fiscais, ICMS e Landed Cost** | [`docs/REGRAS_DE_NEGOCIO_E_FISCAL.md`](docs/REGRAS_DE_NEGOCIO_E_FISCAL.md) | 🌐 [**REGRAS_DE_NEGOCIO_E_FISCAL.html**](docs/REGRAS_DE_NEGOCIO_E_FISCAL.html) |
+| 🛠️ **Guia de Implantação e Setup** | [`docs/GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.md`](docs/GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.md) | 🌐 [**GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html**](docs/GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html) |
+| 📑 **PRD e Arquitetura de Expansão (BPMN)** | [`docs/PRD_E_ARQUITETURA_EXPANSAO.md`](docs/PRD_E_ARQUITETURA_EXPANSAO.md) | 🌐 [**PRD_E_ARQUITETURA_EXPANSAO.html**](docs/PRD_E_ARQUITETURA_EXPANSAO.html) |
 
 ---
 

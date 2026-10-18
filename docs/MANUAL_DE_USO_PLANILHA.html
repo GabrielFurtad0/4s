@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual da Automação de Planilha — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Automação NF-e</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — Gestão de Estoques</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="../automacao-planilha/executar.bat" class="btn-header primary">
+        ⚡ Executar Robô
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html" class="active">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Módulo Satélite</span>
+            <span>/</span>
+            <span>Manual da Planilha</span>
+          </div>
+          <h1 class="doc-title">📊 Manual de Uso e Operação — Automação da Planilha de Estoques</h1>
+          <p class="doc-lead">
+            Guia operacional completo do módulo <code>automacao-planilha/</code>. Automatização de leitura direta de arquivos XML de NF-e, mapeamento de abas contábeis, prevenção de duplicidades e atualização segura do Excel.
+          </p>
+        </div>
+
+        <h2>🎯 Objetivo da Automação</h2>
+        <p>
+          Substituir integralmente a digitação manual de saídas de estoque no Microsoft Excel. O robô em Python lê diretamente os arquivos XML de emissão de NF-e (layout 4.00 nacional) ou pacotes compactados em ZIP, identifica os itens faturados, distribui entre as três abas de produtos e insere as saídas com fórmulas dinâmicas de saldo, preservando a integridade contábil e os saldos históricos.
+        </p>
+
+        <h2>🗂️ Estrutura de Arquivos do Módulo</h2>
+        <pre><code>automacao-planilha/
+│
+├── Planilha de Estoques.xlsx      # Arquivo oficial de estoque em operação
+├── executar.bat                   # Atalho de dois cliques para execução no Windows
+├── config.json                    # Regras de mapeamento e diretórios configuráveis
+│
+├── atualizar_estoque.py           # Script principal (orquestrador e interface visual Rich)
+├── excel_updater.py               # Manipulador da planilha (openpyxl, fórmulas e abas)
+├── nfe_parser.py                  # Parser de XML NF-e (extração de chaves, itens, valores)
+├── zip_manager.py                 # Extrator automático de pacotes ZIP de notas
+│
+├── notas/                         # Pasta onde os arquivos .xml devem ser depositados
+├── zips/                          # Pasta opcional para pacotes .zip de notas baixadas
+├── backups/                       # Histórico de backups automáticos pré-execução
+└── README.md                      # Resumo rápido para o operador</code></pre>
+
+        <h2>🚀 Como Usar no Dia a Dia (Passo a Passo)</h2>
+        
+        <h3>Passo 1: Depositar os Arquivos de Notas</h3>
+        <p>Baixe os arquivos XML emitidos no período diretamente do emissor fiscal (Focus NF-e, Nuvem Fiscal ou portal SEFAZ):</p>
+        <ul>
+          <li><strong>Opção A</strong>: Coloque os arquivos <code>.xml</code> soltos na pasta <code>automacao-planilha/notas/</code>;</li>
+          <li><strong>Opção B</strong>: Coloque o arquivo compactado <code>.zip</code> dentro de <code>automacao-planilha/zips/</code> (o robô descompacta sozinho).</li>
+        </ul>
+
+        <div class="callout important">
+          <div class="callout-title">⚠️ Feche a Planilha no Excel Antes de Rodar</div>
+          <p>Certifique-se de salvar e fechar a <strong>Planilha de Estoques.xlsx</strong> no Excel antes de rodar o robô. Se o arquivo estiver aberto, o Windows bloqueará a gravação com erro de permissão (<code>PermissionError</code>).</p>
+        </div>
+
+        <h3>Passo 2: Executar com Dois Cliques</h3>
+        <p>No Windows Explorer, basta dar dois cliques no executável:</p>
+        <pre><code>automacao-planilha/executar.bat</code></pre>
+
+        <p>O terminal abrirá automaticamente exibindo em tempo real:</p>
+        <ol>
+          <li><strong>Descompactação</strong>: Extração de arquivos ZIP depositados.</li>
+          <li><strong>Varredura</strong>: Leitura e validação da chave de acesso e itens dos XMLs.</li>
+          <li><strong>Validação de Mês</strong>: Checagem se o mês das notas possui cabeçalho na planilha.</li>
+          <li><strong>Backup Pré-Gravação</strong>: Cópia íntegra arquivada na pasta <code>backups/</code> com data e hora.</li>
+          <li><strong>Lançamentos</strong>: Inserção de cada linha faturada e aplicação da fórmula de saldo.</li>
+          <li><strong>Tabela Resumo</strong>: Exibição detalhada de lançamentos realizados e itens ignorados por duplicidade.</li>
+        </ol>
+
+        <h2>📑 Regras de Negócio e Mapeamento de Produtos</h2>
+
+        <h3>1. Mapeamento Automático de Abas</h3>
+        <p>O robô analisa o código de produto da nota fiscal (<code>cProd</code>) e cruza com as palavras-chave na descrição (<code>xProd</code>):</p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Aba na Planilha</th>
+                <th>Códigos na NF-e</th>
+                <th>Palavras-Chave Identificadoras</th>
+                <th>Critérios de Exclusão</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong style="color: var(--primary);">FARINHA DE TRIGO</strong></td>
+                <td><code>05</code>, <code>5</code>, <code>0000200000001</code></td>
+                <td><code>tipo 1</code>, <code>tipo1</code>, <code>farinha de trigo tipo 1</code></td>
+                <td>Nenhum</td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--wheat-dark);">PRE MISTURA</strong></td>
+                <td><code>02</code>, <code>2</code>, <code>PA02980502603</code></td>
+                <td><code>pre mistura</code>, <code>pré mistura</code></td>
+                <td>Exclui <code>pao doce</code>, <code>pão doce</code></td>
+              </tr>
+              <tr>
+                <td><strong style="color: var(--success);">PM PAO DOCE</strong></td>
+                <td><code>03</code>, <code>3</code>, <code>0002960502503</code></td>
+                <td><code>pao doce</code>, <code>pão doce</code>, <code>mistura pao doce</code></td>
+                <td>Nenhum</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>2. Notas Fiscais com Múltiplos Produtos</h3>
+        <ul>
+          <li><strong>Produtos Mistos</strong>: Se uma única NF faturar 50 sacas de Farinha Tipo 1 e 20 sacas de Pré-Mistura, o robô encaminha cada item para a sua respectiva aba, associando o mesmo número de NF e data.</li>
+          <li><strong>Múltiplos Lotes</strong>: Se houver mais de uma linha na NF com o mesmo produto (lotes ou preços diferentes), ambas são lançadas sequencialmente na mesma aba.</li>
+        </ul>
+
+        <h3>3. Formato das Colunas Preenchidas na Planilha</h3>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 80px;">Coluna</th>
+                <th>Nome do Campo</th>
+                <th>Tipo de Dado</th>
+                <th>Regra de Preenchimento</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>A</strong></td>
+                <td>Data</td>
+                <td>Data real Excel</td>
+                <td>Data de emissão da NF-e (<code>dhEmi</code> ou <code>dEmi</code>)</td>
+              </tr>
+              <tr>
+                <td><strong>B</strong></td>
+                <td>N.F.</td>
+                <td>Inteiro</td>
+                <td>Número da nota fiscal (<code>nNF</code>). Ex: <code>12377</code></td>
+              </tr>
+              <tr>
+                <td><strong>C</strong></td>
+                <td>Preço Unitário</td>
+                <td>Decimal</td>
+                <td>Valor unitário faturado na nota (<code>vUnCom</code>)</td>
+              </tr>
+              <tr>
+                <td><strong>D / E</strong></td>
+                <td>(Vazios)</td>
+                <td>—</td>
+                <td>Mantidos em branco conforme layout original</td>
+              </tr>
+              <tr>
+                <td><strong>F</strong></td>
+                <td>Entrada</td>
+                <td>Decimal</td>
+                <td>Mantido em branco para lançamentos de venda</td>
+              </tr>
+              <tr>
+                <td><strong>G</strong></td>
+                <td>Saída</td>
+                <td>Inteiro</td>
+                <td>Quantidade faturada em sacas (<code>qCom</code>)</td>
+              </tr>
+              <tr>
+                <td><strong>H</strong></td>
+                <td>Saldo</td>
+                <td>Fórmula Excel</td>
+                <td>Fórmula dinâmica: <code>=H{linha_anterior}-G{linha_atual}</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>🔒 Mecanismos de Proteção e Segurança</h2>
+
+        <div class="callout tip">
+          <div class="callout-title">🛡️ Prevenção Ativa de Duplicidade (Idempotência)</div>
+          <p>O robô verifica antes de cada gravação se a nota fiscal já está presente na coluna B da aba correspondente. Se a nota já foi lançada, ela é <strong>ignorada com alerta amarelo</strong>, permitindo rodar a automação quantas vezes quiser sem risco de duplicar saídas.</p>
+        </div>
+
+        <h3>Proteção do Saldo Inicial e Validação de Mês</h3>
+        <p>
+          O robô impede a corrupção do saldo do estoque. Se você depositar notas de um mês cujo cabeçalho ainda não foi criado (ex: notas de Outubro quando a planilha só tem Setembro), o script <strong>interrompe a execução antes de gravar</strong> e exibe um aviso:
+        </p>
+        <div class="callout note">
+          <div class="callout-title">ℹ️ Alerta do Sistema</div>
+          <p><em>"O cabeçalho do mês 10/2026 ainda não foi criado na planilha. Abra a planilha, crie a seção do novo mês e digite o saldo inicial antes de rodar a automação."</em></p>
+        </div>
+
+        <h3>Política de Backups Automáticos</h3>
+        <ul>
+          <li><strong>Cópia Original Intacta</strong>: Arquivada em <code>backups/Planilha de Estoques - ORIGINAL 2026-10-12.xlsx</code>.</li>
+          <li><strong>Backups com Carimbo de Data/Hora</strong>: Gerados automaticamente antes de cada gravação no formato <code>Planilha de Estoques - BACKUP YYYY-MM-DD_HHMMSS.xlsx</code>.</li>
+        </ul>
+
+        <h2>⚙️ Arquivo de Configuração (<code>config.json</code>)</h2>
+        <pre><code>{
+  "caminho_planilha": "Planilha de Estoques.xlsx",
+  "pasta_notas": "notas",
+  "pasta_backups": "backups",
+  "pastas_zips": ["zips", "notas", "."],
+  "mapeamento_abas": [
+    {
+      "aba": "FARINHA DE TRIGO",
+      "codigos": ["05", "5"],
+      "palavras_chave": ["tipo 1", "tipo1", "farinha de trigo tipo 1"]
+    },
+    {
+      "aba": "PRE MISTURA",
+      "codigos": ["02", "2"],
+      "palavras_chave": ["pre mistura", "pré mistura"],
+      "palavras_excluidas": ["doce", "pao doce", "pão doce"]
+    },
+    {
+      "aba": "PM PAO DOCE",
+      "codigos": ["03", "3"],
+      "palavras_chave": ["pao doce", "pão doce"]
+    }
+  ]
+}</code></pre>
+
+        <h2>❓ Resolução de Dúvidas & Troubleshooting</h2>
+
+        <h3>1. Erro de Permissão Negada (PermissionError)</h3>
+        <p><strong>Causa</strong>: O arquivo <code>Planilha de Estoques.xlsx</code> está aberto no Excel.<br>
+        <strong>Solução</strong>: Salve e feche a janela do Excel e rode o <code>executar.bat</code> novamente.</p>
+
+        <h3>2. Como Restaurar um Backup Anterior</h3>
+        <p>Se precisar desfazer os lançamentos de um lote:</p>
+        <ol>
+          <li>Abra a pasta <code>automacao-planilha/backups/</code>;</li>
+          <li>Localize o backup gerado imediatamente antes da execução;</li>
+          <li>Copie esse arquivo para <code>automacao-planilha/</code> e renomeie para <code>Planilha de Estoques.xlsx</code>.</li>
+        </ol>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — Módulo automacao-planilha</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

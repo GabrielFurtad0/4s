@@ -207,7 +207,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
         <header className="seller-header">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <FourSIcon size={20} />
+              <FourSIcon size={22} />
               <strong>
                 4S <span className="font-normal text-muted-foreground">em campo</span>
               </strong>

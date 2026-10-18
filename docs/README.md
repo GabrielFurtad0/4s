@@ -8,14 +8,18 @@ Seja bem-vindo à documentação oficial do ecossistema **TotalTrigo** (Total Tr
 
 A pasta `docs/` está estruturada de forma modular para atender tanto os operadores do dia a dia quanto os desenvolvedores e gestores fiscais:
 
-| Documento | Descrição / Objetivo | Público-Alvo |
-| :--- | :--- | :--- |
-| 📑 [**PRD e Arquitetura de Expansão**](PRD_E_ARQUITETURA_EXPANSAO.md) | Documento original de requisitos de produto, personas (JTBD), fluxo BPMN 2.0 To-Be e roadmap de expansão. | Gestão, Produto, Arquitetura |
-| 📊 [**Manual da Automação de Planilha**](MANUAL_DE_USO_PLANILHA.md) | Guia operacional completo do módulo `automacao-planilha/`: processamento de NF-e, mapeamento de abas, prevenção de duplicidade e backups. | Operador da Planilha, Backoffice |
-| 🏗️ [**Arquitetura do Sistema**](ARQUITETURA_DO_SISTEMA.md) | Visão técnica detalhada do Backend Spring Boot, Frontend React, Modelagem de Domínio, Banco de Dados e Integrações. | Desenvolvedores, Arquitetos |
-| 🖥️ [**Manual Operacional do ERP**](MANUAL_OPERACIONAL_ERP.md) | Manual passo a passo para o App de Vendas de Rua (Sr. Sérgio), Mesa de Pré-Nota (Gabriel), Romaneio Cego e Calculadora de Importação. | Vendedores de Campo, Faturamento |
-| ⚖️ [**Regras de Negócio e Fiscal**](REGRAS_DE_NEGOCIO_E_FISCAL.md) | Detalhamento tributário (CRT=3, ICMS CST 20 com Redução de BC, CFOPs, NCM), Catálogo dos 3 SKUs e Custos de Importação (Landed Cost). | Contabilidade, Fiscal, Controladoria |
-| 🚀 [**Guia de Implantação e Setup**](GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.md) | Passo a passo de instalação de pré-requisitos, configuração de portas, Flyway migrations, scripts `.bat` e troubleshooting. | Desenvolvedores, DevOps, Suporte |
+| Documento Markdown | Versão HTML Interativa | Descrição / Objetivo | Público-Alvo |
+| :--- | :--- | :--- | :--- |
+| 🏠 [**Central de Documentação**](README.md) | 🌐 [**index.html**](index.html) | Portal unificado com estatísticas, navegação rápida, dados cadastrais e catálogo dos 3 SKUs. | Todos |
+| 📊 [**Manual da Automação de Planilha**](MANUAL_DE_USO_PLANILHA.md) | 🌐 [**MANUAL_DE_USO_PLANILHA.html**](MANUAL_DE_USO_PLANILHA.html) | Guia operacional do robô `automacao-planilha/`: processamento de NF-e, abas e prevenção de duplicidade. | Operador, Backoffice |
+| 🏗️ [**Arquitetura do Sistema**](ARQUITETURA_DO_SISTEMA.md) | 🌐 [**ARQUITETURA_DO_SISTEMA.html**](ARQUITETURA_DO_SISTEMA.html) | Arquitetura Spring Boot 3, React Vite, ERD interativo Mermaid, máquina de estados e estoque triplo. | Desenvolvedores, Arquitetos |
+| 🖥️ [**Manual Operacional do ERP**](MANUAL_OPERACIONAL_ERP.md) | 🌐 [**MANUAL_OPERACIONAL_ERP.html**](MANUAL_OPERACIONAL_ERP.html) | Manual do App Mobile (Sr. Sérgio), Ficha 360º, Mesa Pré-Nota (Gabriel) e Romaneio Cego. | Vendas Rua, Faturamento |
+| ⚖️ [**Regras de Negócio e Fiscal**](REGRAS_DE_NEGOCIO_E_FISCAL.md) | 🌐 [**REGRAS_DE_NEGOCIO_E_FISCAL.html**](REGRAS_DE_NEGOCIO_E_FISCAL.html) | Legislação ICMS CST 20 (7% efetivo SP), fórmulas KaTeX de Landed Cost, margens e CFOPs. | Fiscal, Contabilidade |
+| 🚀 [**Guia de Implantação e Setup**](GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.md) | 🌐 [**GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html**](GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html) | Instalação de pré-requisitos, inicialização em 1 clique, banco H2 e troubleshooting. | Desenvolvedores, DevOps |
+| 📑 [**PRD e Arquitetura de Expansão**](PRD_E_ARQUITETURA_EXPANSAO.md) | 🌐 [**PRD_E_ARQUITETURA_EXPANSAO.html**](PRD_E_ARQUITETURA_EXPANSAO.html) | Documento original de produto, personas (Jobs-to-be-Done) e fluxo BPMN 2.0 To-Be. | Gestão, Produto |
+
+> [!TIP]
+> **Versões HTML Prontas para Navegador**: As versões `.html` contam com renderização de diagramas Mermaid ao vivo, fórmulas matemáticas formatadas, blocos de código com botão de cópia rápida e layout responsivo com suporte a impressão/PDF (`window.print()`).
 
 ---
 

@@ -77,9 +77,9 @@ $$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete} - \te
 $$\text{Margem Líquida (\%)} = \left(\frac{\text{Lucro Líquido}}{\text{Receita Bruta}}\right) \times 100$$
 
 ### 3. Semáforo de Margem no App do Vendedor
-* 🟢 **Margem Saudável ($\ge 20\%$)**: Venda aprovada automaticamente sem restrições.
-* 🟡 **Margem Atenção ($12\% \le \text{Margem} < 20\%$)**: Venda permitida, mas destaca alerta de concessão de desconto.
-* 🔴 **Margem Crítica ($< 12\%$)**: Alerta vermelho; exige confirmação expressa do sócio para evitar prejuízo operacional.
+* 🟢 **Margem Saudável (Margem ≥ 20%)**: Venda aprovada automaticamente sem restrições.
+* 🟡 **Margem Atenção (12% ≤ Margem < 20%)**: Venda permitida, mas destaca alerta de concessão de desconto.
+* 🔴 **Margem Crítica (Margem < 12%)**: Alerta vermelho; exige confirmação expressa do sócio para evitar prejuízo operacional.
 
 ---
 

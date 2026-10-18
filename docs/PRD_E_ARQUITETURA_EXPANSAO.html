@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PRD & Arquitetura de Expansão — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Requisitos & PRD</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — Engenharia de Produto</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="index.html" class="btn-header primary">
+        🏠 Hub de Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html" class="active">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Planejamento & Produto</span>
+            <span>/</span>
+            <span>PRD & Arquitetura de Expansão</span>
+          </div>
+          <h1 class="doc-title">📑 Documento de Engenharia de Requisitos, PRD e Arquitetura de Expansão</h1>
+          <p class="doc-lead">
+            Especificação de produto, personas fundamentais sob a ótica Jobs-to-be-Done (JTBD), fluxo de processos BPMN 2.0 To-Be e cronograma de fases de evolução do TotalTrigo ERP.
+          </p>
+        </div>
+
+        <div class="callout note">
+          <div class="callout-title">🏢 Empresa & Enquadramento Fiscal</div>
+          <p><strong>Empresa</strong>: TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA<br>
+          <strong>CNPJ</strong>: <code>09.265.201/0001-95</code> | <strong>IE</strong>: <code>149.932.895.118</code> | <strong>Regime</strong>: Normal (<code>CRT=3</code> — ICMS CST 20 com Redução de BC de 41,67%, carga efetiva 7% Anexo III Art. 3 RICMS-SP + IBS/CBS)<br>
+          <strong>Sede</strong>: Rua Marco Aurélio Marliani, 59 - Jardim Almeida Prado, São Paulo - SP (IBGE <code>3550308</code>)</p>
+        </div>
+
+        <h2>1. Catálogo Oficial dos 3 SKUs Importados</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>SKU #</th>
+                <th>Código NF-e (<code>cProd</code>)</th>
+                <th>Descrição Oficial na SEFAZ</th>
+                <th>NCM</th>
+                <th>CEST / cBenef</th>
+                <th>CFOP Int/Ext</th>
+                <th>Unidade</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-primary">SKU-05</span></td>
+                <td><code>0000200000001</code> (<code>05</code>)</td>
+                <td>Farinha de Trigo Tipo 1 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704400</code> / <code>SP020390</code></td>
+                <td><code>5102</code> / <code>6102</code></td>
+                <td><code>SA</code> (25kg)</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-wheat">SKU-02</span></td>
+                <td><code>PA02980502603</code> (<code>02</code>)</td>
+                <td>Farinha de Trigo Pré-Mistura 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704600</code> / <code>SP020390</code></td>
+                <td><code>5102</code> / <code>6102</code></td>
+                <td><code>SA</code> (25kg)</td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-success">SKU-03</span></td>
+                <td><code>0002960502503</code> (<code>03</code>)</td>
+                <td>Pré-Mistura Pão Doce 25Kg</td>
+                <td><code>11010010</code></td>
+                <td><code>1704600</code> / <code>SP020390</code></td>
+                <td><code>5102</code> / <code>6102</code></td>
+                <td><code>SA</code> (25kg)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>2. Personas & Jobs-to-be-Done (JTBD)</h2>
+
+        <h3>[P01] Sr. Sérgio — Sócio-Fundador e Vendedor Field Sales (Na Rua)</h3>
+        <ul>
+          <li><strong>JTBD 1 (Memória de Preço e Velocidade)</strong>: <em>Quando</em> estou no balcão da padaria negociando com o cliente, <em>quero</em> abrir a ficha 360º, ver na hora o último preço praticado nos 3 SKUs, as anotações da última visita e lançar o pedido em poucos toques, <em>para</em> fechar a venda em segundos sem depender de cadernos de papel.</li>
+          <li><strong>JTBD 2 (Privacidade de Margem)</strong>: <em>Quando</em> o cliente está ao meu lado olhando para o celular, <em>quero</em> que o breakdown de lucro líquido e custo do lote de importação fique oculto por padrão e expansível com 1 toque, <em>para</em> proteger a margem da Total Trigo.</li>
+        </ul>
+
+        <h3>[P02] Gabriel — Gestor de Backoffice Fiscal, Financeiro e Importação (Escritório)</h3>
+        <ul>
+          <li><strong>JTBD 1 (Mesa de Conferência Pré-Nota e Ajuste Comercial vs. Fiscal)</strong>: <em>Quando</em> um pedido chega da rua em <code>AGUARDANDO_REVISAO</code>, <em>quero</em> revisar a prontidão fiscal do cliente (consultando CNPJ e IBGE na BrasilAPI em 1 clique) e poder ajustar a quantidade ou o valor unitário que vai efetivamente para a Nota Fiscal sem perder o histórico do pedido comercial original, <em>para</em> evitar rejeições na SEFAZ e adequar o faturamento às condições combinadas.</li>
+          <li><strong>JTBD 2 (Calculadora de Landed Cost)</strong>: <em>Quando</em> chega uma nova carreta/lote de importação, <em>quero</em> ratear câmbio, FOB USD, frete internacional, impostos e despachante entre os 3 SKUs, <em>para</em> atualizar automaticamente o estoque físico e o custo internalizado (<code>currentLandedCost</code>).</li>
+        </ul>
+
+        <h3>[P03] Equipe de Galpão & Motoristas</h3>
+        <ul>
+          <li><strong>JTBD 1 (Romaneio Cego)</strong>: <em>Quando</em> o pedido é liberado para separação (<code>EM_SEPARACAO</code>), <em>quero</em> receber no WhatsApp ou impresso o Romaneio de Separação e Entrega limpo (sem preços nem margens), <em>para</em> carregar os sacos de 25kg certos e entregar no horário combinado.</li>
+        </ul>
+
+        <h2>3. Modelagem BPMN 2.0 (To-Be)</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart TD
+    subgraph RUA["Módulo 1: App Mobile Field Sales (Sr. Sérgio)"]
+        A1(["Seleciona Cliente na Agenda / Radar Recompra"]) --> A2["Consulta Ficha 360º, Últimos Preços e Caderno"]
+        A2 --> A3["Lança Qtd e Preço dos 3 SKUs + Breakdown Oculto"]
+        A3 --> A4["Envia Pedido -> Status: AGUARDANDO_REVISAO"]
+    end
+
+    subgraph ESTOQUE_RESERVA["Controle Triplo de Estoque"]
+        E1["Aumenta reservedStock dos SKUs"] --> E2["Reduz availableStock (physical - reserved)"]
+    end
+
+    subgraph BACKOFFICE["Módulo 2: Mesa de Conferência Pré-Nota (Gabriel)"]
+        B1["Avalia Semáforo de Prontidão Fiscal"] --> B2{"Cadastro Fiscal Completo?"}
+        B2 -- "Não (Cadastro Rápido Rua)" --> B3["1 Clique: Buscar CNPJ + IBGE na BrasilAPI"]
+        B3 --> B4["Ajusta Qtd/Preço da Nota vs. Pedido Rua se necessário"]
+        B2 -- "Sim" --> B4
+        B4 --> B5["Gera Romaneio Cego (Status: EM_SEPARACAO)"]
+        B5 --> B6["Emite NF-e via Adapter Focus NFe / Nuvem Fiscal"]
+    end
+
+    subgraph FATURAMENTO["Baixa Física e Imutabilidade Fiscal"]
+        F1["Status: FATURADO (XML 4.00 + Chave 44 dígitos)"] --> F2["Baixa definitiva em physicalStock e libera reservedStock"]
+        F2 --> F3["Confirma Entrega -> Status: ENTREGUE"]
+    end
+
+    A4 --> E1
+    E2 --> B1
+    B6 --> F1
+          </pre>
+        </div>
+
+        <h2>4. Roadmap de Expansão Futura</h2>
+        
+        <h3>Fase 1 (Entregue nesta Release)</h3>
+        <ul>
+          <li>Backend Spring Boot + JPA + Flyway + H2/PostgreSQL com Máquina de Estados rigorosa e Estoque Triplo.</li>
+          <li>Integração com <strong>BrasilAPI</strong> e <strong>ViaCEP</strong> para preenchimento automático de CNPJ, Razão Social, Endereço e Código IBGE (7 dígitos).</li>
+          <li>Adapter Fiscal (<code>NfeGatewayPort</code>) gerando chave de acesso de 44 dígitos e XML NF-e 4.00 compatível com o padrão real da Total Trigo e com o parser Python (<code>nfe_parser.py</code>).</li>
+          <li>Frontend React + TypeScript + Tailwind com App Mobile (3 abas), Mesa de Conferência Pré-Nota, Calculadora de Lote de Importação e Estúdio de Temas Visuais (4 propostas de design).</li>
+        </ul>
+
+        <h3>Fase 2 (Sincronização Automatizada com Planilha e Contabilidade)</h3>
+        <ul>
+          <li>Ao emitir a NF-e no Backoffice, salvar opcionalmente uma cópia do XML diretamente na pasta <code>notas/</code> e acionar o <code>excel_updater.py</code> para manter a <code>Planilha de Estoques.xlsx</code> 100% sincronizada durante a transição.</li>
+        </ul>
+
+        <h3>Fase 3 (Roteirização Zona Sul SP, Contas a Receber e Canhoto Digital)</h3>
+        <ul>
+          <li>Agrupamento automático de entregas por bairro (Grajaú, Parelheiros, Cidade Ademar, Jabaquara, Campo Belo, Santo André).</li>
+          <li>Controle de vencimento de boletos que alimenta automaticamente a flag <code>BOLETO_VENCIDO</code> na Ficha 360º do cliente.</li>
+        </ul>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

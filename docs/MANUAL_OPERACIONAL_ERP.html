@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Manual Operacional do ERP — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Operações Web</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — Manual de Usuário</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="../iniciar_sistema.bat" class="btn-header primary">
+        🚀 Abrir ERP
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html" class="active">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Manuais de Usuário</span>
+            <span>/</span>
+            <span>Manual Operacional do ERP</span>
+          </div>
+          <h1 class="doc-title">🖥️ Manual Operacional do ERP — TotalTrigo Web</h1>
+          <p class="doc-lead">
+            Guia completo de utilização das telas operacionais do 4S ERP: Força de Vendas de Campo no celular (Sr. Sérgio), Mesa de Pré-Nota e Faturamento (Gabriel), Romaneio Cego e Calculadora de Lotes de Importação.
+          </p>
+        </div>
+
+        <h2>👥 Personas e Perfis de Acesso</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart LR
+    A["Sr. Sérgio<br/>(Vendas em Campo / Balcão da Padaria)"] -->|Smartphone / Tablet| M1["App Mobile Field Sales"]
+    B["Gabriel<br/>(Backoffice / Faturamento / Importação)"] -->|Desktop / Notebook| M2["Mesa Pré-Nota & Gestão"]
+    C["Equipe de Galpão / Motoristas"] -->|Papel ou WhatsApp| M3["Romaneio Cego de Separação"]
+          </pre>
+        </div>
+
+        <h2>📱 Módulo 1: App Mobile Field Sales (Sr. Sérgio)</h2>
+        <p>Desenvolvido sob medida para operação em pé no balcão da padaria em smartphones, com botões amplos e dados essenciais à vista:</p>
+
+        <h3>1. Radar de Recompra e Agenda de Hoje (Tela 1)</h3>
+        <ul>
+          <li><strong>Visitas do Dia</strong>: Lista ordenada das padarias agendadas para o dia;</li>
+          <li><strong>Radar Inteligente de Recompra</strong>: Dispara um alerta automático quando o cliente ultrapassa o ciclo médio de consumo (ex: ciclo habitual de 20 dias, porém sem compras há 22 dias);</li>
+          <li><strong>Semáforo Financeiro</strong>:
+            <ul>
+              <li><span class="badge badge-success">✓ Em dia</span>: Cliente liberado para novos pedidos;</li>
+              <li><span class="badge badge-danger">1 boleto vencido</span>: Alerta em vermelho para o vendedor cobrar cordialidade antes de tirar novo pedido.</li>
+            </ul>
+          </li>
+          <li><strong>Pré-Cadastro Rápido por CNPJ</strong>:
+            <p>Ao visitar uma padaria nova, o vendedor toca em <strong>"+ Pré-Cadastro por CNPJ"</strong>, digita os 14 dígitos e a <strong>BrasilAPI</strong> preenche em 1 segundo a Razão Social, Fantasia, Endereço e Código IBGE.</p>
+          </li>
+        </ul>
+
+        <h3>2. Ficha 360º do Cliente (Tela 2)</h3>
+        <ul>
+          <li><strong>Memória de Preço por SKU</strong>: Exibe o último preço cobrado na Farinha Tipo 1, Pré-Mistura e Pão Doce, eliminando desconfiança de preços entre visitas;</li>
+          <li><strong>Caderno de Notas da Visita</strong>: Anotações operacionais rápidas (ex: <em>"Dono prefere entregas nas terças de manhã pelo portão dos fundos"</em>);</li>
+          <li><strong>Condição de Pagamento</strong>: Exibe prazos negociados (ex: <em>Boleto 28 dias</em> ou <em>Semanal 7/14/21/28 dias</em>).</li>
+        </ul>
+
+        <h3>3. Lançador de Pedidos com Proteção de Margem (Tela 3)</h3>
+        <ul>
+          <li><strong>Seleção dos 3 SKUs</strong>: Botões de incremento rápido (+5, +10, +50 sacas de 25kg);</li>
+          <li><strong>Negociação de Preço Unitário</strong>: Permite aplicar descontos dentro das diretrizes comerciais;</li>
+        </ul>
+
+        <div class="callout important">
+          <div class="callout-title">🔒 Proteção de Margem (Anti-Curioso)</div>
+          <p>O quadro de Lucro Líquido Real, Custo Landed e Frete permanece <strong>oculto por padrão</strong>. O vendedor pode expandi-lo com um toque discreto enquanto o comprador não estiver olhando para a tela, protegendo a rentabilidade da Total Trigo.</p>
+        </div>
+
+        <p>Ao confirmar, o pedido entra no sistema com o status <code>AGUARDANDO_REVISAO</code> e reserva o estoque imediatamente.</p>
+
+        <h2>💻 Módulo 2: Mesa de Conferência Pré-Nota (Gabriel)</h2>
+        <p>Painel desktop de alta produtividade para conferência fiscal, faturamento e logística:</p>
+
+        <h3>1. Mesa de Pedidos em Tempo Real</h3>
+        <p>Exibe os pedidos recebidos da rua com semáforo de prontidão fiscal:</p>
+        <ul>
+          <li><span class="badge badge-success">Pronto para Faturar</span>: CNPJ, Inscrição Estadual e Código IBGE 7 dígitos validados;</li>
+          <li><span class="badge badge-wheat">Cadastro Incompleto</span>: Botão <strong>"Completar Cadastro Fiscal"</strong> busca os dados na Receita Federal em 1 clique.</li>
+        </ul>
+
+        <h3>2. Ajuste Comercial vs. Fiscal</h3>
+        <p>
+          Permite ajustar a quantidade de sacas ou o valor que vai para a NF-e sem apagar o pedido comercial original registrado pelo vendedor na rua, mantendo o histórico de auditoria intacto.
+        </p>
+
+        <h3>3. Emissão do Romaneio Cego de Separação</h3>
+        <p>
+          Ao mover o pedido para <code>EM_SEPARACAO</code>, gera uma folha de romaneio limpa para impressão ou WhatsApp:
+        </p>
+        <ul>
+          <li><strong>Oculta</strong>: Preços em Reais, margens de lucro e valores fiscais;</li>
+          <li><strong>Exibe</strong>: Nome da padaria, endereço completo, quantidade de sacas de cada SKU e instruções de entrega.</li>
+        </ul>
+
+        <h3>4. Transmissão e Emissão da NF-e</h3>
+        <p>
+          Ao clicar em <strong>"Emitir NF-e"</strong>, o sistema gera a chave de 44 dígitos oficial, o arquivo XML 4.00, baixa o estoque físico definitivo (<code>physicalStock</code>) e atualiza o pedido para <code>FATURADO</code>.
+        </p>
+
+        <h2>🚢 Módulo 3: Calculadora de Landed Cost (Importação)</h2>
+        <p>Módulo para rateio de carretas de trigo importadas do Mercosul (Argentina/Uruguai):</p>
+        <ol>
+          <li>Insira a cotação PTAX USD do dia do desembaraço aduaneiro;</li>
+          <li>Declare o FOB USD total e o frete internacional rodoviário em Reais;</li>
+          <li>Declare os impostos de importação (II, PIS/COFINS) e despesas de despacho;</li>
+          <li>O sistema rateia os custos proporcionalmente por saca e atualiza o <code>currentLandedCost</code> no catálogo de produtos.</li>
+        </ol>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>
