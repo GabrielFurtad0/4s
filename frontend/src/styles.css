@@ -244,7 +244,17 @@ h3 { font-size: 12px; font-weight: 600; }
 .environment-switch button.selected { background: var(--chrome-selected); color: var(--chrome-foreground); box-shadow: var(--surface-shadow); }
 .environment-switch svg { width: 13px; height: 13px; }
 .mode-person { padding-left: 8px; margin-left: 2px; border-left: 1px solid var(--chrome-muted); font-size: 10px; opacity: .65; }
-.environment-live { font-size: 10px; color: var(--chrome-muted); display: flex; gap: 7px; align-items: center; width: 265px; justify-content: flex-end; }
+.environment-right { display: flex; align-items: center; gap: 12px; justify-content: flex-end; width: 265px; }
+.environment-right .environment-live { width: auto; }
+.environment-live { font-size: 10px; color: var(--chrome-muted); display: flex; gap: 7px; align-items: center; justify-content: flex-end; }
+.font-scale-control { display: inline-flex; align-items: center; padding: 2px; border-radius: 6px; background: oklch(.18 .006 270); gap: 2px; border: 1px solid oklch(1 1 1 / 0.12); }
+.environment-bar .font-scale-btn { font-family: var(--font-sans); font-size: 11px; font-weight: 600; height: 26px; min-width: 28px; padding: 0 7px; color: var(--chrome-muted); border-radius: 4px; transition: all 0.15s ease; cursor: pointer; background: transparent; border: 1px solid transparent; display: inline-flex; align-items: center; justify-content: center; user-select: none; }
+.environment-bar .font-scale-btn:hover { background: var(--chrome-selected); color: #fff; }
+.environment-bar .font-scale-btn.selected { background: var(--primary); color: #fff; font-weight: 700; border-color: color-mix(in oklch, var(--primary) 70%, #fff); box-shadow: 0 1px 4px oklch(0.535 0.18 282 / 0.45); }
+.settings-scale { background: var(--muted); border: 1px solid var(--border); }
+.settings-scale .font-scale-btn { color: var(--muted-foreground); font-size: 11.5px; font-weight: 500; height: 28px; padding: 0 10px; border-radius: 4px; background: transparent; border: 1px solid transparent; transition: all 0.15s ease; }
+.settings-scale .font-scale-btn:hover { background: var(--card); color: var(--foreground); }
+.settings-scale .font-scale-btn.selected { background: var(--card); color: var(--primary); border-color: var(--border); box-shadow: var(--surface-shadow); font-weight: 600; }
 .online-dot { width: 6px; height: 6px; background: var(--success); display: inline-block; border-radius: 50%; flex-shrink: 0; }
 .desktop-shell { display: flex; height: calc(100vh - 50px); min-height: 0; flex: 1; overflow: hidden; }
 .app-sidebar { width: 220px; height: 100%; flex-shrink: 0; background: var(--sidebar); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 18px 12px 0; transition: width .2s; overflow-y: auto; overflow-x: hidden; }
@@ -879,8 +889,8 @@ kbd, .search-hint { border: 1px solid var(--border); border-radius: 4px; padding
 .profit-breakdown > .status-badge { margin-top: 8px; }
 @media(min-width:1500px) { .main-content { padding: 32px 38px; } .app-sidebar { width: 250px; } .data-table td { padding-block: 16px; } .metric-card h2 { font-size: 26px; } .metric-card:nth-child(2) h2 { font-size: 23px; } .stock-card { padding: 16px 18px; } }
 @media(max-width:1180px) { .seller-side-note { display: none; } }
-@media(max-width:1000px) { .app-sidebar { width: 195px; } .workspace-picker { gap: 8px; padding-inline: 0; } .workspace-picker strong { font-size: 12px; } .workspace-picker p { font-size: 10px; } .sidebar-link { font-size: 11.5px; gap: 8px; } .main-content { padding: 16px 14px; } .page-heading { flex-wrap: wrap; } .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .table-scroll { overflow-x: auto; } .orders-table { min-width: 760px; } .orders-toolbar { flex-wrap: wrap; height: auto; padding: 7px 12px; } .table-tabs { height: 37px; } .environment-brand,.environment-live { width: auto; } .import-layout { grid-template-columns: 1fr; } .landed-summary { max-width: none; } .property-table { min-width: 850px; } }
-@media(max-width:767px) { .environment-bar { padding: 0 12px; height: 52px; } .environment-brand { gap: 6px; } .environment-brand > span { font-size: 12px; } .environment-divider,.environment-live { display: none; } .environment-brand > span { font-size: 0; } .environment-brand > span::first-letter { font-size: 0; } .environment-switch button { font-size: 10px; padding: 0 10px; gap: 5px; } .mode-person { display: none; } .app-sidebar { position: fixed; inset: 52px auto 0 0; z-index: 30; width: 229px; transform: translateX(-100%); transition: transform .2s; } .app-sidebar.mobile-open { transform: translateX(0); } .app-sidebar.collapsed { width: 76px; } .sidebar-scrim { position: fixed; inset: 52px 0 0; background: oklch(.2 .01 270 / .4); z-index: 29; } .mobile-menu-toggle { display: inline-flex; width: 25px; height: 30px; } .main-header { height: 56px; padding: 0 15px; font-size: 10px; } .breadcrumb-workspace,.breadcrumb-slash { display: none; } .global-search { padding: 0; width: 24px; } .global-search span,.global-search kbd { display: none; } .header-actions { gap: 5px; } .main-content { padding: 24px 16px; } h1 { font-size: 25px; } .page-heading { margin-bottom: 22px; gap: 17px; } .page-heading p { font-size: 11px; line-height: 1.7; } .metric-grid { gap: 10px; } .metric-card { padding: 15px 12px; } .metric-card h2 { font-size: 24px; } .metric-card:nth-child(2) h2 { font-size: 19px; } .metric-footer { font-size: 8px; line-height: 1.5; } .metric-card > div:first-child > span:first-child { font-size: 9px; } .metric-icon { width: 23px; height: 23px; } .stock-grid { grid-template-columns: 1fr; gap: 9px; } .stock-card { flex-direction: row; gap: 12px; padding: 15px; } .stock-card .status-badge { display: inline-flex; } .stock-card > .sku-symbol { width: 34px; height: 38px; } .stock-numbers { gap: 15px; margin-top: 13px; } .stock-numbers b { font-size: 20px; } .section-heading > span { font-size: 9px; } .orders-section { margin-top: 24px; } .orders-toolbar { gap: 7px; padding: 7px 9px 10px; } .table-tabs { width: 100%; justify-content: space-between; } .table-tabs button { font-size: 10px; padding-inline: 6px; } .table-footer { padding: 12px; } .workflow-strip { padding: 16px 12px; gap: 18px; } .workflow-steps { width: 100%; gap: 5px; justify-content: space-between; } .workflow-steps > span { font-size: 7px; gap: 4px; } .workflow-steps > svg { width: 8px; } .step-number { width: 14px; height: 14px; font-size: 7px; } .app-footer { padding: 16px; font-size: 7px; } .app-footer > span:nth-child(2) { display: none; } .order-dialog { width: calc(100vw - 20px); border-radius: 8px; padding: 20px 16px; } .review-items { overflow-x: auto; } .review-items > div { gap: 7px; min-width: 290px; } .review-items input { width: 60px; } .review-items b { font-size: 10px; } .review-items strong { font-size: 10px; } .review-meta { gap: 15px; justify-content: space-between; } .review-profit { gap: 7px; font-size: 10px; } .review-profit strong { font-size: 11px; } .dialog-actions button { flex-grow: 1; font-size: 10px; } .seller-wrap { padding: 0; background: var(--background); min-height: calc(100vh - 52px); } .seller-phone { width: 100%; border: 0; border-radius: 0; box-shadow: none; min-height: calc(100vh - 52px); display: flex; flex-direction: column; } .seller-header { padding: 19px 20px 16px; } .seller-side-note { display: none; } .seller-body { padding-bottom: 25px; flex: 1; } .seller-nav { position: sticky; bottom: 0; z-index: 10; } .seller-body h1 { font-size: 23px; } .toast-message { bottom: 20px; font-size: 11px; } .metric-grid.three { grid-template-columns: 1fr; } .form-grid { gap: 12px; } .import-items > div { grid-template-columns: 30px 1fr 1fr; } .property-banner { height: 215px; } .property-banner > div { left: 20px; top: 22px; } .property-banner h2 { font-size: 27px; } .executive-bottom { grid-template-columns: 1fr; gap: 28px; } .chart-legend { font-size: 8px; gap: 9px; } .executive-chart .section-heading { align-items: flex-start; } .period-select { margin-top: 0; } }
+@media(max-width:1000px) { .app-sidebar { width: 195px; } .workspace-picker { gap: 8px; padding-inline: 0; } .workspace-picker strong { font-size: 12px; } .workspace-picker p { font-size: 10px; } .sidebar-link { font-size: 11.5px; gap: 8px; } .main-content { padding: 16px 14px; } .page-heading { flex-wrap: wrap; } .metric-grid { grid-template-columns: repeat(2,minmax(0,1fr)); } .table-scroll { overflow-x: auto; } .orders-table { min-width: 760px; } .orders-toolbar { flex-wrap: wrap; height: auto; padding: 7px 12px; } .table-tabs { height: 37px; } .environment-brand,.environment-live,.environment-right { width: auto; min-width: auto; } .import-layout { grid-template-columns: 1fr; } .landed-summary { max-width: none; } .property-table { min-width: 850px; } }
+@media(max-width:767px) { .environment-bar { padding: 0 12px; height: 52px; } .environment-brand { gap: 6px; } .environment-brand > span { font-size: 12px; } .environment-divider,.environment-live { display: none; } .environment-right { width: auto; min-width: auto; gap: 6px; } .environment-bar .font-scale-btn { min-width: 25px; height: 24px; padding: 0 5px; font-size: 10px; } .environment-brand > span { font-size: 0; } .environment-brand > span::first-letter { font-size: 0; } .environment-switch button { font-size: 10px; padding: 0 10px; gap: 5px; } .mode-person { display: none; } .app-sidebar { position: fixed; inset: 52px auto 0 0; z-index: 30; width: 229px; transform: translateX(-100%); transition: transform .2s; } .app-sidebar.mobile-open { transform: translateX(0); } .app-sidebar.collapsed { width: 76px; } .sidebar-scrim { position: fixed; inset: 52px 0 0; background: oklch(.2 .01 270 / .4); z-index: 29; } .mobile-menu-toggle { display: inline-flex; width: 25px; height: 30px; } .main-header { height: 56px; padding: 0 15px; font-size: 10px; } .breadcrumb-workspace,.breadcrumb-slash { display: none; } .global-search { padding: 0; width: 24px; } .global-search span,.global-search kbd { display: none; } .header-actions { gap: 5px; } .main-content { padding: 24px 16px; } h1 { font-size: 25px; } .page-heading { margin-bottom: 22px; gap: 17px; } .page-heading p { font-size: 11px; line-height: 1.7; } .metric-grid { gap: 10px; } .metric-card { padding: 15px 12px; } .metric-card h2 { font-size: 24px; } .metric-card:nth-child(2) h2 { font-size: 19px; } .metric-footer { font-size: 8px; line-height: 1.5; } .metric-card > div:first-child > span:first-child { font-size: 9px; } .metric-icon { width: 23px; height: 23px; } .stock-grid { grid-template-columns: 1fr; gap: 9px; } .stock-card { flex-direction: row; gap: 12px; padding: 15px; } .stock-card .status-badge { display: inline-flex; } .stock-card > .sku-symbol { width: 34px; height: 38px; } .stock-numbers { gap: 15px; margin-top: 13px; } .stock-numbers b { font-size: 20px; } .section-heading > span { font-size: 9px; } .orders-section { margin-top: 24px; } .orders-toolbar { gap: 7px; padding: 7px 9px 10px; } .table-tabs { width: 100%; justify-content: space-between; } .table-tabs button { font-size: 10px; padding-inline: 6px; } .table-footer { padding: 12px; } .workflow-strip { padding: 16px 12px; gap: 18px; } .workflow-steps { width: 100%; gap: 5px; justify-content: space-between; } .workflow-steps > span { font-size: 7px; gap: 4px; } .workflow-steps > svg { width: 8px; } .step-number { width: 14px; height: 14px; font-size: 7px; } .app-footer { padding: 16px; font-size: 7px; } .app-footer > span:nth-child(2) { display: none; } .order-dialog { width: calc(100vw - 20px); border-radius: 8px; padding: 20px 16px; } .review-items { overflow-x: auto; } .review-items > div { gap: 7px; min-width: 290px; } .review-items input { width: 60px; } .review-items b { font-size: 10px; } .review-items strong { font-size: 10px; } .review-meta { gap: 15px; justify-content: space-between; } .review-profit { gap: 7px; font-size: 10px; } .review-profit strong { font-size: 11px; } .dialog-actions button { flex-grow: 1; font-size: 10px; } .seller-wrap { padding: 0; background: var(--background); min-height: calc(100vh - 52px); } .seller-phone { width: 100%; border: 0; border-radius: 0; box-shadow: none; min-height: calc(100vh - 52px); display: flex; flex-direction: column; } .seller-header { padding: 19px 20px 16px; } .seller-side-note { display: none; } .seller-body { padding-bottom: 25px; flex: 1; } .seller-nav { position: sticky; bottom: 0; z-index: 10; } .seller-body h1 { font-size: 23px; } .toast-message { bottom: 20px; font-size: 11px; } .metric-grid.three { grid-template-columns: 1fr; } .form-grid { gap: 12px; } .import-items > div { grid-template-columns: 30px 1fr 1fr; } .property-banner { height: 215px; } .property-banner > div { left: 20px; top: 22px; } .property-banner h2 { font-size: 27px; } .executive-bottom { grid-template-columns: 1fr; gap: 28px; } .chart-legend { font-size: 8px; gap: 9px; } .executive-chart .section-heading { align-items: flex-start; } .period-select { margin-top: 0; } }
 @media(prefers-reduced-motion:reduce) { *, *:before,*:after { transition: none !important; animation: none !important; } }
 @media(max-width:767px) {
   .seller-nav { position: fixed; bottom: 0; left: 0; right: 0; z-index: 20; padding-bottom: max(8px,env(safe-area-inset-bottom)); }
@@ -932,4 +942,439 @@ kbd, .search-hint { border: 1px solid var(--border); border-radius: 4px; padding
   box-shadow: 0 12px 28px -10px oklch(0.2 0.05 265 / 0.12);
   border-color: oklch(0.535 0.18 282 / 0.35);
 }
+
+/* ==========================================================================
+   Acessibilidade & Conforto Visual (Sr. Sérgio)
+   Modos de Tamanho de Fonte: Normal, Grande (A+), Extra Grande (A++)
+   ========================================================================== */
+
+html.font-scale-large {
+  font-size: 112.5%; /* 18px */
+}
+html.font-scale-xlarge {
+  font-size: 125%; /* 20px */
+}
+
+.app-shell.font-scale-large {
+  font-size: 14.5px;
+}
+.app-shell.font-scale-xlarge {
+  font-size: 16px;
+}
+
+/* --- FONT SCALE: LARGE (A+) --- */
+.font-scale-large .text-\[8px\],
+.font-scale-large .text-\[8\.5px\],
+.font-scale-large .text-\[9px\],
+.font-scale-large .text-\[10px\] {
+  font-size: 11.5px !important;
+}
+.font-scale-large .text-\[11px\],
+.font-scale-large .text-\[11\.5px\] {
+  font-size: 12.5px !important;
+}
+.font-scale-large .text-xs {
+  font-size: 13px !important;
+}
+.font-scale-large .text-sm {
+  font-size: 15px !important;
+}
+.font-scale-large .eyebrow {
+  font-size: 10.5px;
+}
+.font-scale-large .search-hint {
+  font-size: 11px;
+}
+
+/* Inputs & Form Fields */
+.font-scale-large input,
+.font-scale-large select,
+.font-scale-large textarea,
+.font-scale-large .form-input {
+  font-size: 14px;
+}
+.font-scale-large .price-input {
+  font-size: 13.5px;
+  width: 75px;
+}
+
+/* Badges & States */
+.font-scale-large .status-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  font-weight: 600;
+}
+.font-scale-large .fiscal-state {
+  font-size: 12px;
+}
+.font-scale-large .table-tabs span {
+  font-size: 11.5px;
+}
+.font-scale-large .step-number {
+  font-size: 11px;
+}
+
+/* Tables & Data Lists */
+.font-scale-large .data-table {
+  font-size: 13.5px;
+}
+.font-scale-large .data-table th {
+  font-size: 12px;
+  padding: 11px 16px;
+}
+.font-scale-large .data-table td {
+  padding: 13px 16px;
+}
+.font-scale-large .data-table strong {
+  font-size: 14.5px;
+}
+.font-scale-large .data-table p {
+  font-size: 12px;
+}
+.font-scale-large .orders-table td:first-child strong {
+  font-size: 14.5px;
+}
+.font-scale-large .client-cell strong {
+  font-size: 14.5px;
+}
+.font-scale-large .client-cell p {
+  font-size: 12.5px;
+}
+.font-scale-large .table-tabs button {
+  font-size: 13px;
+}
+.font-scale-large .table-footer {
+  font-size: 12.5px;
+}
+
+/* Navigation & Sidebar */
+.font-scale-large .sidebar-link {
+  font-size: 12.5px;
+  height: 42px;
+}
+.font-scale-large .sidebar-section-label {
+  font-size: 10.5px;
+}
+.font-scale-large .workspace-picker strong {
+  font-size: 13.5px;
+}
+.font-scale-large .workspace-picker p {
+  font-size: 11px;
+}
+.font-scale-large .profile-button strong {
+  font-size: 11.5px;
+}
+.font-scale-large .profile-button p {
+  font-size: 10.5px;
+}
+
+/* Metrics & Spotlights */
+.font-scale-large .metric-card h2 {
+  font-size: 19px;
+}
+.font-scale-large .metric-card > div:first-child > span:first-child {
+  font-size: 11px;
+}
+.font-scale-large .metric-footer {
+  font-size: 9.5px;
+}
+.font-scale-large .stock-card strong {
+  font-size: 15px;
+}
+.font-scale-large .stock-category {
+  font-size: 12px;
+}
+.font-scale-large .stock-numbers span {
+  font-size: 11px;
+}
+.font-scale-large .stock-numbers b {
+  font-size: 20px;
+}
+
+/* Dialogs & Rows */
+.font-scale-large .settings-row,
+.font-scale-large .attention-row strong {
+  font-size: 13.5px;
+}
+.font-scale-large .settings-row strong {
+  font-size: 14px;
+}
+.font-scale-large .attention-row p {
+  font-size: 11.5px;
+}
+
+/* Seller (Força de Vendas / Sr. Sérgio) */
+.font-scale-large .seller-header strong {
+  font-size: 15px;
+}
+.font-scale-large .seller-stock span {
+  font-size: 11.5px;
+}
+.font-scale-large .seller-stock b {
+  font-size: 21px;
+}
+.font-scale-large .seller-stock small {
+  font-size: 10px;
+}
+.font-scale-large .visit-title {
+  font-size: 15.5px;
+}
+.font-scale-large .visit-note {
+  font-size: 11.5px;
+}
+.font-scale-large .seller-nav button {
+  font-size: 10.5px;
+}
+.font-scale-large .segmented button {
+  font-size: 11.5px;
+}
+.font-scale-large .last-prices span {
+  font-size: 11px;
+}
+.font-scale-large .last-prices b {
+  font-size: 14.5px;
+}
+.font-scale-large .client-details {
+  font-size: 13.5px;
+}
+.font-scale-large .history-row strong {
+  font-size: 12.5px;
+}
+.font-scale-large .history-row p {
+  font-size: 10.5px;
+}
+.font-scale-large .history-row b {
+  font-size: 12.5px;
+}
+.font-scale-large .product-order h3 {
+  font-size: 13.5px;
+}
+.font-scale-large .quantity-control button {
+  font-size: 14px;
+}
+.font-scale-large .quantity-control input {
+  font-size: 14.5px;
+}
+.font-scale-large .profit-box h2 {
+  font-size: 32px;
+}
+.font-scale-large .profit-breakdown > div {
+  font-size: 11.5px;
+}
+.font-scale-large .profit-breakdown b {
+  font-size: 12.5px;
+}
+
+/* --- FONT SCALE: EXTRA LARGE (A++) --- */
+.font-scale-xlarge .text-\[8px\],
+.font-scale-xlarge .text-\[8\.5px\],
+.font-scale-xlarge .text-\[9px\],
+.font-scale-xlarge .text-\[10px\] {
+  font-size: 13px !important;
+}
+.font-scale-xlarge .text-\[11px\],
+.font-scale-xlarge .text-\[11\.5px\] {
+  font-size: 14px !important;
+}
+.font-scale-xlarge .text-xs {
+  font-size: 14.5px !important;
+}
+.font-scale-xlarge .text-sm {
+  font-size: 16.5px !important;
+}
+.font-scale-xlarge .eyebrow {
+  font-size: 11.5px;
+}
+.font-scale-xlarge .search-hint {
+  font-size: 12px;
+}
+
+/* Inputs & Form Fields */
+.font-scale-xlarge input,
+.font-scale-xlarge select,
+.font-scale-xlarge textarea,
+.font-scale-xlarge .form-input {
+  font-size: 15.5px;
+}
+.font-scale-xlarge .price-input {
+  font-size: 15px;
+  width: 85px;
+}
+
+/* Badges & States */
+.font-scale-xlarge .status-badge {
+  font-size: 13px;
+  padding: 5px 12px;
+  font-weight: 600;
+}
+.font-scale-xlarge .fiscal-state {
+  font-size: 13px;
+}
+.font-scale-xlarge .table-tabs span {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .step-number {
+  font-size: 12px;
+}
+
+/* Tables & Data Lists */
+.font-scale-xlarge .data-table {
+  font-size: 15px;
+}
+.font-scale-xlarge .data-table th {
+  font-size: 13px;
+  padding: 12px 18px;
+}
+.font-scale-xlarge .data-table td {
+  padding: 14px 18px;
+}
+.font-scale-xlarge .data-table strong {
+  font-size: 16px;
+}
+.font-scale-xlarge .data-table p {
+  font-size: 13px;
+}
+.font-scale-xlarge .orders-table td:first-child strong {
+  font-size: 16px;
+}
+.font-scale-xlarge .client-cell strong {
+  font-size: 16px;
+}
+.font-scale-xlarge .client-cell p {
+  font-size: 13.5px;
+}
+.font-scale-xlarge .table-tabs button {
+  font-size: 14px;
+}
+.font-scale-xlarge .table-footer {
+  font-size: 13.5px;
+}
+
+/* Navigation & Sidebar */
+.font-scale-xlarge .sidebar-link {
+  font-size: 13.5px;
+  height: 44px;
+}
+.font-scale-xlarge .sidebar-section-label {
+  font-size: 11.5px;
+}
+.font-scale-xlarge .workspace-picker strong {
+  font-size: 15px;
+}
+.font-scale-xlarge .workspace-picker p {
+  font-size: 12px;
+}
+.font-scale-xlarge .profile-button strong {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .profile-button p {
+  font-size: 11.5px;
+}
+
+/* Metrics & Spotlights */
+.font-scale-xlarge .metric-card h2 {
+  font-size: 21px;
+}
+.font-scale-xlarge .metric-card > div:first-child > span:first-child {
+  font-size: 12px;
+}
+.font-scale-xlarge .metric-footer {
+  font-size: 10.5px;
+}
+.font-scale-xlarge .stock-card strong {
+  font-size: 16.5px;
+}
+.font-scale-xlarge .stock-category {
+  font-size: 13px;
+}
+.font-scale-xlarge .stock-numbers span {
+  font-size: 12px;
+}
+.font-scale-xlarge .stock-numbers b {
+  font-size: 22px;
+}
+
+/* Dialogs & Rows */
+.font-scale-xlarge .settings-row,
+.font-scale-xlarge .attention-row strong {
+  font-size: 15px;
+}
+.font-scale-xlarge .settings-row strong {
+  font-size: 15.5px;
+}
+.font-scale-xlarge .attention-row p {
+  font-size: 13px;
+}
+
+/* Seller (Força de Vendas / Sr. Sérgio) */
+.font-scale-xlarge .seller-header strong {
+  font-size: 16.5px;
+}
+.font-scale-xlarge .seller-stock span {
+  font-size: 12px;
+}
+.font-scale-xlarge .seller-stock b {
+  font-size: 23px;
+}
+.font-scale-xlarge .seller-stock small {
+  font-size: 11px;
+}
+.font-scale-xlarge .visit-title {
+  font-size: 17px;
+}
+.font-scale-xlarge .visit-note {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .seller-nav button {
+  font-size: 11.5px;
+}
+.font-scale-xlarge .segmented button {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .last-prices span {
+  font-size: 12px;
+}
+.font-scale-xlarge .last-prices b {
+  font-size: 15.5px;
+}
+.font-scale-xlarge .client-details {
+  font-size: 14.5px;
+}
+.font-scale-xlarge .history-row strong {
+  font-size: 13.5px;
+}
+.font-scale-xlarge .history-row p {
+  font-size: 11.5px;
+}
+.font-scale-xlarge .history-row b {
+  font-size: 13.5px;
+}
+.font-scale-xlarge .product-order h3 {
+  font-size: 14.5px;
+}
+.font-scale-xlarge .quantity-control button {
+  font-size: 15px;
+}
+.font-scale-xlarge .quantity-control input {
+  font-size: 15.5px;
+}
+.font-scale-xlarge .profit-box h2 {
+  font-size: 34px;
+}
+.font-scale-xlarge .profit-breakdown > div {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .profit-breakdown b {
+  font-size: 13.5px;
+}
+
+/* Desktop Seller Phone enlargement (390px/408px -> 440px) */
+@media (min-width: 768px) {
+  .font-scale-large .seller-phone,
+  .font-scale-xlarge .seller-phone {
+    width: 440px;
+    max-width: 90vw;
+  }
+}
+
 
