@@ -53,7 +53,7 @@
   <!-- Layout Principal -->
   <div class="docs-layout">
     
-    <!-- Sidebar de Navegação -->
+    <!-- Sidebar de Navegação Completa -->
     <aside class="docs-sidebar">
       <div class="sidebar-heading">Documentação Oficial</div>
       <ul class="nav-doc-list">
@@ -88,6 +88,18 @@
           </a>
         </li>
         <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
           <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
             <span class="nav-doc-icon">🚀</span>
             <span>Guia de Implantação</span>
@@ -97,6 +109,28 @@
           <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
             <span class="nav-doc-icon">📑</span>
             <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-heading">Acesso Rápido ao Código</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="../automacao-planilha/README.md">
+            <span class="nav-doc-icon">📦</span>
+            <span>Módulo da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../backend/pom.xml">
+            <span class="nav-doc-icon">☕</span>
+            <span>Backend Spring Boot</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../frontend/package.json">
+            <span class="nav-doc-icon">⚛️</span>
+            <span>Frontend React / Vite</span>
           </a>
         </li>
       </ul>
@@ -110,105 +144,168 @@
           <div class="doc-breadcrumbs">
             <a href="index.html">Docs</a>
             <span>/</span>
-            <span>Manuais de Usuário</span>
+            <span>Guias do Usuário</span>
             <span>/</span>
-            <span>Manual Operacional do ERP</span>
+            <span>Manual do ERP Web</span>
           </div>
           <h1 class="doc-title">🖥️ Manual Operacional do ERP — TotalTrigo Web</h1>
           <p class="doc-lead">
-            Guia completo de utilização das telas operacionais do 4S ERP: Força de Vendas de Campo no celular (Sr. Sérgio), Mesa de Pré-Nota e Faturamento (Gabriel), Romaneio Cego e Calculadora de Lotes de Importação.
+            Guia completo de uso do App Mobile de Vendas em Campo (Sr. Sérgio) e do Backoffice Web Integrado em 6 módulos (Gabriel Furtado e Expedição), cobrindo regras fiscais, emissão de boletos BQ, relatórios executivos e ergonomia.
           </p>
         </div>
 
-        <h2>👥 Personas e Perfis de Acesso</h2>
+        <h2>👥 Perfis de Acesso e Alternância Rápida</h2>
+        <p>O cabeçalho superior permite alternar instantaneamente entre os 3 perfis de operação do sistema:</p>
+
         <div class="mermaid-wrapper">
           <pre class="mermaid">
-flowchart LR
-    A["Sr. Sérgio<br/>(Vendas em Campo / Balcão da Padaria)"] -->|Smartphone / Tablet| M1["App Mobile Field Sales"]
-    B["Gabriel<br/>(Backoffice / Faturamento / Importação)"] -->|Desktop / Notebook| M2["Mesa Pré-Nota & Gestão"]
-    C["Equipe de Galpão / Motoristas"] -->|Papel ou WhatsApp| M3["Romaneio Cego de Separação"]
+flowchart TD
+    A["Seletor de Perfis no Topo"] --> P1["Gabriel Furtado<br/>(Backoffice & Fiscal)"]
+    A --> P2["Sérgio Soares<br/>(Sócio & Vendas de Rua)"]
+    A --> P3["Expedição · Romaneio Cego<br/>(Galpão & Motoristas)"]
+
+    P1 --> O1["Acesso completo aos 6 módulos<br/>Mesa, Boletos, Cadastros, Auditoria, Importação e Visão Executiva"]
+    P2 --> O2["App Mobile PWA Offline & Backoffice<br/>Radar de Recompra, Ficha 360°, Tabela por Padaria"]
+    P3 --> O3["Acesso exclusivo ao Romaneio Cego (DQ)<br/>Custos, preços, impostos e margens estritamente ocultos"]
           </pre>
         </div>
 
-        <h2>📱 Módulo 1: App Mobile Field Sales (Sr. Sérgio)</h2>
-        <p>Desenvolvido sob medida para operação em pé no balcão da padaria em smartphones, com botões amplos e dados essenciais à vista:</p>
-
-        <h3>1. Radar de Recompra e Agenda de Hoje (Tela 1)</h3>
-        <ul>
-          <li><strong>Visitas do Dia</strong>: Lista ordenada das padarias agendadas para o dia;</li>
-          <li><strong>Radar Inteligente de Recompra</strong>: Dispara um alerta automático quando o cliente ultrapassa o ciclo médio de consumo (ex: ciclo habitual de 20 dias, porém sem compras há 22 dias);</li>
-          <li><strong>Semáforo Financeiro</strong>:
-            <ul>
-              <li><span class="badge badge-success">✓ Em dia</span>: Cliente liberado para novos pedidos;</li>
-              <li><span class="badge badge-danger">1 boleto vencido</span>: Alerta em vermelho para o vendedor cobrar cordialidade antes de tirar novo pedido.</li>
-            </ul>
-          </li>
-          <li><strong>Pré-Cadastro Rápido por CNPJ</strong>:
-            <p>Ao visitar uma padaria nova, o vendedor toca em <strong>"+ Pré-Cadastro por CNPJ"</strong>, digita os 14 dígitos e a <strong>BrasilAPI</strong> preenche em 1 segundo a Razão Social, Fantasia, Endereço e Código IBGE.</p>
-          </li>
-        </ul>
-
-        <h3>2. Ficha 360º do Cliente (Tela 2)</h3>
-        <ul>
-          <li><strong>Memória de Preço por SKU</strong>: Exibe o último preço cobrado na Farinha Tipo 1, Pré-Mistura e Pão Doce, eliminando desconfiança de preços entre visitas;</li>
-          <li><strong>Caderno de Notas da Visita</strong>: Anotações operacionais rápidas (ex: <em>"Dono prefere entregas nas terças de manhã pelo portão dos fundos"</em>);</li>
-          <li><strong>Condição de Pagamento</strong>: Exibe prazos negociados (ex: <em>Boleto 28 dias</em> ou <em>Semanal 7/14/21/28 dias</em>).</li>
-        </ul>
-
-        <h3>3. Lançador de Pedidos com Proteção de Margem (Tela 3)</h3>
-        <ul>
-          <li><strong>Seleção dos 3 SKUs</strong>: Botões de incremento rápido (+5, +10, +50 sacas de 25kg);</li>
-          <li><strong>Negociação de Preço Unitário</strong>: Permite aplicar descontos dentro das diretrizes comerciais;</li>
-        </ul>
-
-        <div class="callout important">
-          <div class="callout-title">🔒 Proteção de Margem (Anti-Curioso)</div>
-          <p>O quadro de Lucro Líquido Real, Custo Landed e Frete permanece <strong>oculto por padrão</strong>. O vendedor pode expandi-lo com um toque discreto enquanto o comprador não estiver olhando para a tela, protegendo a rentabilidade da Total Trigo.</p>
+        <h2>🔍 Acessibilidade e Ergonomia em Campo (Escala de Fontes)</h2>
+        <p>
+          Pensando no conforto visual durante o trabalho externo em campo sob luz solar ou em telas de tamanhos variados, o sistema possui controle de zoom de fonte rápido:
+        </p>
+        <div class="grid grid-3" style="margin-bottom: 24px;">
+          <div class="card">
+            <div class="card-title">A (Normal)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted);">
+              Escala padrão (100%), ideal para monitores desktop de alta resolução e notebooks no escritório.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-title">A+ (Grande)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted);">
+              Escala ampliada (+15%), otimizada para tablets ou navegação em notebooks com toque.
+            </p>
+          </div>
+          <div class="card">
+            <div class="card-title">A++ (Extra Grande)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted);">
+              Escala ampliada (+30%) com botões mais largos, excelente para o Sr. Sérgio no celular dentro das padarias.
+            </p>
+          </div>
         </div>
 
-        <p>Ao confirmar, o pedido entra no sistema com o status <code>AGUARDANDO_REVISAO</code> e reserva o estoque imediatamente.</p>
+        <h2>📱 Módulo Mobile: Vendas de Campo (Sr. Sérgio)</h2>
 
-        <h2>💻 Módulo 2: Mesa de Conferência Pré-Nota (Gabriel)</h2>
-        <p>Painel desktop de alta produtividade para conferência fiscal, faturamento e logística:</p>
-
-        <h3>1. Mesa de Pedidos em Tempo Real</h3>
-        <p>Exibe os pedidos recebidos da rua com semáforo de prontidão fiscal:</p>
+        <h3>1. Radar de Recompra & PWA com Fila Offline</h3>
         <ul>
-          <li><span class="badge badge-success">Pronto para Faturar</span>: CNPJ, Inscrição Estadual e Código IBGE 7 dígitos validados;</li>
-          <li><span class="badge badge-wheat">Cadastro Incompleto</span>: Botão <strong>"Completar Cadastro Fiscal"</strong> busca os dados na Receita Federal em 1 clique.</li>
+          <li><strong>PWA & Fila Offline</strong>: Operando com Service Worker (<code>sw.js</code>), caso o vendedor esteja no subsolo ou em área sem sinal 4G/5G, o pedido é armazenado em fila local e transmitido automaticamente ao reencontrar conectividade.</li>
+          <li><strong>Radar Inteligente</strong>: Analisa o ciclo de consumo histórico de cada padaria. Clientes com pedidos atrasados em relação ao ciclo regular aparecem destacados no topo.</li>
+          <li><strong>Semáforo de Crédito</strong>:
+            <span class="badge badge-success">🟢 Em dia</span> permite fechamento direto;
+            <span class="badge badge-danger">🔴 Boleto Vencido</span> emite alerta cordial para alinhar cobrança antes da descarga.
+          </li>
         </ul>
 
-        <h3>2. Ajuste Comercial vs. Fiscal</h3>
-        <p>
-          Permite ajustar a quantidade de sacas ou o valor que vai para a NF-e sem apagar o pedido comercial original registrado pelo vendedor na rua, mantendo o histórico de auditoria intacto.
-        </p>
-
-        <h3>3. Emissão do Romaneio Cego de Separação</h3>
-        <p>
-          Ao mover o pedido para <code>EM_SEPARACAO</code>, gera uma folha de romaneio limpa para impressão ou WhatsApp:
-        </p>
+        <h3>2. Ficha 360º do Cliente</h3>
         <ul>
-          <li><strong>Oculta</strong>: Preços em Reais, margens de lucro e valores fiscais;</li>
-          <li><strong>Exibe</strong>: Nome da padaria, endereço completo, quantidade de sacas de cada SKU e instruções de entrega.</li>
+          <li><strong>Memória de Preços por SKU</strong>: Exibe o último preço praticado para Farinha Tipo 1, Pré-Mistura e Pão Doce, evitando atritos comerciais.</li>
+          <li><strong>Caderno de Notas Operacionais</strong>: Histórico de anotações práticas sobre horários preferidos de entrega e particularidades de cada padaria.</li>
+          <li><strong>Pré-Cadastro Rápido com BrasilAPI</strong>: Inserindo apenas o CNPJ de 14 dígitos, o sistema completa Razão Social, Fantasia, Bairro, CEP e Código IBGE 7 dígitos em segundos.</li>
         </ul>
 
-        <h3>4. Transmissão e Emissão da NF-e</h3>
-        <p>
-          Ao clicar em <strong>"Emitir NF-e"</strong>, o sistema gera a chave de 44 dígitos oficial, o arquivo XML 4.00, baixa o estoque físico definitivo (<code>physicalStock</code>) e atualiza o pedido para <code>FATURADO</code>.
-        </p>
+        <h3>3. Lançador de Pedidos com Proteção Anti-Curioso</h3>
+        <ul>
+          <li><strong>Seleção por Sacas de 25 kg</strong>: Incrementos velozes (+5, +10, +50 sacas).</li>
+          <li><strong>Card de Rentabilidade Ocultável</strong>: Custo Landed, Frete por Saca e Margem Líquida ficam ocultos na tela inicial para que o dono da padaria não visualize o lucro da operação. Um toque rápido expande o painel sigiloso.</li>
+          <li><strong>Reserva Automática de Estoque</strong>: O pedido registrado na rua entra como <code>AGUARDANDO_REVISAO</code> e reserva imediatamente as sacas no galpão (<code>reservedStock</code>).</li>
+        </ul>
 
-        <h2>🚢 Módulo 3: Calculadora de Landed Cost (Importação)</h2>
-        <p>Módulo para rateio de carretas de trigo importadas do Mercosul (Argentina/Uruguai):</p>
-        <ol>
-          <li>Insira a cotação PTAX USD do dia do desembaraço aduaneiro;</li>
-          <li>Declare o FOB USD total e o frete internacional rodoviário em Reais;</li>
-          <li>Declare os impostos de importação (II, PIS/COFINS) e despesas de despacho;</li>
-          <li>O sistema rateia os custos proporcionalmente por saca e atualiza o <code>currentLandedCost</code> no catálogo de produtos.</li>
-        </ol>
+        <h2>💻 Módulo Desktop: Backoffice Integrado em 6 Módulos (Gabriel)</h2>
+
+        <div class="grid grid-2" style="margin-bottom: 24px;">
+          
+          <div class="card">
+            <div class="card-title">1. Mesa de Conferência (<code>orders</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Fila em tempo real dos pedidos da rua para auditoria, conciliação e faturamento:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Farol de Margem</strong>: Verde (≥ 20%), Amarelo (7% a 20%), Vermelho (&lt; 7%);</li>
+              <li><strong>Desacoplamento DQ vs BQ</strong>: Ajuste de sacas físicas entregues (DQ) vs sacas faturadas em nota fiscal (BQ);</li>
+              <li><strong>Emissão de NF-e</strong>: Emissão com chave de acesso de 44 dígitos oficial e XML 4.00;</li>
+              <li><strong>Impressão Fiscal</strong>: Geração visual de DANFE de Retenção (Base BQ) e Romaneio Cego de Carga (Base DQ);</li>
+              <li><strong>Eventos Fiscais</strong>: Carta de Correção Eletrônica (CC-e) e Registro de Devolução.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">2. Boletos & Recebíveis (<code>receivables</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Gestão de Contas a Receber gerado sobre a faturamento:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Cálculo Estrito sobre BQ</strong>: Boletos gerados com precisão centesimal sobre a base faturada em nota fiscal;</li>
+              <li><strong>Prazos Comerciais</strong>: Emissão em parcela única a 28 dias ou parcelas semanais 14/28 dias;</li>
+              <li><strong>Baixa Manual de Títulos</strong>: Liquidação de recebíveis pelo Gabriel com registro de operador e timestamp;</li>
+              <li><strong>Controle de Inadimplência</strong>: Bloqueio automático de limite e semáforo vermelho para títulos vencidos.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">3. Cadastros & Estoque (<code>registrations</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Gestão centralizada da carteira de padarias e saldos de galpão:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Visão Tripla de Estoque</strong>: Acompanhamento de Estoque Físico (DQ), Reservado, Disponível e Saldo Base Acumulado (BQ);</li>
+              <li><strong>Cadastro de Clientes</strong>: Validação de Inscrição Estadual, indicador de IE (Contribuinte / Isento) e Código IBGE 7 dígitos;</li>
+              <li><strong>Tabelas Customizadas</strong>: Ajuste de preços diferenciados por cliente e memória de negociação.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">4. Trilha de Auditoria (<code>audit</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Registro imutável para total transparência e governança societária:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Rastreabilidade de Ações</strong>: Registro de entradas de lotes, emissões de notas, novos pedidos e baixas financeiras;</li>
+              <li><strong>Dados do Registro</strong>: Operador responsável (Gabriel ou Sérgio), papel funcional, data, hora e entidade modificada;</li>
+              <li><strong>Conformidade Contábil</strong>: Previne alterações silenciosas e garante conciliação com o contador.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">5. Importação & Landed Cost (<code>import</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Nacionalização e precificação de carretas de trigo importadas:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Composição de Custo</strong>: PTAX USD, FOB Dólar, Frete Internacional e Despesas Aduaneiras;</li>
+              <li><strong>Regra de Entrada</strong>: Na nacionalização da carreta de importação, a paridade é total: <strong>BQ = DQ</strong>;</li>
+              <li><strong>Custo Médio Ponderado (CMP)</strong>: Atualização automática do custo base dos SKUs no inventário.</li>
+            </ul>
+          </div>
+
+          <div class="card">
+            <div class="card-title">6. Visão Executiva (<code>executive</code>)</div>
+            <p style="font-size: 14px; color: var(--color-text-muted); margin-bottom: 12px;">
+              Painel de indicadores de desempenho financeiro e comercial:
+            </p>
+            <ul style="font-size: 13.5px; padding-left: 18px; margin: 0;">
+              <li><strong>Faturamento Consolidado</strong>: Receita bruta apurada sobre a Base BQ no período;</li>
+              <li><strong>Margem Líquida Real (%)</strong>: Rentabilidade deduzidos o CMV ponderado, impostos (8%) e frete (DQ × R$ 4,00);</li>
+              <li><strong>Volume Expedido</strong>: Total de sacas físicas entregues nas padarias parceiras;</li>
+              <li><strong>Liquidez de Boletos</strong>: Gráficos de títulos em aberto, vencidos e liquidados.</li>
+            </ul>
+          </div>
+
+        </div>
 
         <div class="doc-footer">
           <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
-          <span>Versão da Release: Outubro/2026</span>
+          <span>Versão da Release: Outubro/2026 • Build Alinhado com Backoffice 6 Módulos</span>
         </div>
 
       </article>

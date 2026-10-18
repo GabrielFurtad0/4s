@@ -241,21 +241,24 @@ function Index() {
           </Button>
         </div>
         <div className="environment-right">
-          <button
-            type="button"
-            onClick={() => setInfo('profile')}
-            className="flex items-center gap-2 bg-card/60 hover:bg-card border border-border/80 hover:border-border text-foreground rounded-md px-2.5 py-1 text-xs font-medium transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
-            aria-label="Perfil operacional ativo"
-            title="Clique para alternar o perfil operacional"
-          >
-            <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+          <div className="relative flex items-center bg-card/80 hover:bg-card border border-border/80 hover:border-primary/50 text-foreground rounded-lg pl-2 pr-2.5 py-1 text-xs font-medium transition-all shadow-2xs group focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary">
+            <span className="flex items-center justify-center size-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0 pointer-events-none">
               {getProfileInitials(activeProfile)}
             </span>
-            <span className="font-semibold text-xs text-foreground tracking-tight max-w-[130px] sm:max-w-none truncate">
-              {getProfileShortName(activeProfile)}
-            </span>
-            <ChevronsUpDown size={13} className="text-muted-foreground ml-0.5 shrink-0" />
-          </button>
+            <select
+              value={activeProfile}
+              onChange={e => handleProfileChange(e.target.value as UserRoleProfile)}
+              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pl-1.5 pr-4 appearance-none py-0.5 tracking-tight"
+              aria-label="Selecionar perfil operacional"
+            >
+              {PROFILES_CONFIG.map(p => (
+                <option key={p.id} value={p.id} className="bg-popover text-popover-foreground py-1 font-medium">
+                  {p.name.split(' · ')[0]} ({p.badge})
+                </option>
+              ))}
+            </select>
+            <ChevronDown size={13} className="text-muted-foreground group-hover:text-foreground absolute right-2 pointer-events-none shrink-0 transition-colors" />
+          </div>
           <div className="font-scale-control" role="group" aria-label="Tamanho da letra (Conforto visual)">
             <Button
               type="button"
@@ -406,20 +409,20 @@ function Index() {
                   const ModIcon = currentMod?.icon ?? FileCheck2;
                   const modLabel = currentMod?.label ?? 'Mesa de conferência';
                   return (
-                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary/10 text-primary font-bold text-sm tracking-tight border border-primary/20">
-                      <ModIcon size={16} className="text-primary shrink-0" />
+                    <div className="inline-flex items-center gap-1.5 text-foreground font-semibold text-sm tracking-tight select-none">
+                      <ModIcon size={15} className="text-muted-foreground shrink-0" />
                       <span>{modLabel}</span>
                     </div>
                   );
                 })()}
               </div>
 
-              {/* Centro da Navbar: Barra de busca destacada centralizada (substitui o título duplicado) */}
-              <div className="hidden md:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-auto z-10">
+              {/* Centro da Navbar: Barra de busca no fluxo natural flex sem absolute */}
+              <div className="hidden md:flex items-center justify-center flex-1 max-w-xs lg:max-w-md mx-3">
                 <Button
                   type="button"
                   variant="outline"
-                  className="global-search header-center-search h-8 px-3.5 w-72 lg:w-96 justify-between bg-muted/40 hover:bg-muted/80 border-border/70 text-xs text-muted-foreground hover:text-foreground shadow-2xs transition-colors rounded-lg"
+                  className="global-search header-center-search h-8 px-3.5 w-full justify-between bg-muted/40 hover:bg-muted/80 border-border/70 text-xs text-muted-foreground hover:text-foreground shadow-2xs transition-colors rounded-lg"
                   onClick={() => setGlobalSearch(true)}
                   aria-label="Buscar pedidos, clientes ou atalhos"
                 >
@@ -431,7 +434,7 @@ function Index() {
                 </Button>
               </div>
 
-              <div className="header-actions">
+              <div className="header-actions shrink-0">
                 {module === 'orders' && (
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={exportOrdersCsv}>

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Manual da Automação de Planilha — TotalTrigo / 4S ERP</title>
+  <title>Manual da Planilha — TotalTrigo / 4S ERP</title>
   <link rel="stylesheet" href="assets/docs.css">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
@@ -34,9 +34,9 @@
       <div class="brand-info">
         <div class="brand-title-row">
           <span class="brand-name">4S ERP</span>
-          <span class="brand-badge">Automação NF-e</span>
+          <span class="brand-badge">Automação Excel</span>
         </div>
-        <span class="brand-tagline">TotalTrigo — Gestão de Estoques</span>
+        <span class="brand-tagline">TotalTrigo — Sincronizador de Estoque</span>
       </div>
     </a>
 
@@ -45,7 +45,7 @@
         🖨️ Imprimir / PDF
       </button>
       <a href="../automacao-planilha/executar.bat" class="btn-header primary">
-        ⚡ Executar Robô
+        ⚡ Executar Script
       </a>
     </div>
   </header>
@@ -53,7 +53,7 @@
   <!-- Layout Principal -->
   <div class="docs-layout">
     
-    <!-- Sidebar de Navegação -->
+    <!-- Sidebar de Navegação Completa -->
     <aside class="docs-sidebar">
       <div class="sidebar-heading">Documentação Oficial</div>
       <ul class="nav-doc-list">
@@ -88,6 +88,18 @@
           </a>
         </li>
         <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
           <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
             <span class="nav-doc-icon">🚀</span>
             <span>Guia de Implantação</span>
@@ -97,6 +109,28 @@
           <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
             <span class="nav-doc-icon">📑</span>
             <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-heading">Acesso Rápido ao Código</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="../automacao-planilha/README.md">
+            <span class="nav-doc-icon">📦</span>
+            <span>Módulo da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../backend/pom.xml">
+            <span class="nav-doc-icon">☕</span>
+            <span>Backend Spring Boot</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../frontend/package.json">
+            <span class="nav-doc-icon">⚛️</span>
+            <span>Frontend React / Vite</span>
           </a>
         </li>
       </ul>
@@ -116,14 +150,48 @@
           </div>
           <h1 class="doc-title">📊 Manual de Uso e Operação — Automação da Planilha de Estoques</h1>
           <p class="doc-lead">
-            Guia operacional completo do módulo <code>automacao-planilha/</code>. Automatização de leitura direta de arquivos XML de NF-e, mapeamento de abas contábeis, prevenção de duplicidades e atualização segura do Excel.
+            Guia operacional completo do módulo <code>automacao-planilha/</code>. Automatização de leitura direta de arquivos XML de NF-e, sincronização em tempo real via ERP (<code>SpreadsheetSyncService</code>), mapeamento de abas contábeis e proteção do Excel.
           </p>
         </div>
 
         <h2>🎯 Objetivo da Automação</h2>
         <p>
-          Substituir integralmente a digitação manual de saídas de estoque no Microsoft Excel. O robô em Python lê diretamente os arquivos XML de emissão de NF-e (layout 4.00 nacional) ou pacotes compactados em ZIP, identifica os itens faturados, distribui entre as três abas de produtos e insere as saídas com fórmulas dinâmicas de saldo, preservando a integridade contábil e os saldos históricos.
+          Substituir integralmente a digitação manual de saídas de estoque no Excel. O robô em Python 3 lê diretamente arquivos XML de notas fiscais (NF-e layout 4.00), extrai chaves de acesso, identifica produtos e lança as saídas preservando fórmulas dinâmicas de saldo, formatação de células e integridade histórica.
         </p>
+
+        <h2>🔄 Sincronização Automática via ERP (<code>SpreadsheetSyncService</code>)</h2>
+        <p>
+          A partir da integração entre o Backoffice Spring Boot e o script Python, cada nota fiscal faturada na Mesa Pré-Nota aciona a sincronização em tempo real:
+        </p>
+
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor G as Gabriel Furtado (Backoffice)
+    participant BO as Backoffice / FiscalDocumentService
+    participant SYNC as SpreadsheetSyncService (Spring Boot)
+    participant FS as automacao-planilha/notas/
+    participant PY as atualizar_estoque.py (Python)
+    participant XLS as Planilha de Estoques.xlsx
+
+    G->>BO: Clica em "Emitir NF-e" na Mesa Pré-Nota
+    BO->>BO: Gera Chave 44 dígitos e XML 4.00 (Base BQ)
+    BO->>SYNC: Notifica evento de emissão da NF-e
+    SYNC->>FS: Salva cópia do XML em automacao-planilha/notas/
+    SYNC-->>PY: Dispara execução assíncrona em background
+    PY->>FS: Lê e valida o novo XML
+    PY->>XLS: Cria backup e lança saídas nas abas de produtos
+    Note over XLS: Saldo atualizado sem necessidade de intervenção manual!
+          </pre>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-title">💡 Operação Híbrida: Automática ou em Lote</div>
+          <p>
+            O faturamento no sistema alimenta a planilha de forma invisível. Adicionalmente, o comando manual <code>executar.bat</code> continua 100% disponível para processar lotes legados de notas recebidas da contabilidade em arquivos <code>.zip</code>.
+          </p>
+        </div>
 
         <h2>🗂️ Estrutura de Arquivos do Módulo</h2>
         <pre><code>automacao-planilha/
@@ -137,206 +205,78 @@
 ├── nfe_parser.py                  # Parser de XML NF-e (extração de chaves, itens, valores)
 ├── zip_manager.py                 # Extrator automático de pacotes ZIP de notas
 │
-├── notas/                         # Pasta onde os arquivos .xml devem ser depositados
+├── notas/                         # Pasta onde os arquivos .xml são depositados
 ├── zips/                          # Pasta opcional para pacotes .zip de notas baixadas
 ├── backups/                       # Histórico de backups automáticos pré-execução
 └── README.md                      # Resumo rápido para o operador</code></pre>
 
-        <h2>🚀 Como Usar no Dia a Dia (Passo a Passo)</h2>
-        
-        <h3>Passo 1: Depositar os Arquivos de Notas</h3>
-        <p>Baixe os arquivos XML emitidos no período diretamente do emissor fiscal (Focus NF-e, Nuvem Fiscal ou portal SEFAZ):</p>
-        <ul>
-          <li><strong>Opção A</strong>: Coloque os arquivos <code>.xml</code> soltos na pasta <code>automacao-planilha/notas/</code>;</li>
-          <li><strong>Opção B</strong>: Coloque o arquivo compactado <code>.zip</code> dentro de <code>automacao-planilha/zips/</code> (o robô descompacta sozinho).</li>
-        </ul>
+        <h2>🚀 Como Usar no Dia a Dia (Modo Manual em Lote)</h2>
 
-        <div class="callout important">
-          <div class="callout-title">⚠️ Feche a Planilha no Excel Antes de Rodar</div>
-          <p>Certifique-se de salvar e fechar a <strong>Planilha de Estoques.xlsx</strong> no Excel antes de rodar o robô. Se o arquivo estiver aberto, o Windows bloqueará a gravação com erro de permissão (<code>PermissionError</code>).</p>
+        <h3>Passo 1: Depositar os Arquivos de Notas</h3>
+        <p>Coloque os arquivos <code>.xml</code> diretamente na pasta <code>automacao-planilha/notas/</code> ou jogue o pacote <code>.zip</code> na pasta <code>automacao-planilha/zips/</code>.</p>
+
+        <h3>Passo 2: Fechar a Planilha no Excel</h3>
+        <div class="callout danger">
+          <div class="callout-title">⚠️ Atenção: Feche o Excel</div>
+          <p>
+            Feche o arquivo <code>Planilha de Estoques.xlsx</code> antes de rodar a automação manual. Se a planilha estiver aberta no Microsoft Excel, o Windows bloqueará a gravação com erro de permissão (<code>PermissionError</code>).
+          </p>
         </div>
 
-        <h3>Passo 2: Executar com Dois Cliques</h3>
-        <p>No Windows Explorer, basta dar dois cliques no executável:</p>
-        <pre><code>automacao-planilha/executar.bat</code></pre>
-
-        <p>O terminal abrirá automaticamente exibindo em tempo real:</p>
-        <ol>
-          <li><strong>Descompactação</strong>: Extração de arquivos ZIP depositados.</li>
-          <li><strong>Varredura</strong>: Leitura e validação da chave de acesso e itens dos XMLs.</li>
-          <li><strong>Validação de Mês</strong>: Checagem se o mês das notas possui cabeçalho na planilha.</li>
-          <li><strong>Backup Pré-Gravação</strong>: Cópia íntegra arquivada na pasta <code>backups/</code> com data e hora.</li>
-          <li><strong>Lançamentos</strong>: Inserção de cada linha faturada e aplicação da fórmula de saldo.</li>
-          <li><strong>Tabela Resumo</strong>: Exibição detalhada de lançamentos realizados e itens ignorados por duplicidade.</li>
-        </ol>
+        <h3>Passo 3: Executar a Automação</h3>
+        <p>Dê dois cliques no arquivo <code>automacao-planilha/executar.bat</code>. O terminal abrirá com interface rica, executando:</p>
+        <ul>
+          <li><strong>Descompactação</strong>: Extração de novos arquivos ZIP;</li>
+          <li><strong>Varredura</strong>: Leitura e validação dos XMLs;</li>
+          <li><strong>Backup Pré-Gravação</strong>: Criação automática de snapshot em <code>backups/</code>;</li>
+          <li><strong>Lançamentos & Fórmulas</strong>: Débito na coluna de saída e inserção de <code>=H{anterior}-G{atual}</code>.</li>
+        </ul>
 
         <h2>📑 Regras de Negócio e Mapeamento de Produtos</h2>
 
-        <h3>1. Mapeamento Automático de Abas</h3>
-        <p>O robô analisa o código de produto da nota fiscal (<code>cProd</code>) e cruza com as palavras-chave na descrição (<code>xProd</code>):</p>
-
-        <div class="table-container">
-          <table>
+        <div class="table-responsive">
+          <table class="table">
             <thead>
               <tr>
                 <th>Aba na Planilha</th>
-                <th>Códigos na NF-e</th>
-                <th>Palavras-Chave Identificadoras</th>
-                <th>Critérios de Exclusão</th>
+                <th>Códigos na NF-e (cProd)</th>
+                <th>Palavras-Chave (xProd)</th>
+                <th>Exclusões</th>
               </tr>
             </thead>
             <tbody>
               <tr>
-                <td><strong style="color: var(--primary);">FARINHA DE TRIGO</strong></td>
+                <td><strong>FARINHA DE TRIGO</strong></td>
                 <td><code>05</code>, <code>5</code>, <code>0000200000001</code></td>
-                <td><code>tipo 1</code>, <code>tipo1</code>, <code>farinha de trigo tipo 1</code></td>
+                <td><code>tipo 1</code>, <code>tipo1</code>, <code>farinha de trigo</code></td>
                 <td>Nenhum</td>
               </tr>
               <tr>
-                <td><strong style="color: var(--wheat-dark);">PRE MISTURA</strong></td>
+                <td><strong>PRE MISTURA</strong></td>
                 <td><code>02</code>, <code>2</code>, <code>PA02980502603</code></td>
                 <td><code>pre mistura</code>, <code>pré mistura</code></td>
-                <td>Exclui <code>pao doce</code>, <code>pão doce</code></td>
+                <td>Exclui <code>pao doce</code></td>
               </tr>
               <tr>
-                <td><strong style="color: var(--success);">PM PAO DOCE</strong></td>
+                <td><strong>PM PAO DOCE</strong></td>
                 <td><code>03</code>, <code>3</code>, <code>0002960502503</code></td>
-                <td><code>pao doce</code>, <code>pão doce</code>, <code>mistura pao doce</code></td>
+                <td><code>pao doce</code>, <code>pão doce</code></td>
                 <td>Nenhum</td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h3>2. Notas Fiscais com Múltiplos Produtos</h3>
+        <h2>🔒 Mecanismos de Proteção e Idempotência</h2>
         <ul>
-          <li><strong>Produtos Mistos</strong>: Se uma única NF faturar 50 sacas de Farinha Tipo 1 e 20 sacas de Pré-Mistura, o robô encaminha cada item para a sua respectiva aba, associando o mesmo número de NF e data.</li>
-          <li><strong>Múltiplos Lotes</strong>: Se houver mais de uma linha na NF com o mesmo produto (lotes ou preços diferentes), ambas são lançadas sequencialmente na mesma aba.</li>
+          <li><strong>Prevenção de Duplicidade</strong>: O script lê a coluna de notas fiscais de cada mês antes de inserir novas linhas. Se a NF já constar, ela é ignorada com aviso amarelo.</li>
+          <li><strong>Proteção de Saldo Inicial</strong>: Caso surja nota de um mês ainda não inicializado, o script interrompe o processo e solicita que o operador humano insira o saldo de transporte do mês conscientemente.</li>
+          <li><strong>Histórico de Backups</strong>: Toda execução com lançamentos gera um arquivo completo carimbado em <code>automacao-planilha/backups/</code>.</li>
         </ul>
-
-        <h3>3. Formato das Colunas Preenchidas na Planilha</h3>
-        <div class="table-container">
-          <table>
-            <thead>
-              <tr>
-                <th style="width: 80px;">Coluna</th>
-                <th>Nome do Campo</th>
-                <th>Tipo de Dado</th>
-                <th>Regra de Preenchimento</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr>
-                <td><strong>A</strong></td>
-                <td>Data</td>
-                <td>Data real Excel</td>
-                <td>Data de emissão da NF-e (<code>dhEmi</code> ou <code>dEmi</code>)</td>
-              </tr>
-              <tr>
-                <td><strong>B</strong></td>
-                <td>N.F.</td>
-                <td>Inteiro</td>
-                <td>Número da nota fiscal (<code>nNF</code>). Ex: <code>12377</code></td>
-              </tr>
-              <tr>
-                <td><strong>C</strong></td>
-                <td>Preço Unitário</td>
-                <td>Decimal</td>
-                <td>Valor unitário faturado na nota (<code>vUnCom</code>)</td>
-              </tr>
-              <tr>
-                <td><strong>D / E</strong></td>
-                <td>(Vazios)</td>
-                <td>—</td>
-                <td>Mantidos em branco conforme layout original</td>
-              </tr>
-              <tr>
-                <td><strong>F</strong></td>
-                <td>Entrada</td>
-                <td>Decimal</td>
-                <td>Mantido em branco para lançamentos de venda</td>
-              </tr>
-              <tr>
-                <td><strong>G</strong></td>
-                <td>Saída</td>
-                <td>Inteiro</td>
-                <td>Quantidade faturada em sacas (<code>qCom</code>)</td>
-              </tr>
-              <tr>
-                <td><strong>H</strong></td>
-                <td>Saldo</td>
-                <td>Fórmula Excel</td>
-                <td>Fórmula dinâmica: <code>=H{linha_anterior}-G{linha_atual}</code></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        <h2>🔒 Mecanismos de Proteção e Segurança</h2>
-
-        <div class="callout tip">
-          <div class="callout-title">🛡️ Prevenção Ativa de Duplicidade (Idempotência)</div>
-          <p>O robô verifica antes de cada gravação se a nota fiscal já está presente na coluna B da aba correspondente. Se a nota já foi lançada, ela é <strong>ignorada com alerta amarelo</strong>, permitindo rodar a automação quantas vezes quiser sem risco de duplicar saídas.</p>
-        </div>
-
-        <h3>Proteção do Saldo Inicial e Validação de Mês</h3>
-        <p>
-          O robô impede a corrupção do saldo do estoque. Se você depositar notas de um mês cujo cabeçalho ainda não foi criado (ex: notas de Outubro quando a planilha só tem Setembro), o script <strong>interrompe a execução antes de gravar</strong> e exibe um aviso:
-        </p>
-        <div class="callout note">
-          <div class="callout-title">ℹ️ Alerta do Sistema</div>
-          <p><em>"O cabeçalho do mês 10/2026 ainda não foi criado na planilha. Abra a planilha, crie a seção do novo mês e digite o saldo inicial antes de rodar a automação."</em></p>
-        </div>
-
-        <h3>Política de Backups Automáticos</h3>
-        <ul>
-          <li><strong>Cópia Original Intacta</strong>: Arquivada em <code>backups/Planilha de Estoques - ORIGINAL 2026-10-12.xlsx</code>.</li>
-          <li><strong>Backups com Carimbo de Data/Hora</strong>: Gerados automaticamente antes de cada gravação no formato <code>Planilha de Estoques - BACKUP YYYY-MM-DD_HHMMSS.xlsx</code>.</li>
-        </ul>
-
-        <h2>⚙️ Arquivo de Configuração (<code>config.json</code>)</h2>
-        <pre><code>{
-  "caminho_planilha": "Planilha de Estoques.xlsx",
-  "pasta_notas": "notas",
-  "pasta_backups": "backups",
-  "pastas_zips": ["zips", "notas", "."],
-  "mapeamento_abas": [
-    {
-      "aba": "FARINHA DE TRIGO",
-      "codigos": ["05", "5"],
-      "palavras_chave": ["tipo 1", "tipo1", "farinha de trigo tipo 1"]
-    },
-    {
-      "aba": "PRE MISTURA",
-      "codigos": ["02", "2"],
-      "palavras_chave": ["pre mistura", "pré mistura"],
-      "palavras_excluidas": ["doce", "pao doce", "pão doce"]
-    },
-    {
-      "aba": "PM PAO DOCE",
-      "codigos": ["03", "3"],
-      "palavras_chave": ["pao doce", "pão doce"]
-    }
-  ]
-}</code></pre>
-
-        <h2>❓ Resolução de Dúvidas & Troubleshooting</h2>
-
-        <h3>1. Erro de Permissão Negada (PermissionError)</h3>
-        <p><strong>Causa</strong>: O arquivo <code>Planilha de Estoques.xlsx</code> está aberto no Excel.<br>
-        <strong>Solução</strong>: Salve e feche a janela do Excel e rode o <code>executar.bat</code> novamente.</p>
-
-        <h3>2. Como Restaurar um Backup Anterior</h3>
-        <p>Se precisar desfazer os lançamentos de um lote:</p>
-        <ol>
-          <li>Abra a pasta <code>automacao-planilha/backups/</code>;</li>
-          <li>Localize o backup gerado imediatamente antes da execução;</li>
-          <li>Copie esse arquivo para <code>automacao-planilha/</code> e renomeie para <code>Planilha de Estoques.xlsx</code>.</li>
-        </ol>
 
         <div class="doc-footer">
-          <span>Total Trigo Comércio de Alimentos Ltda — Módulo automacao-planilha</span>
-          <span>Versão da Release: Outubro/2026</span>
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026 • Build Alinhado com SpreadsheetSyncService</span>
         </div>
 
       </article>

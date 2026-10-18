@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estudo Técnico: API de Cobrança Sicredi (Boletos sobre BQ) — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Estudo Bancário</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — API Cobrança Sicredi</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="index.html" class="btn-header primary">
+        🏠 Hub de Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html" class="active">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Estudos Financeiros</span>
+            <span>/</span>
+            <span>API Sicredi</span>
+          </div>
+          <h1 class="doc-title">🏦 Estudo Técnico: Integração do 4S ERP com a API de Cobrança do Sicredi</h1>
+          <p class="doc-lead">
+            Automação da emissão de Boletos Bancários Híbridos (Código de Barras + QR Code Pix Dinâmico) via API REST oficial do Sicredi, conciliação instantânea por Webhook e amarração rigorosa com a regra de <strong>Boletos Gerados Estritamente sobre a BQ</strong>.
+          </p>
+        </div>
+
+        <div class="callout note">
+          <div class="callout-title">🏛️ Instituição Financeira & Beneficiário</div>
+          <p>
+            <strong>Cooperativa</strong>: Sistema de Crédito Cooperativo Sicredi<br>
+            <strong>Beneficiária</strong>: TOTAL TRIGO COMÉRCIO DE ALIMENTOS LTDA (<code>CNPJ: 09.265.201/0001-95</code>)<br>
+            <strong>Espécie do Documento</strong>: <code>DM</code> (Duplicata Mercantil) | Carteira: <code>1</code> (Cobrança Simples com Registro)
+          </p>
+        </div>
+
+        <h2>1. Visão Geral e Benefícios da Integração</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart LR
+    subgraph LEGADO["Fluxo Legado (CNAB / Manual)"]
+        A1["Faturamento ERP"] -->|Gera Arquivo| A2["Arquivo Remessa .REM"]
+        A2 -->|Upload Manual| A3["Internet Banking Sicredi"]
+        A3 -->|Compensação D+1/D+2| A4["Arquivo Retorno .RET"]
+        A4 -->|Download Manual| A5["Baixa no ERP"]
+    end
+
+    subgraph API_REST["Fluxo Moderno 4S ERP (API REST + Webhook)"]
+        B1["Aprovação Mesa Pré-Nota"] -->|POST REST (1s)| B2["API Cobrança Sicredi"]
+        B2 -->|PDF + QR Code Pix| B1
+        B3["Cliente Paga (Pix ou Boleto)"] -->|Notificação Instantânea| B4["Webhook Sicredi"]
+        B4 -->|Baixa Atômica| B5["4S ERP (Crédito Liberado)"]
+    end
+          </pre>
+        </div>
+
+        <h3>Vantagens do Boleto Híbrido Sicredi:</h3>
+        <ol>
+          <li><strong>Emissão em Sub-segundo</strong>: O boleto com PDF oficial e linha digitável é gerado em menos de 1 segundo assim que a nota fiscal é autorizada na SEFAZ;</li>
+          <li><strong>Recebimento Instantâneo via Pix</strong>: O mesmo boleto contém um <strong>QR Code Pix Dinâmico</strong>. Se o padeiro pagar com Pix, o valor cai na conta corrente da Total Trigo na mesma hora (inclusive fins de semana);</li>
+          <li><strong>Liquidação Automática via Webhook</strong>: A cooperativa avisa a API do 4S ERP no momento em que o pagamento é liquidado, baixando a conta a receber em tempo real;</li>
+          <li><strong>Zero Tarifa de Carteira Ociosa</strong>: Elimina custos postais e tarifas fixas de manutenção de arquivos remessa CNAB.</li>
+        </ol>
+
+        <h2>2. A Regra de Ouro da Total Trigo: Boletos Gerados sobre a <code>BQ</code></h2>
+        <p>
+          Durante os alinhamentos comerciais e operacionais com o <strong>Sr. Sérgio (Sócio-Fundador)</strong>, foi consolidada a regra fundamental da empresa:
+        </p>
+
+        <div class="callout important">
+          <div class="callout-title">⭐ REGRA DE OURO DO FATURAMENTO E COBRANÇA</div>
+          <p>
+            No 4S ERP, os boletos bancários do Sicredi são gerados <strong>estritamente sobre o valor financeiro da <code>BQ</code> (<code>baseQuantity</code> — Quantidade Base Faturada)</strong>.
+          </p>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Conceito</th>
+                <th>Sigla</th>
+                <th>Nome Técnico no ERP</th>
+                <th>Função Operacional e Financeira</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Quantidade Física Entregue</strong></td>
+                <td><span class="badge badge-primary">DQ</span></td>
+                <td><code>dispatch_quantity</code> (<code>orderedQuantity</code>)</td>
+                <td>Quantidade física real descarregada no depósito da padaria. Movimenta o estoque físico e <strong>determina o custo do frete operacional (<code>DQ × R$ 4,00</code>)</strong>.</td>
+              </tr>
+              <tr>
+                <td><strong>Quantidade Base Faturada</strong></td>
+                <td><span class="badge badge-success">BQ</span></td>
+                <td><code>quantity</code> (<code>baseQuantity</code>)</td>
+                <td>Quantidade formalmente faturada na NF-e e <strong>utilizada com exclusividade para emissão dos boletos bancários no Sicredi</strong>.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart TD
+    PED["Pedido Comercial Fechado pelo Sr. Sérgio"] --> SEPARACAO{"Desdobramento de Quantidades"}
+    
+    SEPARACAO -->|Volume Físico Real| DQ["DQ (Delivered Quantity)<br/>Exemplo: 20 Sacas Entregues"]
+    SEPARACAO -->|Volume Faturado Oficial| BQ["BQ (Base Quantity)<br/>Exemplo: 15 Sacas Faturadas"]
+
+    DQ --> ESTOQUE["Baixa no Estoque Físico: 20 Sacas"]
+    DQ --> FRETE["Custo Frete: 20 × R$ 4,00 = R$ 80,00"]
+
+    BQ --> NFE["Emissão NF-e SEFAZ: 15 Sacas"]
+    BQ --> BOLETO["Boletos Sicredi: 15 × Preço Unitário"]
+
+    style BQ fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+    style BOLETO fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px
+          </pre>
+        </div>
+
+        <h3>Demonstração Numérica Prática:</h3>
+        <ul>
+          <li><strong>Cliente</strong>: Padaria Alvorada do Grajaú Ltda;</li>
+          <li><strong>SKU</strong>: Farinha Tipo 1 25 kg (<code>SKU-05</code>) a <strong>R$ 80,00</strong> / saca;</li>
+          <li><strong>Operação</strong>: 20 sacas descarregadas (<code>DQ = 20</code>) e faturamento base de 15 sacas (<code>BQ = 15</code>);</li>
+          <li><strong>Total dos Boletos Sicredi</strong>: $15 \times \text{R\$} 80,00 = \text{R\$} 1.200,00$;</li>
+          <li><strong>Parcelas</strong>: Parcela 1 (14 dias) de R$ 600,00 + Parcela 2 (28 dias) de R$ 600,00 (Soma = R$ 1.200,00, idêntico ao total da NF-e);</li>
+          <li><strong>Apuração Interna</strong>: Baixa física de 20 sacas e frete de entrega $= 20 \times \text{R\$} 4,00 = \text{R\$} 80,00$.</li>
+        </ul>
+
+        <h2>3. Arquitetura de Autenticação OAuth2 e Webhook</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Cliente as Padaria / Padeiro
+    participant AppBanco as App Bancário (Qualquer Banco)
+    participant SPI as SPI / Pix (Banco Central)
+    participant Sicredi as Sicredi Cobrança
+    participant Webhook as Endpoint 4S ERP (/api/webhooks/sicredi)
+    participant ERP as Banco 4S ERP
+
+    Cliente->>AppBanco: Lê QR Code Pix do Boleto e Paga
+    AppBanco->>SPI: Transfere valor instantaneamente
+    SPI->>Sicredi: Liquidação financeira na conta Total Trigo
+    Sicredi->>Webhook: POST https://api.totaltrigo.com.br/api/webhooks/sicredi
+    Note over Sicredi,Webhook: Header: X-Sicredi-Signature (HMAC-SHA256)
+    Webhook->>Webhook: Valida assinatura de segurança com Chave Master
+    Webhook->>ERP: Baixa atômica do título e atualiza pedido para LIQUIDADO
+    Webhook-->>Sicredi: HTTP 200 OK
+          </pre>
+        </div>
+
+        <h3>Segurança e Idempotência no Webhook:</h3>
+        <ol>
+          <li><strong>Validação HMAC-SHA256</strong>: Toda notificação recebida no header <code>X-Sicredi-Signature</code> é autenticada com a chave master da Total Trigo;</li>
+          <li><strong>Idempotência</strong>: Se o Sicredi reenviar a notificação de liquidação por instabilidade de rede, o 4S ERP valida o <code>nossoNumero</code> e responde <code>HTTP 200 OK</code> sem duplicar lançamentos.</li>
+        </ol>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

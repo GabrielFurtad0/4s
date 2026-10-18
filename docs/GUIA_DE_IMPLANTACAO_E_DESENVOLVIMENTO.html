@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Guia de Implantação & Setup — TotalTrigo / 4S ERP</title>
+  <title>Guia de Implantação e Desenvolvimento — TotalTrigo / 4S ERP</title>
   <link rel="stylesheet" href="assets/docs.css">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
 </head>
@@ -34,9 +34,9 @@
       <div class="brand-info">
         <div class="brand-title-row">
           <span class="brand-name">4S ERP</span>
-          <span class="brand-badge">Setup & DevOps</span>
+          <span class="brand-badge">DevOps & Setup</span>
         </div>
-        <span class="brand-tagline">TotalTrigo — Guia de Instalação</span>
+        <span class="brand-tagline">TotalTrigo — Instalação & Operação</span>
       </div>
     </a>
 
@@ -45,7 +45,7 @@
         🖨️ Imprimir / PDF
       </button>
       <a href="../iniciar_sistema.bat" class="btn-header primary">
-        🚀 Executar Local
+        🚀 Iniciar Sistema
       </a>
     </div>
   </header>
@@ -53,7 +53,7 @@
   <!-- Layout Principal -->
   <div class="docs-layout">
     
-    <!-- Sidebar de Navegação -->
+    <!-- Sidebar de Navegação Completa -->
     <aside class="docs-sidebar">
       <div class="sidebar-heading">Documentação Oficial</div>
       <ul class="nav-doc-list">
@@ -88,6 +88,18 @@
           </a>
         </li>
         <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
           <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html" class="active">
             <span class="nav-doc-icon">🚀</span>
             <span>Guia de Implantação</span>
@@ -97,6 +109,28 @@
           <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
             <span class="nav-doc-icon">📑</span>
             <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-heading">Acesso Rápido ao Código</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="../automacao-planilha/README.md">
+            <span class="nav-doc-icon">📦</span>
+            <span>Módulo da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../backend/pom.xml">
+            <span class="nav-doc-icon">☕</span>
+            <span>Backend Spring Boot</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../frontend/package.json">
+            <span class="nav-doc-icon">⚛️</span>
+            <span>Frontend React / Vite</span>
           </a>
         </li>
       </ul>
@@ -110,23 +144,23 @@
           <div class="doc-breadcrumbs">
             <a href="index.html">Docs</a>
             <span>/</span>
-            <span>DevOps & Infraestrutura</span>
+            <span>Engenharia & Operações</span>
             <span>/</span>
             <span>Guia de Implantação</span>
           </div>
-          <h1 class="doc-title">🚀 Guia de Implantação e Desenvolvimento</h1>
+          <h1 class="doc-title">🚀 Guia de Implantação e Desenvolvimento — TotalTrigo</h1>
           <p class="doc-lead">
-            Instruções completas para configurar o ambiente de desenvolvimento local, compilação de código, migrações com Flyway, execução de servidores e resolução de problemas comuns.
+            Instruções completas para execução em desenvolvimento local, migrações versionadas Flyway (V1 a V4), testes unitários automatizados, orquestração corporativa com Docker Compose e rotinas de backup.
           </p>
         </div>
 
         <h2>💻 Pré-Requisitos de Ambiente</h2>
-        <div class="table-container">
-          <table>
+        <div class="table-responsive">
+          <table class="table">
             <thead>
               <tr>
-                <th>Ferramenta</th>
-                <th>Versão Recomendada</th>
+                <th>Tecnologia</th>
+                <th>Versão Mínima</th>
                 <th>Finalidade</th>
                 <th>Comando de Teste</th>
               </tr>
@@ -134,117 +168,142 @@
             <tbody>
               <tr>
                 <td><strong>Java JDK</strong></td>
-                <td><code>21 LTS</code></td>
-                <td>Compilação e execução da API Spring Boot 3</td>
+                <td>21 LTS</td>
+                <td>Backend Spring Boot 3.4 (Hexagonal REST API)</td>
                 <td><code>java -version</code></td>
               </tr>
               <tr>
                 <td><strong>Apache Maven</strong></td>
-                <td><code>3.9+</code> (ou wrapper)</td>
-                <td>Gerenciador de dependências e build Java</td>
+                <td>3.9+</td>
+                <td>Compilação, dependências e suíte JUnit 5</td>
                 <td><code>mvn -v</code></td>
               </tr>
               <tr>
                 <td><strong>Node.js & npm</strong></td>
-                <td>Node <code>18+</code> / npm <code>9+</code></td>
-                <td>Execução e build do frontend Vite/React</td>
+                <td>Node 18+ / npm 9+</td>
+                <td>Frontend React 18, Vite, Tailwind CSS e PWA</td>
                 <td><code>node -v</code> e <code>npm -v</code></td>
               </tr>
               <tr>
+                <td><strong>Docker & Compose</strong></td>
+                <td>Docker 24+ / Compose v2</td>
+                <td>Ambiente de Produção com PostgreSQL 16</td>
+                <td><code>docker --version</code></td>
+              </tr>
+              <tr>
                 <td><strong>Python</strong></td>
-                <td><code>3.10+</code></td>
-                <td>Robô de automação da planilha de estoque</td>
+                <td>3.10+</td>
+                <td>Automação local de planilha Excel (openpyxl)</td>
                 <td><code>python --version</code></td>
               </tr>
             </tbody>
           </table>
         </div>
 
-        <h2>⚡ Inicialização Rápida (1 Clique)</h2>
+        <h2>⚡ Inicialização Rápida para Desenvolvimento (1 Clique)</h2>
         <p>
-          O repositório inclui um arquivo em lote pré-configurado para inicializar todos os serviços no Windows sem necessidade de comandos manuais:
+          O repositório disponibiliza um script automatizado que inicializa todos os serviços com um duplo clique:
         </p>
 
-        <pre><code>iniciar_sistema.bat</code></pre>
-
         <div class="callout tip">
-          <div class="callout-title">🛠️ O que o script realiza em segundo plano:</div>
-          <ol>
-            <li>Inicia o <strong>Backend Spring Boot</strong> na porta <code>8085</code>;</li>
-            <li>Executa as migrações <strong>Flyway</strong> (<code>V1__init_schema.sql</code> e <code>V2__seed_data.sql</code>) criando tabelas e populando os 3 SKUs e clientes B2B;</li>
-            <li>Inicia o servidor <strong>Vite (Frontend Web)</strong> na porta <code>5173</code>;</li>
-            <li>Abre automaticamente o navegador padrão em <code>http://localhost:5173</code>.</li>
-          </ol>
+          <div class="callout-title">📂 Executável Raiz</div>
+          <p style="font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: #047857; margin: 4px 0;">
+            iniciar_sistema.bat
+          </p>
+          <span style="font-size: 13.5px; color: #065F46;">
+            Abre as instâncias do Spring Boot (porta 8085) com H2 local e Vite (porta 5173), aplicando todas as migrações Flyway automaticamente.
+          </span>
         </div>
+
+        <h3>Migrações Versionadas Aplicadas (Flyway)</h3>
+        <ul>
+          <li><code>V1__init_schema.sql</code>: Estrutura inicial de produtos, clientes, pedidos e itens;</li>
+          <li><code>V2__seed_data.sql</code>: Sementes cadastrais das padarias da Zona Sul de SP e lotes de importação;</li>
+          <li><code>V3__dq_bq_and_dual_stock.sql</code>: Duplo estoque (<code>base_stock</code>), coluna <code>dispatch_quantity</code> (DQ) e frete oficial R$ 4,00/saca;</li>
+          <li><code>V4__crud_receivables_audit_auth.sql</code>: Tabelas de <code>receivable_titles</code> (boletos bancários) e <code>audit_logs</code> (trilha de auditoria).</li>
+        </ul>
 
         <h2>🔧 Execução Manual dos Componentes</h2>
 
-        <h3>1. Backend (Spring Boot 3)</h3>
+        <h3>1. Backend (Spring Boot 3.4)</h3>
         <pre><code>cd backend
 mvn spring-boot:run</code></pre>
-        <ul>
-          <li><strong>Porta HTTP</strong>: <code>8085</code></li>
-          <li><strong>Console do Banco H2</strong>: <code>http://localhost:8085/h2-console</code></li>
-          <li><strong>JDBC URL</strong>: <code>jdbc:h2:file:./data/totaltrigo_db;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE</code></li>
-          <li><strong>Usuário</strong>: <code>sa</code> | <strong>Senha</strong>: <em>(em branco)</em></li>
-        </ul>
+        <p>Acesse o Console do Banco H2 em <code>http://localhost:8085/h2-console</code> (JDBC URL: <code>jdbc:h2:file:./data/totaltrigo_db;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE</code>).</p>
 
-        <h3>2. Frontend (React 18 + Vite + Tailwind)</h3>
+        <h4>Executando a Suíte de Testes Automatizados (JUnit 5 + Mockito):</h4>
+        <pre><code>cd backend
+mvn test</code></pre>
+        <p>Garante a integridade dos cálculos fiscais (DQ/BQ), frete oficial e faturamento do <code>FiscalDocumentService</code>.</p>
+
+        <h3>2. Frontend (React 18 + Vite)</h3>
         <pre><code>cd frontend
 npm install
 npm run dev</code></pre>
-        <p>Acesse no navegador: <code>http://localhost:5173</code></p>
-        <p>Para rodar a suíte de testes unitários automatizados:</p>
-        <pre><code>npm run test</code></pre>
+        <p>Executa na porta <code>http://localhost:5173</code> com Hot-Module Replacement (HMR).</p>
 
-        <h3>3. Automação da Planilha de Estoque (Python)</h3>
+        <h4>Executando Testes Unitários de Frontend (Vitest):</h4>
+        <pre><code>cd frontend
+npm run test</code></pre>
+
+        <h3>3. Automação da Planilha Excel (Python 3)</h3>
         <pre><code>cd automacao-planilha
-.\executar.bat</code></pre>
-        <p>Ou utilizando o ambiente virtual Python diretamente:</p>
-        <pre><code>..\.venv\Scripts\activate
+.\executar.bat
+# Ou via Python com o virtualenv:
+..\.venv\Scripts\activate
 python atualizar_estoque.py</code></pre>
 
-        <h2>📂 Estrutura de Diretórios</h2>
-        <pre><code>TotalTrigo/
-├── backend/                       # API Spring Boot
-│   ├── src/main/java/             # Controladores, serviços e domínio
-│   ├── src/main/resources/        # application.yml e migrações Flyway
-│   └── pom.xml                    # Configurações Maven
-├── frontend/                      # Interface Web React
-│   ├── src/components/            # Componentes (Seller, Backoffice, UI)
-│   ├── src/lib/                   # Regras de negócio (business.ts)
-│   └── package.json               # Dependências npm
-├── automacao-planilha/            # Automação de Estoque via NF-e
-│   ├── Planilha de Estoques.xlsx  # Planilha de trabalho
-│   ├── atualizar_estoque.py       # Script orquestrador
-│   ├── config.json                # Mapeamento de abas
-│   ├── notas/                     # XMLs a serem processados
-│   └── backups/                   # Backups com carimbo de tempo
-├── docs/                          # Central de documentação oficial
-├── iniciar_sistema.bat            # Script de inicialização em 1 clique
-└── README.md                      # Apresentação do repositório</code></pre>
+        <h2>🐳 Implantação em Produção com Docker Compose</h2>
+        <p>
+          Para disponibilização em servidor corporativo ou VPS na nuvem, o sistema inclui orquestração completa em contêineres:
+        </p>
 
-        <h2>🛠️ Dicas e Troubleshooting</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart TD
+    DC["docker-compose.yml"] --> C_DB["totaltrigo-postgres<br/>PostgreSQL 16 Alpine<br/>Porta 5432"]
+    DC --> C_BACK["totaltrigo-backend<br/>Java 21 Distroless<br/>Spring Boot (Prod Profile)<br/>Porta 8085"]
+    DC --> C_FRONT["totaltrigo-frontend<br/>Nginx 1.25 Alpine<br/>React 18 SPA<br/>Porta 80 / 5173"]
+          </pre>
+        </div>
 
-        <h3>Porta 8085 ou 5173 Ocupada</h3>
-        <p>Se as portas estiverem bloqueadas por instâncias anteriores travadas:</p>
-        <pre><code># Identificar PID do processo ocupando a porta:
-netstat -ano | findstr :8085
+        <h3>Comandos de Produção:</h3>
+        <pre><code># Subir os 3 contêineres em modo daemon
+docker compose up --build -d
 
-# Finalizar o processo pelo PID:
-taskkill /PID &lt;PID&gt; /F</code></pre>
+# Visualizar o status de saúde dos contêineres
+docker compose ps
 
-        <h3>Resetar a Base de Dados Local H2</h3>
-        <p>Para recarregar os dados de demonstração iniciais:</p>
-        <ol>
-          <li>Encerre o backend no terminal;</li>
-          <li>Apague o arquivo <code>backend/data/totaltrigo_db.mv.db</code>;</li>
-          <li>Inicie o backend novamente. O Flyway recriará todo o schema e os dados de seed limpos automaticamente.</li>
-        </ol>
+# Acompanhar os logs do Backend
+docker compose logs -f totaltrigo-backend</code></pre>
+
+        <h2>💾 Rotinas Automatizadas de Backup do Banco</h2>
+        <p>
+          O sistema inclui scripts para cópia de segurança contínua com retenção de 30 dias:
+        </p>
+
+        <div class="grid grid-2" style="margin-bottom: 24px;">
+          <div class="card">
+            <div class="card-title">🪟 Windows (<code>backend/backup_db.bat</code>)</div>
+            <p style="font-size: 13.5px; color: var(--color-text-muted);">
+              Executa <code>pg_dump</code> com compressão gzip, salvando o arquivo na pasta <code>backend/backups/</code> e eliminando dumps mais antigos que 30 dias.
+            </p>
+            <pre><code>cd backend
+.\backup_db.bat</code></pre>
+          </div>
+
+          <div class="card">
+            <div class="card-title">🐧 Linux / Servidor (<code>backend/backup_db.sh</code>)</div>
+            <p style="font-size: 13.5px; color: var(--color-text-muted);">
+              Script shell compatível com o <code>crontab</code> do servidor para rotinas automáticas de madrugada:
+            </p>
+            <pre><code># Exemplo no crontab (diariamente às 02:00)
+0 2 * * * /app/TotalTrigo/backend/backup_db.sh</code></pre>
+          </div>
+        </div>
 
         <div class="doc-footer">
           <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
-          <span>Versão da Release: Outubro/2026</span>
+          <span>Versão da Release: Outubro/2026 • Build Alinhado com Docker & PostgreSQL 16</span>
         </div>
 
       </article>

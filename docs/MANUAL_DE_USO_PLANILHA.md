@@ -10,6 +10,35 @@ Substituir o trabalho manual de digitação de saídas de estoque no Excel. O si
 
 ---
 
+## 🔄 Sincronização Automática via ERP (`SpreadsheetSyncService`)
+
+A partir da versão integrada com o Backoffice TotalTrigo, o processo de exportação tornou-se **100% automático**:
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor G as Gabriel Furtado (Backoffice)
+    participant BO as Backoffice / FiscalDocumentService
+    participant SYNC as SpreadsheetSyncService (Spring Boot)
+    participant FS as automacao-planilha/notas/
+    participant PY as atualizar_estoque.py (Python)
+    participant XLS as Planilha de Estoques.xlsx
+
+    G->>BO: Clica em "Emitir NF-e" na Mesa Pré-Nota
+    BO->>BO: Gera Chave 44 dígitos e XML 4.00 (Base BQ)
+    BO->>SYNC: Notifica evento NfeEmittedEvent
+    SYNC->>FS: Salva cópia do XML em automacao-planilha/notas/
+    SYNC-->>PY: Dispara execução assíncrona em background
+    PY->>FS: Lê e valida o novo XML
+    PY->>XLS: Cria backup e lança saídas nas abas de produtos
+    Note over XLS: Saldo atualizado sem necessidade de intervenção manual!
+```
+
+> [!TIP]
+> A execução manual via `executar.bat` descrita abaixo continua totalmente disponível e é o método recomendado para notas fiscais legadas ou pacotes ZIP mensais fornecidos pela contabilidade.
+
+---
+
 ## 🗂️ Estrutura de Arquivos do Módulo (`automacao-planilha/`)
 
 ```text
@@ -24,7 +53,7 @@ automacao-planilha/
 ├── nfe_parser.py                  # Parser de XML NF-e (extração de chaves, itens, valores)
 ├── zip_manager.py                 # Extrator automático de pacotes ZIP de notas
 │
-├── notas/                         # Pasta onde os arquivos .xml devem ser depositados
+├── notas/                         # Pasta onde os arquivos .xml devem ser depositados (ou salvos pelo ERP)
 ├── zips/                          # Pasta opcional para pacotes .zip de notas baixadas
 ├── backups/                       # Histórico de backups automáticos pré-execução
 └── README.md                      # Resumo rápido para o operador
@@ -32,7 +61,7 @@ automacao-planilha/
 
 ---
 
-## 🚀 Como Usar no Dia a Dia (Passo a Passo)
+## 🚀 Como Usar no Dia a Dia (Modo Manual em Lote)
 
 ### Passo 1: Depositar os Arquivos de Notas
 1. Baixe os arquivos XML emitidos no período (do portal da SEFAZ, Focus NF-e, Nuvem Fiscal ou software emissor).

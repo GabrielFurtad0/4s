@@ -18,6 +18,7 @@ import {
   DollarSign,
   Edit,
   ExternalLink,
+  Eye,
   FileCheck2,
   FileText,
   History,
@@ -38,6 +39,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
+import { DeliveryRouteModal } from './delivery-route-modal';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { SlidingTabs } from '@/components/ui/sliding-tabs';
@@ -125,6 +127,7 @@ export function Backoffice({
   const [fiscalFilter, setFiscalFilter] = useState('all');
   const [period, setPeriod] = useState('today');
   const [page, setPage] = useState(1);
+  const [routeModalOpen, setRouteModalOpen] = useState(false);
 
   const effectiveStatus = (o: Order) => o.rawStatus || o.status;
 
@@ -651,63 +654,104 @@ export function Backoffice({
         const uniqueClientsCount = new Set(routeOrders.map(o => o.clientId)).size;
 
         return (
-          <div className="workflow-strip">
-            <div className="workflow-label">
-              <span className="workflow-icon bg-primary/10 text-primary border-primary/20">
-                <Truck size={15} />
-              </span>
-              <div>
-                <div className="flex items-center gap-2">
-                  <strong>Carga do Caminhão do Dia (Expedição DQ)</strong>
-                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
-                    {readySacks} / {totalRouteSacks} sacas liberadas
-                  </span>
+          <>
+            <div
+              className="workflow-strip workflow-strip-clickable"
+              onClick={() => setRouteModalOpen(true)}
+              role="button"
+              tabIndex={0}
+              onKeyDown={e => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setRouteModalOpen(true);
+                }
+              }}
+              title="Clique para ver o planejamento da rota e detalhes das entregas"
+            >
+              <div className="workflow-label">
+                <span className="workflow-icon bg-primary/10 text-primary border-primary/20">
+                  <Truck size={15} />
+                </span>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <strong>Carga do Caminhão do Dia (Expedição DQ)</strong>
+                    <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                      {readySacks} / {totalRouteSacks} sacas liberadas
+                    </span>
+                    <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
+                      <Eye size={10} />
+                      Ver Detalhes da Rota
+                    </span>
+                  </div>
+                  <p>
+                    Consolidação física da rota ativa ({uniqueClientsCount}{' '}
+                    {uniqueClientsCount === 1 ? 'parada programada' : 'paradas programadas'}) · Clique para expandir planejamento
+                  </p>
                 </div>
-                <p>
-                  Consolidação física da rota ativa ({uniqueClientsCount}{' '}
-                  {uniqueClientsCount === 1 ? 'parada programada' : 'paradas programadas'})
-                </p>
-              </div>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-4 text-xs">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
-                <Package size={13} className="text-primary" />
-                <span className="text-muted-foreground">Volume (DQ):</span>
-                <strong className="numeric font-bold text-foreground">{totalRouteSacks} sacas</strong>
               </div>
 
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
-                <span className="text-muted-foreground">Peso total:</span>
-                <strong className="numeric font-bold text-foreground">
-                  {totalWeightKg.toLocaleString('pt-BR')} kg ({(totalWeightKg / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t)
-                </strong>
-              </div>
-
-              {!isExpedicao && (
+              <div className="flex flex-wrap items-center gap-3 text-xs">
                 <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
-                  <span className="text-muted-foreground">Frete estimado (R$ 4/un.):</span>
-                  <strong className="numeric font-bold text-foreground">{money(estimatedFreight)}</strong>
+                  <Package size={13} className="text-primary" />
+                  <span className="text-muted-foreground">Volume (DQ):</span>
+                  <strong className="numeric font-bold text-foreground">{totalRouteSacks} sacas</strong>
                 </div>
-              )}
 
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
-                disabled={routeOrders.length === 0}
-                onClick={() => {
-                  const targetOrder = readyForTruckOrders[0] ?? routeOrders[0];
-                  if (!targetOrder) return;
-                  const targetClient = data.clients.find(c => c.id === targetOrder.clientId);
-                  openPrintableRomaneio(targetOrder, targetClient, data.products);
-                }}
-              >
-                <Printer size={12} />
-                Imprimir Romaneio (DQ)
-              </Button>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
+                  <span className="text-muted-foreground">Peso total:</span>
+                  <strong className="numeric font-bold text-foreground">
+                    {totalWeightKg.toLocaleString('pt-BR')} kg ({(totalWeightKg / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t)
+                  </strong>
+                </div>
+
+                {!isExpedicao && (
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
+                    <span className="text-muted-foreground">Frete estimado (R$ 4/un.):</span>
+                    <strong className="numeric font-bold text-foreground">{money(estimatedFreight)}</strong>
+                  </div>
+                )}
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                  onClick={e => {
+                    e.stopPropagation();
+                    setRouteModalOpen(true);
+                  }}
+                >
+                  <Eye size={12} />
+                  Ver Entregas
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 border-border hover:bg-muted"
+                  disabled={routeOrders.length === 0}
+                  onClick={e => {
+                    e.stopPropagation();
+                    const targetOrder = readyForTruckOrders[0] ?? routeOrders[0];
+                    if (!targetOrder) return;
+                    const targetClient = data.clients.find(c => c.id === targetOrder.clientId);
+                    openPrintableRomaneio(targetOrder, targetClient, data.products);
+                  }}
+                  title="Imprimir romaneio cego da primeira entrega pronta"
+                >
+                  <Printer size={12} />
+                  Imprimir Romaneio (DQ)
+                </Button>
+              </div>
             </div>
-          </div>
+
+            <DeliveryRouteModal
+              open={routeModalOpen}
+              onOpenChange={setRouteModalOpen}
+              data={data}
+              onSelectOrder={openOrder}
+              isExpedicao={isExpedicao}
+            />
+          </>
         );
       })()}
 

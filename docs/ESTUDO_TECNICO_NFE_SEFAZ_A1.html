@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Estudo Técnico: Emissão Direta de NF-e 4.00 na SEFAZ-SP com Certificado A1 — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Estudo Técnico</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — NF-e 4.00 SEFAZ A1</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="index.html" class="btn-header primary">
+        🏠 Hub de Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html" class="active">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Estudos Fiscais</span>
+            <span>/</span>
+            <span>Estudo Técnico SEFAZ A1</span>
+          </div>
+          <h1 class="doc-title">📑 Estudo Técnico: Emissão Direta de NF-e 4.00 na SEFAZ-SP com Certificado A1</h1>
+          <p class="doc-lead">
+            Arquitetura para aposentadoria definitiva do emissor desktop do Sebrae (<code>4.01_sebrae_b053</code>) e emissão direta gratuita no Spring Boot via <code>java-nfe</code>, transmissão síncrona SOAP TLS 1.2 e Certificado Digital e-CNPJ A1.
+          </p>
+        </div>
+
+        <div class="callout note">
+          <div class="callout-title">🏢 Dados de Referência da Empresa Emissora</div>
+          <p>
+            <strong>Razão Social</strong>: TOTAL TRIGO COMÉRCIO DE ALIMENTOS LTDA<br>
+            <strong>CNPJ</strong>: <code>09.265.201/0001-95</code> | <strong>IE</strong>: <code>149.932.895.118</code> | <strong>CRT</strong>: <code>3</code> (Regime Normal)<br>
+            <strong>Status</strong>: Validado para Implementação Nativa no 4S ERP (Custo Zero de Mensalidade SaaS)
+          </p>
+        </div>
+
+        <h2>1. Contexto e Motivação do Projeto</h2>
+        <p>
+          Atualmente, a Total Trigo opera com um fluxo fragmentado e dependente do software desktop <strong>Emissor de NF-e do Sebrae</strong> (versão <code>4.01_sebrae_b052 / b053</code>):
+        </p>
+
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart LR
+    subgraph ATUAL["Fluxo Legado (Manual e Lento)"]
+        A["Vendedor em Campo<br/>(Sr. Sérgio)"] -->|WhatsApp / Bloco| B["Operador Backoffice<br/>(Gabriel)"]
+        B -->|Redigitação Manual| C["Emissor Sebrae<br/>Desktop"]
+        C -->|Assina e Envia| D["SEFAZ-SP"]
+        D -->|XML / DANFE| C
+        C -->|Exportação ZIP Manual| E["Script Python<br/>Atualiza Estoque"]
+    end
+          </pre>
+        </div>
+
+        <h3>Problemas Críticos do Modelo Legado:</h3>
+        <ol>
+          <li><strong>Redigitação Humana</strong>: Cada pedido fechado na rua precisa ser redigitado manualmente campo a campo no software do Sebrae, gerando risco severo de erros de digitação em CNPJ, razão social, endereço e preços;</li>
+          <li><strong>Gargalo Operacional</strong>: O pedido fica represado aguardando operador disponível para abrir o aplicativo desktop, carregar o certificado e emitir a nota;</li>
+          <li><strong>Ausência de API</strong>: O emissor do Sebrae não possui API REST ou webhooks. A única forma de capturar as emissões para controle de estoque é exportar periodicamente arquivos <code>.zip</code> manuais;</li>
+          <li><strong>Instabilidade do Software Desktop</strong>: Aplicação Java desktop legada que trava em lotes maiores e depende de máquina local específica.</li>
+        </ol>
+
+        <h2>2. Comparativo de Arquitetura: Emissão Direta vs. APIs SaaS de Mercado</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Critério de Avaliação</th>
+                <th>Opção 1: Emissão Direta via <code>java-nfe</code> + Certificado A1 (Recomendada)</th>
+                <th>Opção 2: APIs Terceirizadas SaaS (Nuvem Fiscal / Focus NFe)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Custo Mensal Recorrente</strong></td>
+                <td><strong style="color: #047857;">R$ 0,00 / mês (Custo Zero)</strong></td>
+                <td>R$ 59,00 a R$ 250,00+ / mês (planos por faixa de notas)</td>
+              </tr>
+              <tr>
+                <td><strong>Certificado Digital</strong></td>
+                <td>e-CNPJ A1 <code>.pfx</code> existente da Total Trigo</td>
+                <td>e-CNPJ A1 enviado para a nuvem da integradora</td>
+              </tr>
+              <tr>
+                <td><strong>Latência e Performance</strong></td>
+                <td>Direta com a SEFAZ-SP (~500ms a 1.5s via chamada síncrona)</td>
+                <td>Duplo salto de rede: App → API Terceira → SEFAZ-SP → API Terceira → App</td>
+              </tr>
+              <tr>
+                <td><strong>Dependência de Terceiros</strong></td>
+                <td>Nenhuma (comunicação direta TLS 1.2 com os WebServices SEFAZ-SP)</td>
+                <td>Dependência contratual, suporte externo e risco de indisponibilidade de terceiros</td>
+              </tr>
+              <tr>
+                <td><strong>Privacidade e Segurança</strong></td>
+                <td>O certificado e chave privada nunca saem da infraestrutura da Total Trigo</td>
+                <td>A chave privada e a senha residem em servidores de terceiros</td>
+              </tr>
+              <tr>
+                <td><strong>Manutenção Tributária</strong></td>
+                <td>Como a Total Trigo opera com apenas <strong>3 SKUs</strong> padronizados e regras estáveis de SP (CST 20 / Carga 7%), o esforço de manutenção é mínimo</td>
+                <td>A integradora atualiza schemas de múltiplos estados automaticamente</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="callout tip">
+          <div class="callout-title">💡 Decisão Estratégica: Emissão Direta (Custo Zero)</div>
+          <p>
+            Com o volume de 100 a 300 notas/mês da Total Trigo e o catálogo enxuto de 3 SKUs, a emissão direta via Spring Boot com a biblioteca aberta <code>java-nfe</code> economiza centenas de reais por ano, garante velocidade sub-segundo e mantém o certificado seguro na empresa.
+          </p>
+        </div>
+
+        <h2>3. Gestão e Ciclo de Vida do Certificado Digital e-CNPJ A1</h2>
+        <p>
+          A Total Trigo possui certificado digital padrão <strong>ICP-Brasil e-CNPJ A1</strong> emitido pela autoridade certificadora <code>AC SAFEWEB RFB v5</code>:
+        </p>
+        <ul>
+          <li><strong>Tipo</strong>: A1 (Software — par de chaves RSA de 2048 bits gravado em arquivo <code>.pfx</code> / <code>.p12</code>);</li>
+          <li><strong>Titular</strong>: <code>TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA:09265201000195</code>;</li>
+          <li><strong>Vantagem Operacional</strong>: Pode ser carregado em memória pelo Spring Boot em qualquer ambiente (Windows, Linux, Docker, GCP Cloud Run), sem tokens físicos USB.</li>
+        </ul>
+
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart TD
+    subgraph AMBIENTE_LOCAL["Fase Atual (Servidor Local)"]
+        CFG1["application.yml / env"] -->|Path + Senha| S1["TOTALTRIGO_NFE_CERT_PATH<br/>TOTALTRIGO_NFE_CERT_PASSWORD"]
+        S1 --> B1["Backend Spring Boot<br/>KeyStore.getInstance('PKCS12')"]
+    end
+
+    subgraph AMBIENTE_CLOUD["Fase Futura (Google Cloud Platform - GCP)"]
+        GSM["Google Secret Manager"] -->|Secret Payload (Base64)| B2["Backend Spring Boot (Cloud Run / GKE)"]
+        B2 -->|Leitura in-memory| KM["ByteArrayInputStream (Zero Disk Write)"]
+    end
+          </pre>
+        </div>
+
+        <h2>4. Pipeline Técnico de Emissão da NF-e 4.00</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+sequenceDiagram
+    autonumber
+    actor Operador as Backoffice (Gabriel)
+    participant ERP as 4S ERP Backend (Spring Boot)
+    participant Lib as Biblioteca java-nfe
+    participant SEFAZ as SEFAZ-SP (WebServices)
+    participant DB as Banco de Dados (H2 / PostgreSQL)
+
+    Operador->>ERP: Clica "Aprovar e Emitir NF-e"
+    ERP->>DB: Bloqueia registro e obtém próximo nNF sequencial
+    ERP->>Lib: Monta Objeto TNFe com dados reais da venda
+    Lib->>Lib: Gera Chave de Acesso (44 dígitos, cDV Módulo 11)
+    Lib->>Lib: Assina XML (xmldsig C14N + RSA-SHA1 via Certificado A1)
+    Lib->>Lib: Valida XML contra XSD local da SEFAZ
+    Lib->>SEFAZ: POST SOAP 1.2 com TLS 1.2 (NFeAutorizacao4, indSinc=1)
+    SEFAZ-->>Lib: Retorno Síncrono (protNFe: cStat=100, nProt, dhRecbto)
+    Lib-->>ERP: XML Autorizado (nfeProc com infNFe + Signature + protNFe)
+    ERP->>DB: Salva XML, Chave de Acesso, Protocolo e atualiza Status=FATURADO
+    ERP->>ERP: Gera DANFE em PDF
+    ERP-->>Operador: NF-e Autorizada com Sucesso! Exibe DANFE e libera romaneio
+          </pre>
+        </div>
+
+        <h3>4.1. Reserva Atômica da Numeração (<code>nNF</code>)</h3>
+        <p>
+          A série utilizada pela Total Trigo é a <strong>Série 1</strong> (<code>serie = 1</code>). A última nota emitida registrada no sistema legado do Sebrae foi a <strong><code>12957</code></strong> (lote de outubro/2026). 
+          <strong>O 4S ERP iniciará estritamente na numeração <code>12958</code></strong>, garantindo continuidade fiscal sem conflito com notas anteriores.
+        </p>
+
+        <h3>4.2. Transmissão Síncrona para a SEFAZ-SP (<code>indSinc=1</code>)</h3>
+        <p>
+          A SEFAZ-SP processa lotes unitários de forma síncrona via <code>&lt;indSinc&gt;1&lt;/indSinc&gt;</code>, devolvendo o protocolo de autorização (<code>cStat=100</code>) na mesma conexão HTTP em menos de 1 segundo.
+        </p>
+
+        <h2>5. Mapeamento Tributário Validado nos XMLs Reais</h2>
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Elemento XML</th>
+                <th>Valor Padrão Total Trigo</th>
+                <th>Regra Fiscal SEFAZ-SP</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>&lt;mod&gt; / &lt;serie&gt;</code></td>
+                <td><code>55</code> / <code>1</code></td>
+                <td>Nota Fiscal Eletrônica Modelo 55, Série 1</td>
+              </tr>
+              <tr>
+                <td><code>&lt;CRT&gt;</code></td>
+                <td><code>3</code></td>
+                <td>Regime Normal (Lucro Presumido / Real)</td>
+              </tr>
+              <tr>
+                <td><code>&lt;CFOP&gt;</code></td>
+                <td><code>5102</code> (SP) / <code>6102</code> (Outros Estados)</td>
+                <td>Venda de mercadoria adquirida ou recebida de terceiros</td>
+              </tr>
+              <tr>
+                <td><code>&lt;CST&gt; ICMS</code></td>
+                <td><code>20</code></td>
+                <td>Com redução de base de cálculo (41,67% red / 12% alíquota = 7% efetivo SP)</td>
+              </tr>
+              <tr>
+                <td><code>&lt;CST&gt; PIS / COFINS</code></td>
+                <td><code>09</code></td>
+                <td>Operação com Suspensão / Não Tributada (Lei 10.925/2004 Art. 1º XIV)</td>
+              </tr>
+              <tr>
+                <td><code>&lt;tPag&gt;</code></td>
+                <td><code>15</code></td>
+                <td>Boleto Bancário Sicredi a prazo (<code>indPag=1</code>)</td>
+              </tr>
+              <tr>
+                <td><code>&lt;infAdic&gt;</code></td>
+                <td><code>REDUCAO DE 7% ANEXO III ARTIGO 3 DO RICMS</code></td>
+                <td>Observação legal obrigatória na SEFAZ-SP</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2>6. Roteiro de Transição e Cutover (Aposentadoria do Sebrae)</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart TD
+    subgraph FASE1["Fase 1: Homologação SEFAZ-SP (tpAmb=2)"]
+        H1["Configurar Certificado A1"] --> H2["Testar Envio Síncrono"]
+        H2 --> H3["Validar Assinatura xmldsig e XSDs"]
+        H3 --> H4["Testar Cancelamento e Inutilização"]
+    end
+
+    subgraph FASE2["Fase 2: Validação Contábil"]
+        V1["Emitir Nota de Teste em Homologação"] --> V2["Gerar DANFE e XML"]
+        V2 --> V3["Submeter para o Contador da Total Trigo"]
+        V3 --> V4["Aprovação Formal dos Cálculos (ICMS 20, 7% efetivo)"]
+    end
+
+    subgraph FASE3["Fase 3: Virada de Chave em Produção (tpAmb=1)"]
+        C1["Identificar Última Nota Sebrae (ex: 12957)"] --> C2["Definir Próxima Sequência no 4S ERP: 12958"]
+        C2 --> C3["Desativar Emissão no Software do Sebrae"]
+        C3 --> C4["Emitir Primeira Nota Oficial no 4S ERP"]
+        C4 --> C5["Aposentadoria Concluída com Sucesso"]
+    end
+
+    FASE1 --> FASE2
+    FASE2 --> FASE3
+          </pre>
+        </div>
+
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

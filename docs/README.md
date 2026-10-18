@@ -11,8 +11,8 @@ A pasta `docs/` está estruturada de forma modular para atender tanto os operado
 | Documento Markdown | Versão HTML Interativa | Descrição / Objetivo | Público-Alvo |
 | :--- | :--- | :--- | :--- |
 | 🏠 [**Central de Documentação**](README.md) | 🌐 [**index.html**](index.html) | Portal unificado com estatísticas, navegação rápida, dados cadastrais e catálogo dos 3 SKUs. | Todos |
-| 📑 [**Estudo Técnico NF-e SEFAZ A1**](ESTUDO_TECNICO_NFE_SEFAZ_A1.md) | 🌐 *Markdown Técnico* | Aposentadoria do Sebrae, emissão direta gratuita no Spring Boot via `java-nfe` e Certificado A1. | Arquitetos, Fiscal |
-| 🏦 [**Estudo Técnico API Sicredi**](ESTUDO_TECNICO_API_SICREDI.md) | 🌐 *Markdown Técnico* | Emissão de boletos híbridos (Código de Barras + Pix) calculados estritamente sobre a `BQ`. | Financeiro, Desenvolvedores |
+| 📑 [**Estudo Técnico NF-e SEFAZ A1**](ESTUDO_TECNICO_NFE_SEFAZ_A1.md) | 🌐 [**ESTUDO_TECNICO_NFE_SEFAZ_A1.html**](ESTUDO_TECNICO_NFE_SEFAZ_A1.html) | Aposentadoria do Sebrae, emissão direta gratuita no Spring Boot via `java-nfe` e Certificado A1. | Arquitetos, Fiscal |
+| 🏦 [**Estudo Técnico API Sicredi**](ESTUDO_TECNICO_API_SICREDI.md) | 🌐 [**ESTUDO_TECNICO_API_SICREDI.html**](ESTUDO_TECNICO_API_SICREDI.html) | Emissão de boletos híbridos (Código de Barras + Pix) calculados estritamente sobre a `BQ`. | Financeiro, Desenvolvedores |
 | 📊 [**Manual da Automação de Planilha**](MANUAL_DE_USO_PLANILHA.md) | 🌐 [**MANUAL_DE_USO_PLANILHA.html**](MANUAL_DE_USO_PLANILHA.html) | Guia operacional do robô `automacao-planilha/`: processamento de NF-e, abas e prevenção de duplicidade. | Operador, Backoffice |
 | 🏗️ [**Arquitetura do Sistema**](ARQUITETURA_DO_SISTEMA.md) | 🌐 [**ARQUITETURA_DO_SISTEMA.html**](ARQUITETURA_DO_SISTEMA.html) | Arquitetura Spring Boot 3, React Vite, ERD interativo Mermaid, máquina de estados e estoque triplo. | Desenvolvedores, Arquitetos |
 | 🖥️ [**Manual Operacional do ERP**](MANUAL_OPERACIONAL_ERP.md) | 🌐 [**MANUAL_OPERACIONAL_ERP.html**](MANUAL_OPERACIONAL_ERP.html) | Manual do App Mobile (Sr. Sérgio), Ficha 360º, Mesa Pré-Nota (Gabriel) e Romaneio Cego. | Vendas Rua, Faturamento |

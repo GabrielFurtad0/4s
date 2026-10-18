@@ -90,6 +90,18 @@
           </a>
         </li>
         <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
           <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
             <span class="nav-doc-icon">🚀</span>
             <span>Guia de Implantação</span>
@@ -241,33 +253,48 @@
           </table>
         </div>
 
-        <h2>🧮 Metodologia de Custo Landed Cost de Importação</h2>
-        <p>Para carretas de trigo importadas do Mercosul (Argentina/Uruguai), o custo total internalizado no galpão é composto por:</p>
+        <h2>🧮 Custo Landed Cost de Importação e Custo Médio Ponderado (CMP)</h2>
+        <p>Os trigos da Total Trigo são importados principalmente do Mercosul (Argentina e Uruguai). O custo internalizado de cada lote de importação no galpão é calculado pela seguinte composição:</p>
 
         <div class="callout note">
           <div class="callout-title">💵 Equação de Landed Cost Total</div>
           <p>$$\text{Total Landed (R\$)} = (\text{FOB USD} \times \text{PTAX}) + \text{Frete Internacional} + \text{Impostos Importação} + \text{Despesas Aduaneiras}$$</p>
         </div>
 
-        <p>O custo unitário de cada saca de 25 kg é calculado pelo rateio proporcional:</p>
+        <h3>1. Rateio por SKU e Saco de 25 kg do Novo Lote</h3>
         <p>$$\text{Custo Unitário Landed (Saco)} = \frac{\text{Custo Landed Rateado do SKU (R\$)}}{\text{Quantidade de Sacas Importadas}}$$</p>
 
-        <h2>📈 Formação de Preço e Margem Líquida Real</h2>
-        <p>No momento em que o vendedor lança o pedido na rua, o sistema calcula a rentabilidade líquida considerando:</p>
+        <h3>2. Regra de Entrada de Lote: Custo Médio Ponderado e Equivalência BQ = DQ</h3>
         <ul>
-          <li><strong>Receita Bruta</strong>: Quantidade de sacas × Preço unitário faturado;</li>
-          <li><strong>CMV (Custo da Mercadoria Vendida)</strong>: Quantidade de sacas × Custo Landed histórico;</li>
-          <li><strong>Frete de Entrega</strong>: Custo fixo estimado de <code>R$ 45,00</code> por entrega na Zona Sul de SP;</li>
-          <li><strong>Impostos Estimados</strong>: <code>8,00%</code> da Receita Bruta (ICMS efetivo de 7% + PIS/COFINS).</li>
+          <li><strong>Equivalência na Entrada</strong>: No momento do recebimento físico e fiscal da importação no armazém, <code>BQ = DQ</code> (<code>baseQuantity</code> = <code>deliveredQuantity</code>). Todas as sacas desembarcadas entram integralmente no estoque físico e contábil.</li>
+          <li><strong>Cálculo do Custo Médio Ponderado (CMP)</strong>: O sistema recalcula atomicamente o custo unitário do produto (<code>current_landed_cost</code>) ponderando o saldo remanescente em estoque com a nova remessa:</li>
+        </ul>
+        <div class="callout tip">
+          <div class="callout-title">📐 Equação do Custo Médio Ponderado (CMP)</div>
+          <p>$$\text{CMP} = \frac{(\text{Estoque Físico Anterior} \times \text{Custo Anterior}) + (\text{Qtd Nova} \times \text{Custo Landed Novo})}{\text{Estoque Físico Anterior} + \text{Qtd Nova}}$$</p>
+        </div>
+        <p>Esse valor atualizado alimenta a coluna <code>current_landed_cost</code> na tabela <code>products</code>, servindo de piso para a calculadora de margem do vendedor na rua.</p>
+
+        <h2>📈 Formação de Preço e Metodologia de Margem Líquida</h2>
+        <p>
+          Para cada pedido gerado pelo vendedor de campo, o sistema calcula a rentabilidade líquida em tempo real, considerando a distinção operacional validada pelo Sr. Sérgio entre <strong><code>DQ</code></strong> (<code>deliveredQuantity</code> — sacas físicas entregues) e <strong><code>BQ</code></strong> (<code>baseQuantity</code> — sacas base faturadas):
+        </p>
+        <ul>
+          <li><strong>Receita Bruta</strong>: $\sum (\text{BQ} \times \text{Preço Unitário Negociado})$;</li>
+          <li><strong>CMV (Custo da Mercadoria Vendida)</strong>: $\sum (\text{DQ} \times \text{currentLandedCost})$ <em>(baixa no estoque real entregue)</em>;</li>
+          <li><strong>Custo de Frete de Entrega</strong>: <strong><code>R$ 4,00 por saca entregue (DQ)</code></strong>
+            <p style="margin: 4px 0 8px;">$$\text{Custo de Frete} = \text{DQ Total} \times \text{R\$} 4,00$$</p>
+          </li>
+          <li><strong>Carga Tributária Efetiva Estimada</strong>: <code>8,00%</code> da Receita Bruta (ICMS efetivo de 7% + PIS/COFINS CST 09 com suspensão/alíquota zero na farinha conf. Lei 10.925/2004).</li>
         </ul>
 
         <div class="callout tip">
           <div class="callout-title">💰 Equações de Lucro e Margem</div>
-          <p>$$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete} - \text{Impostos}$$</p>
+          <p>$$\text{Lucro Líquido} = \text{Receita Bruta} - \text{CMV} - \text{Frete (DQ} \times 4,00) - \text{Impostos}$$</p>
           <p>$$\text{Margem Líquida (\%)} = \left(\frac{\text{Lucro Líquido}}{\text{Receita Bruta}}\right) \times 100$$</p>
         </div>
 
-        <h3>Semáforo de Rentabilidade no Aplicativo</h3>
+        <h3>Semáforo Oficial de Margem Líquida (Validado pelo Sr. Sérgio)</h3>
         <div class="table-container">
           <table>
             <thead>
@@ -279,19 +306,19 @@
             </thead>
             <tbody>
               <tr>
-                <td><span class="badge badge-success">🟢 Verde (Saudável)</span></td>
+                <td><span class="badge badge-success">🟢 Verde (Excelente)</span></td>
                 <td><code style="font-size: 13px; font-weight: 700; color: #047857; background: #ECFDF5; border: 1px solid #A7F3D0; padding: 4px 10px; border-radius: 6px;">Margem ≥ 20,0%</code></td>
-                <td>Pedido aprovado automaticamente sem travas comerciais</td>
+                <td>Rentabilidade excelente. Pedido aprovado automaticamente sem travas comerciais.</td>
               </tr>
               <tr>
                 <td><span class="badge badge-wheat">🟡 Amarelo (Atenção)</span></td>
-                <td><code style="font-size: 13px; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A; padding: 4px 10px; border-radius: 6px;">12,0% ≤ Margem &lt; 20,0%</code></td>
-                <td>Permitido, mas alerta o vendedor sobre desconto excessivo</td>
+                <td><code style="font-size: 13px; font-weight: 700; color: #B45309; background: #FFFBEB; border: 1px solid #FDE68A; padding: 4px 10px; border-radius: 6px;">7,0% ≤ Margem &lt; 20,0%</code></td>
+                <td>Margem intermediária aceitável para clientes estratégicos; destaca alerta visual de negociação.</td>
               </tr>
               <tr>
-                <td><span class="badge badge-danger">🔴 Vermelho (Crítico)</span></td>
-                <td><code style="font-size: 13px; font-weight: 700; color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; padding: 4px 10px; border-radius: 6px;">Margem &lt; 12,0%</code></td>
-                <td>Bloqueio de segurança; exige autorização expressa do sócio</td>
+                <td><span class="badge badge-danger">🔴 Vermelho (Crítica)</span></td>
+                <td><code style="font-size: 13px; font-weight: 700; color: #B91C1C; background: #FEF2F2; border: 1px solid #FECACA; padding: 4px 10px; border-radius: 6px;">Margem &lt; 7,0%</code></td>
+                <td>Rentabilidade perigosa abaixo do piso operacional; exige justificativa e aprovação expressa do sócio.</td>
               </tr>
             </tbody>
           </table>
@@ -309,6 +336,23 @@
           <li><strong>Código de Município IBGE (<code>cMun</code>)</strong>: Exatamente 7 dígitos numéricos válidos.</li>
           <li><strong>Chave de Acesso de 44 Dígitos</strong>: Com dígito verificador módulo 11 gerado conforme o MOC.</li>
         </ol>
+
+        <h2>📚 Estudos Técnicos Complementares</h2>
+        <div class="card-grid">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html" class="doc-card">
+            <div class="doc-card-icon">📑</div>
+            <div class="doc-card-title">Estudo Técnico NF-e SEFAZ A1</div>
+            <div class="doc-card-desc">Aposentadoria definitiva do software do Sebrae e emissão direta via Spring Boot com Certificado Digital A1.</div>
+            <div style="margin-top: 14px;"><span class="badge badge-primary">Fiscal & SEFAZ</span></div>
+          </a>
+
+          <a href="ESTUDO_TECNICO_API_SICREDI.html" class="doc-card">
+            <div class="doc-card-icon">🏦</div>
+            <div class="doc-card-title">Estudo Técnico API Sicredi</div>
+            <div class="doc-card-desc">Emissão automatizada de Boletos Bancários Híbridos (Código de Barras + QR Code Pix) calculados sobre a BQ.</div>
+            <div style="margin-top: 14px;"><span class="badge badge-wheat">Financeiro & Pix</span></div>
+          </a>
+        </div>
 
         <div class="doc-footer">
           <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>

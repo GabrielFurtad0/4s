@@ -166,8 +166,8 @@ Guias técnicos e operacionais disponíveis na pasta [`docs/`](docs/) com versõ
 | Documento | Versão Markdown | Versão Web HTML (Interativa) |
 | :--- | :---: | :---: |
 | 📚 **Central de Documentação (Portal Hub)** | [`docs/README.md`](docs/README.md) | 🌐 [**index.html**](docs/index.html) |
-| 📑 **Estudo Técnico: Emissão NF-e SEFAZ A1** | [`docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md`](docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md) | 🌐 *Markdown Técnico* |
-| 🏦 **Estudo Técnico: Cobrança API Sicredi (BQ)** | [`docs/ESTUDO_TECNICO_API_SICREDI.md`](docs/ESTUDO_TECNICO_API_SICREDI.md) | 🌐 *Markdown Técnico* |
+| 📑 **Estudo Técnico: Emissão NF-e SEFAZ A1** | [`docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md`](docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.md) | 🌐 [**ESTUDO_TECNICO_NFE_SEFAZ_A1.html**](docs/ESTUDO_TECNICO_NFE_SEFAZ_A1.html) |
+| 🏦 **Estudo Técnico: Cobrança API Sicredi (BQ)** | [`docs/ESTUDO_TECNICO_API_SICREDI.md`](docs/ESTUDO_TECNICO_API_SICREDI.md) | 🌐 [**ESTUDO_TECNICO_API_SICREDI.html**](docs/ESTUDO_TECNICO_API_SICREDI.html) |
 | 🏗️ **Arquitetura do Sistema & Diagramas** | [`docs/ARQUITETURA_DO_SISTEMA.md`](docs/ARQUITETURA_DO_SISTEMA.md) | 🌐 [**ARQUITETURA_DO_SISTEMA.html**](docs/ARQUITETURA_DO_SISTEMA.html) |
 | 📱 **Manual Operacional do ERP & Vendas** | [`docs/MANUAL_OPERACIONAL_ERP.md`](docs/MANUAL_OPERACIONAL_ERP.md) | 🌐 [**MANUAL_OPERACIONAL_ERP.html**](docs/MANUAL_OPERACIONAL_ERP.html) |
 | 📊 **Manual da Automação da Planilha** | [`docs/MANUAL_DE_USO_PLANILHA.md`](docs/MANUAL_DE_USO_PLANILHA.md) | 🌐 [**MANUAL_DE_USO_PLANILHA.html**](docs/MANUAL_DE_USO_PLANILHA.html) |

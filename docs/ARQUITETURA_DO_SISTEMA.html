@@ -53,7 +53,7 @@
   <!-- Layout Principal -->
   <div class="docs-layout">
     
-    <!-- Sidebar de Navegação -->
+    <!-- Sidebar de Navegação Completa -->
     <aside class="docs-sidebar">
       <div class="sidebar-heading">Documentação Oficial</div>
       <ul class="nav-doc-list">
@@ -88,6 +88,18 @@
           </a>
         </li>
         <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
           <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
             <span class="nav-doc-icon">🚀</span>
             <span>Guia de Implantação</span>
@@ -97,6 +109,28 @@
           <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
             <span class="nav-doc-icon">📑</span>
             <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+
+      <div class="sidebar-heading">Acesso Rápido ao Código</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="../automacao-planilha/README.md">
+            <span class="nav-doc-icon">📦</span>
+            <span>Módulo da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../backend/pom.xml">
+            <span class="nav-doc-icon">☕</span>
+            <span>Backend Spring Boot</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="../frontend/package.json">
+            <span class="nav-doc-icon">⚛️</span>
+            <span>Frontend React / Vite</span>
           </a>
         </li>
       </ul>
@@ -116,73 +150,101 @@
           </div>
           <h1 class="doc-title">🏗️ Arquitetura do Sistema e Engenharia de Software</h1>
           <p class="doc-lead">
-            Visão abrangente dos componentes de backend Spring Boot 3, interfaces React 18, modelagem relacional, máquina de estados rigorosa e controle triplo de estoque físico e reservado.
+            Visão abrangente dos componentes de backend Spring Boot 3, interfaces React 18 / PWA, modelagem relacional com duplo estoque (DQ/BQ), contas a receber, trilha de auditoria e infraestrutura Docker/PostgreSQL.
           </p>
         </div>
 
         <h2>🏛️ Visão Geral da Arquitetura</h2>
         <p>
-          O sistema foi desenhado segundo os preceitos de <strong>Arquitetura Limpa / Hexagonal (Ports & Adapters)</strong>, dividindo-se em três pilares autônomos:
+          O sistema foi desenhado segundo os preceitos de <strong>Arquitetura Limpa / Hexagonal (Ports & Adapters)</strong>, dividindo-se em quatro pilares autônomos e cooperativos:
         </p>
         <ul>
-          <li><strong>Backend RESTful</strong>: Spring Boot 3.4 (Java 21 LTS) com Spring Data JPA, Flyway para migrações imutáveis, banco H2 (arquivo local compatível com PostgreSQL) e validações com Bean Validation;</li>
-          <li><strong>Frontend SPA / PWA Ready</strong>: React 18 com TypeScript, Vite, Tailwind CSS, Radix UI e Lucide Icons, entregando interfaces responsivas para vendas de campo (mobile) e backoffice fiscal (desktop);</li>
-          <li><strong>Módulo Satélite de Estoque</strong>: Módulo Python local offline para manipulação de XMLs de NF-e e atualização da planilha Excel com backups automáticos.</li>
+          <li><strong>Backend RESTful</strong>: Spring Boot 3.4 (Java 21 LTS) com Spring Data JPA, Flyway (migrações imutáveis V1 a V4), banco H2 local e perfil de produção PostgreSQL 16 (<code>application-prod.yml</code>);</li>
+          <li><strong>Frontend SPA / PWA</strong>: React 18 com TypeScript, Vite, Tailwind CSS, Lucide Icons, fila de pedidos offline (<code>sw.js</code>), escalabilidade tipográfica para campo (A / A+ / A++) e 3 perfis de acesso;</li>
+          <li><strong>Módulo de Documentos Fiscais & Sincronização</strong>: <code>FiscalDocumentService</code> para geração de DANFE (Base BQ), Romaneio Cego (Base DQ), CC-e e Devoluções, integrado ao <code>SpreadsheetSyncService</code> para acionamento transparente da planilha;</li>
+          <li><strong>Módulo Satélite de Automação de Planilha</strong>: Script autônomo em Python 3 (<code>openpyxl</code>) para consolidação em lote na <code>Planilha de Estoques.xlsx</code> e backup rotativo.</li>
         </ul>
 
         <h2>📐 Diagrama de Componentes e Fluxo de Dados</h2>
         <div class="mermaid-wrapper">
           <pre class="mermaid">
 graph TD
-    subgraph CLIENT_LAYER["Camada de Interface (Frontend React + Vite)"]
-        UI_MOBILE["App Mobile Field Sales (Sr. Sérgio)<br/>• Radar Recompra<br/>• Ficha 360º<br/>• Lançamento Pedidos"]
-        UI_DESKTOP["Backoffice Web (Gabriel)<br/>• Mesa Pré-Nota<br/>• Prontidão Fiscal<br/>• Landed Cost"]
+    subgraph CLIENT_LAYER["Camada de Interface (Frontend React 18 + PWA)"]
+        UI_MOBILE["App Mobile Field Sales (Sr. Sérgio)<br/>• Radar Recompra & PWA Offline<br/>• Ficha 360º & Escala de Fonte<br/>• Lançamento Pedidos"]
+        UI_DESKTOP["Backoffice Web (Gabriel Furtado)<br/>• 6 Módulos de Gestão<br/>• Mesa Pré-Nota & Faturamento<br/>• Contas a Receber (Boletos BQ)"]
+        UI_EXPEDITION["Terminal de Expedição (Galpão)<br/>• Impressão Romaneio Cego (DQ)<br/>• Separação sem Exposição de Margens"]
     end
 
     subgraph API_GATEWAY["Camada de Serviços (Spring Boot 3 - Porta 8085)"]
         CTRL_SALES["FieldSalesController"]
         CTRL_BACKOFFICE["BackofficeController"]
+        CTRL_DOCS["FiscalDocumentController"]
+        CTRL_MGMT["ManagementExtensionController"]
+        
         SRV_SALES["FieldSalesService"]
         SRV_BACKOFFICE["BackofficeService"]
+        SRV_DOCS["FiscalDocumentService<br/>(DANFE BQ / Romaneio DQ)"]
+        SRV_MGMT["ManagementExtensionService<br/>(Recebíveis / Auditoria / Métricas)"]
+        SRV_SYNC["SpreadsheetSyncService<br/>(Push XML -> Python Sync)"]
         SRV_BRASILAPI["BrasilApiService (CNPJ/IBGE)"]
         PORT_NFE["NfeGatewayPort"]
         ADAPT_NFE["FocusNfeSimulatorAdapter<br/>(Chave 44 dígitos + XML 4.00)"]
     end
 
     subgraph PERSISTENCE["Camada de Dados & Persistência"]
-        FLYWAY["Flyway Migrations (V1, V2)"]
-        DB_LOCAL[("H2 Database Local<br/>(Arquivo / Em Memória)<br/>Compatível PostgreSQL")]
+        FLYWAY["Flyway Migrations (V1, V2, V3, V4)"]
+        DB_DEV[("H2 Database Local<br/>(Arquivo / Em Memória)")]
+        DB_PROD[("PostgreSQL 16 (Docker Prod)<br/>application-prod.yml")]
+        REPO_AUDIT["AuditLogRepository"]
+        REPO_REC["ReceivableTitleRepository"]
     end
 
-    subgraph SPREADSHEET_MODULE["Módulo Satélite (Python)"]
+    subgraph SPREADSHEET_MODULE["Módulo Satélite (Python 3)"]
         AUTOMATION["automacao-planilha/<br/>atualizar_estoque.py"]
         EXCEL[("Planilha de Estoques.xlsx")]
+        BACKUPS["automacao-planilha/backups/"]
     end
 
-    subgraph EXTERNAL_APIS["Serviços Externos"]
+    subgraph EXTERNAL_APIS["Serviços Externos / Integrações"]
         EXT_BRASILAPI["BrasilAPI (Receita Federal / IBGE)"]
-        EXT_SEFAZ["SEFAZ SP / Nuvem Fiscal / Focus NFe"]
+        EXT_SEFAZ["SEFAZ SP (NF-e 4.00 / Certificado A1)"]
+        EXT_SICREDI["Sicredi Open Banking (Boletos BQ / Webhooks)"]
     end
 
-    UI_MOBILE -->|HTTP/REST| CTRL_SALES
+    UI_MOBILE -->|HTTP/REST / PWA Offline| CTRL_SALES
     UI_DESKTOP -->|HTTP/REST| CTRL_BACKOFFICE
+    UI_DESKTOP -->|HTTP/REST| CTRL_DOCS
+    UI_DESKTOP -->|HTTP/REST| CTRL_MGMT
+    UI_EXPEDITION -->|HTTP/REST| CTRL_DOCS
+
     CTRL_SALES --> SRV_SALES
     CTRL_BACKOFFICE --> SRV_BACKOFFICE
+    CTRL_DOCS --> SRV_DOCS
+    CTRL_MGMT --> SRV_MGMT
+
     SRV_BACKOFFICE --> SRV_BRASILAPI
     SRV_BACKOFFICE --> PORT_NFE
+    SRV_BACKOFFICE --> SRV_SYNC
     PORT_NFE --> ADAPT_NFE
     SRV_BRASILAPI --> EXT_BRASILAPI
+
     ADAPT_NFE -.->|Fase 2: Conector Real| EXT_SEFAZ
-    SRV_SALES --> DB_LOCAL
-    SRV_BACKOFFICE --> DB_LOCAL
-    FLYWAY --> DB_LOCAL
-    ADAPT_NFE -.->|Exporta XML| AUTOMATION
+    SRV_MGMT -.->|Fase 2: API Boletos| EXT_SICREDI
+
+    SRV_SALES --> DB_DEV
+    SRV_BACKOFFICE --> DB_DEV
+    SRV_MGMT --> DB_DEV
+    FLYWAY --> DB_DEV
+    FLYWAY --> DB_PROD
+
+    SRV_SYNC -->|Disparo em Background| AUTOMATION
     AUTOMATION --> EXCEL
+    AUTOMATION --> BACKUPS
           </pre>
         </div>
 
         <h2>💾 Modelo de Dados e Entidades (ERD)</h2>
-        <p>A base de dados garante a rastreabilidade ponta a ponta desde o lote de importação de trigo até a nota fiscal na padaria:</p>
+        <p>A base de dados garante rastreabilidade total desde a importação do trigo até a liquidação bancária dos boletos e trilha de auditoria:</p>
 
         <div class="mermaid-wrapper">
           <pre class="mermaid">
@@ -197,17 +259,20 @@ erDiagram
     clients ||--o{ client_sku_prices : "tem preco ajustado"
     clients ||--o{ client_notes : "registra notas"
     clients ||--o{ visit_schedules : "possui agenda"
+    clients ||--o{ receivable_titles : "deve"
 
     orders ||--|{ order_items : "contem itens"
+    orders ||--o{ receivable_titles : "gera titulos"
 
     products {
         bigint id PK
         varchar sku_code UK "SKU-05, SKU-02, SKU-03"
         varchar erp_code "Código SEFAZ cProd"
         varchar name "Farinha Tipo 1 25Kg..."
-        int physical_stock "Estoque Físico Galpão"
+        int physical_stock "Estoque Físico Galpão (DQ)"
         int reserved_stock "Estoque Comprometido"
-        decimal current_landed_cost "Custo Médio Unitário"
+        int base_stock "Estoque Base Fiscal Acumulado (BQ)"
+        decimal current_landed_cost "Custo Médio Ponderado (CMP)"
         decimal base_list_price "Preço Tabela Balcão"
         varchar ncm "11010010"
         varchar cest "1704400"
@@ -223,110 +288,200 @@ erDiagram
         varchar ie_indicator "CONTRIBUINTE / ISENTO"
         varchar zip_code "CEP"
         varchar ibge_city_code "3550308 (São Paulo)"
-        varchar financial_status "EM_DIA / EM_ATRASO"
+        varchar financial_status "EM_DIA / BOLETO_VENCIDO / BLOQUEADO"
         boolean is_registration_complete "Prontidão Fiscal"
     }
 
     orders {
         bigint id PK
         bigint client_id FK
-        varchar status "AGUARDANDO_REVISAO..."
-        decimal shipping_cost_estimate "Frete Estimado"
+        varchar status "AGUARDANDO_REVISAO, EM_SEPARACAO, FATURADO, ENTREGUE, CANCELADO"
+        decimal shipping_cost_estimate "Frete Oficial: DQ x R$ 4,00"
         decimal original_commercial_total "Total Pedido Rua"
-        decimal gross_total "Total Faturado NF"
+        decimal gross_total "Total Faturado NF-e (Base BQ)"
         decimal net_profit_snapshot "Lucro Líquido Real"
-        decimal net_margin_percentage "Margem Líquida %"
-        varchar nfe_status "PENDENTE / AUTORIZADA"
-        varchar nfe_access_key "Chave 44 dígitos"
+        decimal net_margin_percentage "Margem Líquida % (Verde >= 20, Amarelo 7-20, Vermelho < 7)"
+        varchar nfe_status "PENDENTE / AUTORIZADA / CANCELADA"
+        varchar nfe_access_key "Chave 44 dígitos oficial"
     }
 
     order_items {
         bigint id PK
         bigint order_id FK
         bigint product_id FK
-        int ordered_quantity "Sacas Pedidas Rua"
-        int quantity "Sacas Faturadas NF"
+        int ordered_quantity "Sacas Pedidas na Rua"
+        int dispatch_quantity "Sacas Físicas Entregues (DQ)"
+        int quantity "Sacas Faturadas NF-e (BQ)"
         decimal ordered_unit_price "Preço Rua"
-        decimal unit_sale_price "Preço NF"
-        decimal unit_cost_snapshot "Custo Landed no Momento"
+        decimal unit_sale_price "Preço Faturado NF-e"
+        decimal unit_cost_snapshot "Custo CMP no Momento"
+    }
+
+    receivable_titles {
+        bigint id PK
+        bigint order_id FK "Vínculo com Pedido Faturado"
+        bigint client_id FK "Devedor"
+        varchar client_name "Razão Social"
+        varchar document_number "BOL-NF012926-01"
+        int installment_number "Parcela Atual"
+        int total_installments "Total Parcelas (14/28d)"
+        decimal amount_bq "Valor Parcela (Calculado sobre BQ)"
+        date due_date "Vencimento"
+        varchar status "ABERTO, PAGO, VENCIDO, CANCELADO"
+        timestamp paid_at "Data da Baixa Manual"
+        varchar notes "Histórico e observações"
+    }
+
+    audit_logs {
+        bigint id PK
+        varchar actor_name "Gabriel Furtado / Sérgio Soares"
+        varchar actor_role "Backoffice & Fiscal / Sócio & Rua"
+        varchar action_type "ENTRADA_LOTE, EMISSAO_NFE, PEDIDO_NOVO, BAIXA_TITULO"
+        varchar target_entity "Order, ImportBatch, ReceivableTitle, Client"
+        varchar target_id "Identificador"
+        varchar summary "Descrição detalhada do evento"
+        timestamp created_at "Data e hora exatas"
     }
 
     import_batches {
         bigint id PK
         varchar batch_code UK "IMP-2026-09-ARG"
-        date arrival_date "Data Chegada"
-        decimal exchange_rate_usd "PTAX USD"
+        date arrival_date "Data Chegada Galpão"
+        decimal exchange_rate_usd "PTAX USD Oficial"
         decimal fob_total_usd "FOB USD"
-        decimal international_freight_brl "Frete Int."
-        decimal total_landed_cost_brl "Custo Total BRL"
+        decimal international_freight_brl "Frete Marítimo/Rodoviário BRL"
+        decimal total_landed_cost_brl "Custo Landed Nacionalizado BRL"
     }
           </pre>
         </div>
 
-        <h2>🔄 Máquina de Estados e Controle Triplo de Estoque</h2>
+        <h2>📦 Engenharia de Dupla Quantidade (DQ vs BQ) e Duplo Estoque</h2>
         <p>
-          O sistema implementa o padrão de <strong>Estoque Triplo</strong> por SKU, evitando rupturas ou vendas além do estoque disponível no galpão:
+          O sistema separa com precisão matemática a movimentação de mercadorias no galpão e o faturamento fiscal:
         </p>
 
-        <div class="callout tip">
-          <div class="callout-title">📐 Equação Fundamental do Estoque</div>
-          <p style="font-family: var(--font-mono); font-size: 14.5px; font-weight: 700; color: #047857; margin: 4px 0;">
-            availableStock = physicalStock − reservedStock
-          </p>
+        <div class="grid grid-2" style="margin-bottom: 20px;">
+          <div class="card" style="border-left: 4px solid var(--color-primary);">
+            <div class="card-title">🚚 Qtd. Expedição (DQ) — Físico</div>
+            <p style="font-size: 14px; color: var(--color-text-muted);">
+              Quantidade real carregada no caminhão e descarregada na padaria (<code>order_items.dispatch_quantity</code>). Movimenta o <code>physical_stock</code> e determina o frete de <strong>R$ 4,00 por saca entregue</strong> e o CMV contábil.
+            </p>
+          </div>
+          <div class="card" style="border-left: 4px solid var(--color-warning);">
+            <div class="card-title">🧾 Qtd. Base (BQ) — Fiscal & Boletos</div>
+            <p style="font-size: 14px; color: var(--color-text-muted);">
+              Quantidade faturada na NF-e e na cobrança bancária (<code>order_items.quantity</code>). Movimenta o <code>base_stock</code> e baliza estritamente os títulos gerados no Contas a Receber (<code>receivable_titles</code>).
+            </p>
+          </div>
         </div>
 
+        <div class="callout tip">
+          <div class="callout-title">📐 Equação Fundamental do Estoque Disponível</div>
+          <p style="font-family: var(--font-mono); font-size: 15px; font-weight: 700; color: #047857; margin: 4px 0;">
+            availableStock = physicalStock − reservedStock
+          </p>
+          <span style="font-size: 13px; color: #065F46;">O estoque disponível é decrementado imediatamente no lançamento do pedido comercial, evitando vendas descobertas.</span>
+        </div>
+
+        <h2>🔄 Máquina de Estados do Pedido</h2>
         <div class="mermaid-wrapper">
           <pre class="mermaid">
 stateDiagram-v2
-    [*] --> AGUARDANDO_REVISAO: Sr. Sérgio lança pedido na Rua
+    [*] --> AGUARDANDO_REVISAO: Sr. Sérgio lança pedido na Rua (Mobile / PWA)
     note right of AGUARDANDO_REVISAO
         • physicalStock: Inalterado
-        • reservedStock: +Qtd
-        • availableStock: -Qtd
+        • reservedStock: +DQ (reserva física)
+        • availableStock: -DQ
     end note
 
     AGUARDANDO_REVISAO --> EM_SEPARACAO: Gabriel aprova na Mesa Pré-Nota
     note right of EM_SEPARACAO
-        • Ajuste comercial vs fiscal aplicado
-        • Romaneio Cego gerado p/ Galpão
+        • Ajuste comercial vs fiscal aplicado (DQ vs BQ)
+        • Romaneio Cego impresso p/ Galpão (apenas DQ)
     end note
 
-    EM_SEPARACAO --> FATURADO: NF-e emitida com sucesso
+    EM_SEPARACAO --> FATURADO: NF-e emitida com sucesso (FiscalDocumentService)
     note right of FATURADO
-        • physicalStock: -Qtd definitiva
-        • reservedStock: -Qtd (baixa da reserva)
-        • XML 4.00 e Chave 44 gerados
+        • physicalStock: -DQ definitiva
+        • reservedStock: -DQ (baixa da reserva)
+        • base_stock: -BQ
+        • Boletos gerados sobre BQ (receivable_titles)
+        • XML exportado p/ automacao-planilha (SpreadsheetSyncService)
     end note
 
-    FATURADO --> ENTREGUE: Motorista conclui rota
+    FATURADO --> ENTREGUE: Motorista conclui rota e colhe canhoto
     
     AGUARDANDO_REVISAO --> CANCELADO: Cancelado pelo Backoffice
     EM_SEPARACAO --> CANCELADO: Cancelado antes do faturamento
     note right of CANCELADO
-        • reservedStock: -Qtd (estorno da reserva)
-        • availableStock: +Qtd liberado
+        • reservedStock: -DQ (estorno da reserva)
+        • availableStock: +DQ liberado
     end note
           </pre>
         </div>
 
-        <h2>⚡ Integrações Externas</h2>
+        <h2>👥 Perfis de Acesso e Matriz de Autorização</h2>
+        <p>A segurança operacional isola os papéis para evitar exposição de margens no galpão ou faturamentos descontrolados:</p>
+        
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Perfil</th>
+                <th>Ator Principal</th>
+                <th>Acessos e Funções</th>
+                <th>Interface</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Backoffice & Fiscal</strong></td>
+                <td>Gabriel Furtado</td>
+                <td>Acesso irrestrito: Mesa Pré-Nota, Análise de Margem Líquida (farol 7%/20%), Emissão NF-e, Boletos BQ, Trilha de Auditoria e Lotes de Importação (CMP).</td>
+                <td><span class="badge badge-success">Backoffice 6 Abas</span></td>
+              </tr>
+              <tr>
+                <td><strong>Comercial & Campo</strong></td>
+                <td>Sr. Sérgio</td>
+                <td>Radar de Recompra (dias sem comprar), Ficha 360°, Lançamento de Pedidos, Tabela por Cliente, PWA Offline e Zoom de Fonte (A / A+ / A++).</td>
+                <td><span class="badge badge-warning">App Mobile PWA</span></td>
+              </tr>
+              <tr>
+                <td><strong>Expedição & Carga</strong></td>
+                <td>Galpão / Motorista</td>
+                <td>Acesso restrito ao <strong>Romaneio Cego</strong>: exibição exclusiva de sacas físicas DQ, dados da padaria e endereço de entrega, sem valores em R$.</td>
+                <td><span class="badge badge-danger">Romaneio Cego</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
 
-        <h3>1. BrasilAPI (Enriquecimento Cadastral Instantâneo)</h3>
-        <p>A API de Backoffice consulta a <strong>BrasilAPI</strong> de forma síncrona:</p>
-        <ul>
-          <li><strong>Consulta de CNPJ</strong>: <code>GET https://brasilapi.com.br/api/cnpj/v1/{cnpj}</code> — preenche Razão Social, Fantasia, CNAE, Endereço e Situação Cadastral;</li>
-          <li><strong>Resolução de Código IBGE</strong>: <code>GET https://brasilapi.com.br/api/ibge/municipios/v1/{uf}</code> — obtém o código IBGE oficial de 7 dígitos (ex: <code>3550308</code> para São Paulo), exigência indispensável da SEFAZ SP.</li>
-        </ul>
+        <h2>🚢 Infraestrutura e Ambientes de Implantação</h2>
+        <div class="mermaid-wrapper">
+          <pre class="mermaid">
+flowchart LR
+    subgraph DEV_ENV["Ambiente de Desenvolvimento"]
+        DEV_APP["Spring Boot 3.4<br/>application.yml<br/>H2 Database Local"]
+        DEV_FRONT["Vite Dev Server<br/>Porta 5173 / Proxy 8085"]
+    end
 
-        <h3>2. Gerador Fiscal NF-e 4.00 (<code>FocusNfeSimulatorAdapter</code>)</h3>
-        <p>
-          Calcula a chave de acesso oficial de 44 dígitos aplicando o algoritmo do dígito verificador módulo 11 conforme o Manual de Orientação do Contribuinte (MOC):
-        </p>
-        <pre><code>Chave = UF(35) + AAMM(2610) + CNPJ(09265201000195) + Mod(55) + Série(001) + nNF(000012377) + tpEmis(1) + cNF(10042002) + cDV(1)</code></pre>
+    subgraph PROD_ENV["Ambiente de Produção (Docker Compose)"]
+        PROD_POSTGRES[("PostgreSQL 16 Alpine<br/>Porta 5432<br/>totaltrigo_prod")]
+        PROD_BACKEND["totaltrigo-backend<br/>Java 21 Distroless<br/>application-prod.yml"]
+        PROD_FRONTEND["totaltrigo-frontend<br/>Nginx 1.25 Alpine<br/>Single Page App"]
+        BACKUP_CRON["Scripts de Backup Diário<br/>backup_db.bat / .sh"]
+    end
+
+    DEV_APP -->|Testes Unitários| JUNIT["JUnit 5 + Mockito<br/>Vitest Suite"]
+    PROD_BACKEND --> PROD_POSTGRES
+    PROD_FRONTEND --> PROD_BACKEND
+    PROD_POSTGRES --> BACKUP_CRON
+          </pre>
+        </div>
 
         <div class="doc-footer">
           <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
-          <span>Versão da Release: Outubro/2026</span>
+          <span>Versão da Release: Outubro/2026 • Build Alinhado com Flyway V4</span>
         </div>
 
       </article>

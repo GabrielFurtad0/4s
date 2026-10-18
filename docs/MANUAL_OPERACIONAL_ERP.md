@@ -1,94 +1,118 @@
 # 🖥️ Manual Operacional do ERP — TotalTrigo Web
 
-Este manual orienta a utilização das interfaces operacionais da plataforma web do **TotalTrigo ERP**, contemplando o módulo móvel para vendas de campo (utilizado pelo **Sr. Sérgio**) e o painel de retaguarda de faturamento e estoque (operado pelo **Gabriel**).
+Este manual orienta a operação prática do **TotalTrigo / 4S ERP**, cobrindo o aplicativo móvel de vendas de campo (utilizado pelo **Sr. Sérgio**) e os 6 módulos integrados do painel de retaguarda desktop (operado pelo **Gabriel Furtado** e pela equipe de **Expedição**).
 
 ---
 
-## 👥 Personas e Perfis de Acesso
+## 👥 Perfis de Acesso e Alternância Rápida
+
+O sistema possui 3 perfis operacionais com controle de visualização granular no seletor do topo:
 
 ```mermaid
-flowchart LR
-    A["Sr. Sérgio<br/>(Vendas em Campo / Balcão da Padaria)"] -->|Smartphone / Tablet| M1["App Mobile Field Sales"]
-    B["Gabriel<br/>(Backoffice / Faturamento / Importação)"] -->|Desktop / Notebook| M2["Mesa Pré-Nota & Gestão"]
-    C["Equipe de Galpão / Motoristas"] -->|Papel ou WhatsApp| M3["Romaneio Cego de Separação"]
+flowchart TD
+    A["Seletor de Perfis no Topo"] --> P1["Gabriel Furtado<br/>(Backoffice & Fiscal)"]
+    A --> P2["Sérgio Soares<br/>(Sócio & Vendas de Rua)"]
+    A --> P3["Expedição · Romaneio Cego<br/>(Galpão & Motoristas)"]
+
+    P1 --> O1["Acesso completo aos 6 módulos<br/>Mesa, Boletos, Cadastros, Auditoria, Importação e Visão Executiva"]
+    P2 --> O2["App Mobile PWA Offline & Backoffice<br/>Radar de Recompra, Ficha 360°, Tabela por Padaria"]
+    P3 --> O3["Acesso exclusivo ao Romaneio Cego (DQ)<br/>Custos, preços, impostos e margens estritamente ocultos"]
 ```
 
+* **Gabriel Furtado · Backoffice & Fiscal**: Operação completa de retaguarda, aprovação pré-nota, emissão de NF-e, controle de boletos, trilha de auditoria e parametrização de importação.
+* **Sérgio Soares · Sócio & Rua**: Operação em campo com PWA offline e visão estratégica no notebook.
+* **Expedição · Romaneio Cego**: Interface simplificada para operadores de empilhadeira e separadores no galpão, garantindo sigilo comercial absoluto.
+
 ---
 
-## 📱 Módulo 1: App Mobile Field Sales (Sr. Sérgio)
+## 🔍 Acessibilidade e Ergonomia em Campo (Escala de Fontes)
 
-Projetado para telas de celular, com ergonomia para operação em pé no balcão da padaria, toques largos e alta densidade de informação útil.
+No cabeçalho superior direito, tanto no celular quanto no desktop, há o seletor rápido de escala tipográfica:
+* **A (Normal)**: 100% do tamanho base (padrão de interface moderna).
+* **A+ (Grande)**: +15% no corpo do texto e botões, facilitando leitura em tablets.
+* **A++ (Extra Grande)**: +30% no contraste e tamanho, ideal para operação em celulares sob luz solar direta no balcão da padaria.
+* A preferência fica gravada no dispositivo local (`localStorage.getItem('totaltrigo_font_scale')`).
 
-### 1. Radar de Recompra e Agenda de Hoje (Tela 1)
-* **Visitas Agendadas**: Lista prioritária de clientes roteirizados para o dia.
-* **Radar Inteligente de Recompra**: Sinaliza automaticamente padarias que ultrapassaram seu ciclo habitual de compras (ex: média de compra a cada 20 dias, porém sem compras há 22 dias).
+---
+
+## 📱 Módulo Mobile: Vendas de Campo (Sr. Sérgio)
+
+### 1. Radar de Recompra & PWA com Fila Offline
+* **Funcionamento Offline**: Através do Service Worker (`sw.js`), se a padaria estiver sem sinal de operadora 4G/5G, o pedido é salvo na fila local do dispositivo. Assim que a conexão for restabelecida, o sistema envia automaticamente para o backend (`FieldSalesService`).
+* **Radar Inteligente de Recompra**:
+  * O sistema analisa o ciclo médio de consumo de cada padaria.
+  * Padarias com ciclo estourado (ex: compra habitual a cada 15 dias, já se passaram 18 dias) ganham destaque imediato no topo da lista.
 * **Semáforo Financeiro**:
-  * 🟢 **Em dia**: Cliente apto para novos pedidos.
-  * 🔴 **1 boleto vencido**: Alerta para cobrança cordial antes de fechar novo lote.
+  * 🟢 **Em Dia**: Cliente liberado para novos pedidos.
+  * 🔴 **Boleto Vencido**: Alerta sonoro/visual para alinhamento amigável antes de emitir nova carga.
+
+### 2. Ficha 360º do Cliente
+* **Histórico de Preços por SKU**: Apresenta a memória de preços acordada no último pedido para Farinha Tipo 1, Pré-Mistura e Pão Doce.
+* **Caderno de Notas Operacionais**: Campo dinâmico para instruções como horários de recebimento, preferências do padeiro e restrições de caminhão.
 * **Pré-Cadastro Rápido por CNPJ**:
-  * Ao visitar um cliente novo, clique no botão **"+ Pré-Cadastro por CNPJ"**.
-  * Digite apenas o CNPJ (14 dígitos) e clique em **Buscar**.
-  * O sistema consulta a Receita Federal via **BrasilAPI**, preenche Razão Social, Fantasia, Endereço e Código IBGE em segundos.
+  * Botão **"+ Pré-Cadastro por CNPJ"**.
+  * Preenchimento automático via **BrasilAPI** (Razão Social, Nome Fantasia, Bairro, CEP e Código IBGE 7 dígitos).
 
-### 2. Ficha 360º do Cliente (Tela 2)
-* **Memória de Preço por SKU**: Mostra instantaneamente o último preço praticado para Farinha Tipo 1, Pré-Mistura e Pão Doce, evitando divergências na negociação.
-* **Caderno de Notas da Visita**: Campo para anotações operacionais rápidas (ex: *"Dono viaja na quinta, prefere entrega às terças pela manhã"*).
-* **Condição de Pagamento Padrão**: Exibe os prazos combinados (ex: *Boleto 28 dias* ou *Semanal 7/14/21/28 dias*).
-
-### 3. Lançador de Pedidos com Proteção de Margem (Tela 3)
-* **Seleção dos 3 SKUs**: Adicione quantidades em sacas de 25 kg com botões de incremento rápido (+5, +10, +50).
-* **Ajuste de Preço**: O vendedor pode negociar o preço unitário mantendo a coerência com a tabela base.
-* **Privacidade de Margem (Anti-Curioso)**:
-  * O breakdown de custos (Custo Landed, Frete por Saco, Impostos e Lucro Líquido Real) permanece **oculto por padrão**.
-  * O vendedor pode expandir o card com um único toque quando o cliente não estiver olhando para a tela, verificando a rentabilidade da venda.
-* **Conclusão**: Ao clicar em **"Finalizar Pedido"**, o pedido entra no sistema com o status `AGUARDANDO_REVISAO` e o estoque correspondente é imediatamente bloqueado no galpão como `reservedStock`.
+### 3. Lançador de Pedidos com Proteção Anti-Curioso
+* **Seleção em Sacas (25kg)**: Inserção facilitada por botões rápidos (+5, +10, +50 sacas).
+* **Card de Margem Ocultável**: Os números de custo landed, frete por saca e margem líquida ficam recolhidos por padrão para que o cliente não veja a rentabilidade da TotalTrigo no balcão. O vendedor toca para expandir quando estiver sozinho.
+* **Reserva de Estoque Imediata**: Ao clicar em **"Finalizar Pedido"**, o status torna-se `AGUARDANDO_REVISAO` e o estoque é reservado no galpão (`reservedStock`).
 
 ---
 
-## 💻 Módulo 2: Mesa de Conferência Pré-Nota (Gabriel)
+## 💻 Módulo Desktop: Backoffice Integrado (Gabriel)
 
-Painel desktop de alta produtividade voltado para validação cadastral, conciliação fiscal e faturamento.
+O painel de retaguarda conta com **6 abas especializadas**:
 
-### 1. Mesa de Pedidos em Tempo Real
-Exibe os pedidos enviados da rua organizados por ordem de chegada:
-* **Semáforo de Prontidão Fiscal**:
-  * 🟢 **Pronto para Faturar**: CNPJ válido, Inscrição Estadual preenchida e Código IBGE 7 dígitos presente.
-  * 🟡 **Cadastro Incompleto**: Falta IE ou Código IBGE. O botão **"Completar Cadastro Fiscal"** dispara a busca automática na BrasilAPI para enriquecer a ficha em 1 clique.
+```mermaid
+graph LR
+    TAB1["1. Mesa de Conferência<br/>(Pedidos & Faturamento)"]
+    TAB2["2. Boletos<br/>(Contas a Receber BQ)"]
+    TAB3["3. Cadastros & Estoque<br/>(Clientes & Produtos)"]
+    TAB4["4. Trilha de Auditoria<br/>(Histórico de Eventos)"]
+    TAB5["5. Importação<br/>(Landed Cost CMP)"]
+    TAB6["6. Visão Executiva<br/>(Dashboard & KPIs)"]
+```
 
-### 2. Ajuste Comercial vs. Fiscal
-> [!NOTE]
-> Muitas vezes a negociação na rua difere do faturamento fiscal por questões de fatiamento de lotes ou acertos tributários.
-* A mesa permite que o Gabriel edite a quantidade ou o valor unitário da **Nota Fiscal** sem apagar o **Pedido Comercial Original da Rua**.
-* Fica registrado o histórico completo de quem ajustou, quando e a justificativa fiscal.
+### 1. Mesa de Conferência Pré-Nota (`orders`)
+* **Análise de Margem com Farol Visual**:
+  * 🟢 **Margem Saudável (≥ 20%)**: Pedido rentável e liberado para faturamento.
+  * 🟡 **Margem Atenção (7% a 20%)**: Requer conferência do Gabriel sobre descontos comerciais concedidos.
+  * 🔴 **Margem Crítica (< 7%)**: Venda com risco de prejuízo operacional após impostos (8% ICMS/Simples) e frete (R$ 4,00/saca).
+* **Desacoplamento DQ vs BQ**:
+  * Permite ajustar a **Qtd. Expedição (DQ)** física a ser entregue e a **Qtd. Base (BQ)** tributada na nota fiscal.
+* **Impressão de Documentos Fiscais**:
+  * **DANFE de Retenção**: Impressão visual com dados completos, produtos faturados por BQ, base de cálculo e chave de acesso oficial.
+  * **Romaneio Cego**: Documento limpo com quantidades físicas DQ, instrução de descarregamento e comprovante de canhoto de entrega.
+* **Eventos Fiscais**: Geração de Carta de Correção Eletrônica (CC-e) e Registro de Devolução Total ou Parcial.
 
-### 3. Emissão do Romaneio Cego de Separação
-* Ao avançar o pedido para `EM_SEPARACAO`, o sistema permite gerar o **Romaneio Cego**.
-* O documento omite intencionalmente valores em reais, margens de lucro e dados fiscais, exibindo estritamente:
-  * Nome do Cliente e Endereço de Entrega;
-  * Quantidade exata de sacas de cada SKU (25kg);
-  * Instruções especiais para o motorista (ex: *"Descarregar nos fundos"*).
+### 2. Boletos & Contas a Receber (`receivables`)
+* **Geração Baseada Estritamente na BQ**: Nenhum boleto é gerado sobre sacas de bonificação ou volumes além da base fiscal faturada.
+* **Prazos Operacionais**: Suporte nativo a faturamento em 28 dias ou parcelamento semanal (ex: 14 e 28 dias).
+* **Gestão de Baixas**: Baixa manual de títulos quitados com registro do operador e data de pagamento.
+* **Controle de Inadimplência**: Padarias com títulos vencidos têm status automaticamente sinalizado como `BOLETO_VENCIDO`.
 
-### 4. Transmissão e Emissão da NF-e
-* Ao clicar em **"Emitir NF-e"**:
-  1. O sistema valida os campos obrigatórios da SEFAZ SP.
-  2. Gera a **Chave de Acesso de 44 dígitos** (com verificação módulo 11).
-  3. Gera o arquivo **XML 4.00** compatível.
-  4. Executa a baixa definitiva no estoque físico (`physicalStock`).
-  5. Atualiza o status do pedido para `FATURADO`.
+### 3. Cadastros & Estoque (`registrations`)
+* **Visão Tripla de Estoque**: Exibição em tempo real do Estoque Físico (`physical_stock`), Reservado (`reserved_stock`), Disponível (`available_stock`) e Saldo Base Acumulado (`base_stock`).
+* **Enriquecimento Cadastral**: Botão de busca imediata na Receita Federal via BrasilAPI para novos clientes e validação de Inscrição Estadual.
 
----
+### 4. Trilha de Auditoria (`audit`)
+* **Registro Imutável de Operações**:
+  * Gravação automática de eventos críticos: `ENTRADA_LOTE_IMPORTACAO`, `EMISSAO_NFE`, `PEDIDO_NOVO`, `BAIXA_TITULO_RECEBIVEL`, `AJUSTE_FISCAL`.
+  * Identificação do operador responsável (Gabriel Furtado ou Sérgio Soares), timestamp exato e resumo da alteração.
 
-## 🚢 Módulo 3: Calculadora de Landed Cost (Lotes de Importação)
+### 5. Importação & Landed Cost CMP (`import`)
+* **Entrada de Carreta de Trigo**:
+  * Lançamento de lotes da Argentina/Uruguai com cotação PTAX, FOB USD, Frete Internacional e Despesas Aduaneiras.
+  * Na entrada do lote de importação nacionalizado: **$\text{BQ} = \text{DQ}$**.
+* **Recálculo do CMP**:
+  * O sistema atualiza o Custo Médio Ponderado dos SKUs instantaneamente:
+  $$\text{Novo CMP} = \frac{(\text{Estoque Antigo} \times \text{CMP Antigo}) + (\text{Qtd Lote} \times \text{Custo Lote})}{\text{Estoque Antigo} + \text{Qtd Lote}}$$
 
-Módulo dedicado à precificação e rateio de carretas de trigo importadas da Argentina/Uruguai:
-
-1. **Parâmetros de Entrada do Lote**:
-   * Cotação PTAX USD do dia do desembaraço;
-   * Valor FOB Total em Dólares;
-   * Frete Internacional Rodoviário / Marítimo em Reais;
-   * Impostos de Importação (II, PIS/COFINS Importação, AFRMM);
-   * Despesas Aduaneiras e Honorários de Despachante.
-2. **Rateio Automático**:
-   * O sistema rateia proporcionalmente o custo entre os sacos de Farinha Tipo 1, Pré-Mistura e Pão Doce importados.
-3. **Atualização do Custo Médio**:
-   * O sistema calcula o novo `currentLandedCost` unitário e recalcula os alertas de margem de lucro mínima praticáveis pelo time de vendas.
+### 6. Visão Executiva (`executive`)
+* **KPIs Estratégicos**:
+  * Faturamento bruto mensal faturado (Base BQ);
+  * Margem de contribuição líquida consolidada (%);
+  * Volume físico expedido em sacas (DQ);
+  * Custo total de frete apurado ($\sum \text{DQ} \times \text{R\$}~4{,}00$);
+  * Índice de pontualidade de recebíveis e saldo a liquidar.
