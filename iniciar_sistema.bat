@@ -1,16 +1,16 @@
 @echo off
 chcp 65001 >nul
-title 4S ERP - Total Trigo
+title 4S ERP
 
 echo ============================================================================
-echo   TOTAL TRIGO ERP - Forca de Vendas (Rua), Backoffice Pre-Nota e Importacao
+echo   4S ERP - Forca de Vendas (Rua), Backoffice Pre-Nota e Gestao B2B
 echo ============================================================================
 echo.
 echo [1/2] Iniciando Backend Spring Boot (Porta 8085 - Banco H2 Local)...
-start "TotalTrigo Backend API (8085)" /D "%~dp0backend" cmd /k "mvnw.cmd spring-boot:run"
+start "4S ERP Backend API (8085)" /D "%~dp0backend" cmd /k "mvnw.cmd spring-boot:run"
 
 echo [2/2] Iniciando Frontend React + TanStack + Vite (Porta 8080)...
-start "TotalTrigo Frontend Web (8080)" /D "%~dp0frontend" cmd /k "npm run dev"
+start "4S ERP Frontend Web (8080)" /D "%~dp0frontend" cmd /k "npm run dev"
 
 echo.
 echo Aguardando inicializacao dos servidores (6 segundos)...
