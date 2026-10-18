@@ -91,9 +91,9 @@ const PROFILES_CONFIG = [
 ] as const;
 
 function getProfileShortName(prof: string) {
-  if (prof.includes('Sérgio')) return 'Sérgio Soares';
-  if (prof.includes('Expedição')) return 'Expedição Galpão';
-  return 'Gabriel Furtado';
+  if (prof.includes('Sérgio')) return 'Sérgio · Sócio & Rua';
+  if (prof.includes('Expedição')) return 'Expedição · Galpão';
+  return 'Gabriel · Backoffice';
 }
 
 function getProfileInitials(prof: string) {
@@ -271,29 +271,17 @@ function Index() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="profile-switcher-btn group relative flex items-center gap-2 h-8 pl-2 pr-2.5 rounded-lg border border-border/80 hover:border-primary/50 bg-card/80 hover:bg-card text-foreground transition-all shadow-2xs cursor-pointer select-none focus:outline-none focus:ring-1 focus:ring-primary/40"
-                aria-label="Alternar perfil operacional"
-                title="Clique para alternar o perfil operacional ativo"
+                className="flex items-center gap-2 bg-card/60 hover:bg-card border border-border/80 hover:border-border text-foreground rounded-md px-2.5 py-1 text-xs font-medium transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+                aria-label="Perfil operacional ativo"
+                title="Clique para alternar o perfil operacional"
               >
-                {(() => {
-                  const curr = PROFILES_CONFIG.find(p => p.id === activeProfile) ?? PROFILES_CONFIG[0];
-                  return (
-                    <>
-                      <span className={`flex items-center justify-center size-5.5 rounded-md text-[10px] font-bold shrink-0 ${curr.colorClasses.avatar}`}>
-                        {curr.initials}
-                      </span>
-                      <div className="flex items-center gap-1.5 text-left">
-                        <span className="text-xs font-semibold text-foreground tracking-tight whitespace-nowrap">
-                          {curr.shortName}
-                        </span>
-                        <span className={`hidden sm:inline-flex text-[9px] font-semibold px-1.5 py-0.5 rounded border ${curr.colorClasses.badge}`}>
-                          {curr.badge}
-                        </span>
-                      </div>
-                      <ChevronDown size={13} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0 ml-0.5" />
-                    </>
-                  );
-                })()}
+                <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+                  {getProfileInitials(activeProfile)}
+                </span>
+                <span className="font-semibold text-xs text-foreground tracking-tight max-w-[130px] sm:max-w-none truncate">
+                  {getProfileShortName(activeProfile)}
+                </span>
+                <ChevronsUpDown size={13} className="text-muted-foreground ml-0.5 shrink-0" />
               </button>
             </DropdownMenuTrigger>
 
