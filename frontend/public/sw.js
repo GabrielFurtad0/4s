@@ -3,12 +3,17 @@
 // Cache offline do App Shell e suporte ao Sr. Sérgio em campo
 // ============================================================================
 
-const CACHE_NAME = 'totaltrigo-shell-v1';
+const CACHE_NAME = 'totaltrigo-shell-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
   '/favicon.svg',
+  '/favicon.ico',
+  '/favicon.png',
+  '/favicon-32x32.png',
+  '/favicon-192x192.png',
+  '/apple-touch-icon.png',
   '/logo-4s.jpg'
 ];
 

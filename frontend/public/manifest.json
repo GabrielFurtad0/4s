@@ -1,18 +1,30 @@
 {
   "name": "TotalTrigo 4S ERP — Vendas & Backoffice",
-  "short_name": "TotalTrigo ERP",
+  "short_name": "4S ERP",
   "description": "Sistema 4S Total Trigo: Força de Vendas Offline em Campo, SEFAZ Pré-Nota, Romaneio de Expedição e Gestão Financeira BQ.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#1b4332",
+  "background_color": "#09090b",
+  "theme_color": "#5E43F3",
   "icons": [
     {
       "src": "/favicon.svg",
       "sizes": "any",
       "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
       "purpose": "any maskable"
     },
     {
