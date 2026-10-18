@@ -271,17 +271,17 @@ function Index() {
             <DropdownMenuTrigger asChild>
               <button
                 type="button"
-                className="flex items-center gap-2 bg-card/60 hover:bg-card border border-border/80 hover:border-border text-foreground rounded-md px-2.5 py-1 text-xs font-medium transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+                className="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 border border-slate-200/90 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300 select-none"
                 aria-label="Perfil operacional ativo"
                 title="Clique para alternar o perfil operacional"
               >
-                <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+                <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                   {getProfileInitials(activeProfile)}
                 </span>
-                <span className="font-semibold text-xs text-foreground tracking-tight max-w-[130px] sm:max-w-none truncate">
+                <span className="font-semibold text-xs text-slate-900 tracking-tight max-w-[130px] sm:max-w-none truncate">
                   {getProfileShortName(activeProfile)}
                 </span>
-                <ChevronsUpDown size={13} className="text-muted-foreground ml-0.5 shrink-0" />
+                <ChevronsUpDown size={13} className="text-slate-500 hover:text-slate-800 ml-0.5 shrink-0" />
               </button>
             </DropdownMenuTrigger>
 
