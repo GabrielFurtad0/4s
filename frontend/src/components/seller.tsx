@@ -19,7 +19,6 @@ import {
   RefreshCw,
   Search,
   Send,
-  ShoppingBag,
   Smartphone,
   Sparkles,
   Truck,
@@ -870,7 +869,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
             Clientes
           </Button>
           <Button variant="ghost" className={view === 'order' ? 'active' : ''} onClick={startOrder}>
-            <ShoppingBag />
+            <Truck />
             Pedido
           </Button>
         </nav>
