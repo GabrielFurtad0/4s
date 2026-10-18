@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, Bell, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
+import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Backoffice } from '@/components/backoffice';
@@ -37,9 +37,60 @@ export const Route = createFileRoute('/')({
 
 type FontScale = 'normal' | 'large' | 'xlarge';
 
+const PROFILES_CONFIG = [
+  {
+    id: 'Gabriel Furtado · Backoffice & Fiscal' as UserRoleProfile,
+    name: 'Gabriel Furtado · Backoffice & Fiscal',
+    initials: 'GF',
+    icon: ShieldCheck,
+    badge: 'Gestão & SEFAZ',
+    description: 'Conferência de pré-notas (DQ/BQ), emissão de NF-e, baixa de boletos, cadastros e importação.',
+  },
+  {
+    id: 'Sérgio Soares · Sócio & Rua' as UserRoleProfile,
+    name: 'Sérgio Soares · Sócio & Rua',
+    initials: 'SS',
+    icon: Smartphone,
+    badge: 'Vendas & Diretoria',
+    description: 'App mobile de rua (estoque físico disponível) e acesso ao Backoffice pelo notebook em casa.',
+  },
+  {
+    id: 'Expedição · Romaneio Cego' as UserRoleProfile,
+    name: 'Expedição · Romaneio Cego',
+    initials: 'EX',
+    icon: Truck,
+    badge: 'Galpão & Entrega',
+    description: 'Visualização exclusiva de volumes físicos (DQ) e impressão de Romaneio Cego. Custos e margens ocultos.',
+  },
+] as const;
+
+function getProfileShortName(prof: string) {
+  if (prof.includes('Sérgio')) return 'Sérgio · Sócio & Rua';
+  if (prof.includes('Expedição')) return 'Expedição · Galpão';
+  return 'Gabriel · Backoffice';
+}
+
+function getProfileInitials(prof: string) {
+  if (prof.includes('Sérgio')) return 'SS';
+  if (prof.includes('Expedição')) return 'EX';
+  return 'GF';
+}
+
+function applyFontScaleToDom(scale: FontScale) {
+  if (typeof document !== 'undefined') {
+    const classes = ['font-scale-normal', 'font-scale-large', 'font-scale-xlarge'];
+    document.documentElement.classList.remove(...classes);
+    document.documentElement.classList.add(`font-scale-${scale}`);
+    if (document.body) {
+      document.body.classList.remove(...classes);
+      document.body.classList.add(`font-scale-${scale}`);
+    }
+  }
+}
+
 const modules = [
   { id: 'orders', label: 'Mesa de conferência', icon: FileCheck2 },
-  { id: 'receivables', label: 'Boletos sobre BQ', icon: CreditCard },
+  { id: 'receivables', label: 'Boletos', icon: Barcode },
   { id: 'registrations', label: 'Cadastros & Estoque', icon: Users },
   { id: 'audit', label: 'Trilha de auditoria', icon: ShieldCheck },
   { id: 'import', label: 'Importação', icon: Globe2 },
@@ -89,6 +140,7 @@ function Index() {
 
   const updateFontScale = (scale: FontScale) => {
     setFontScale(scale);
+    applyFontScaleToDom(scale);
     if (typeof window !== 'undefined') {
       try {
         localStorage.setItem('totaltrigo_font_scale', scale);
@@ -99,17 +151,30 @@ function Index() {
   };
 
   useEffect(() => {
-    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    if (typeof window === 'undefined') return;
+    try {
+      const saved = localStorage.getItem('totaltrigo_font_scale');
+      if (saved === 'large' || saved === 'xlarge' || saved === 'normal') {
+        setFontScale(saved);
+        applyFontScaleToDom(saved);
+      } else {
+        localStorage.setItem('totaltrigo_font_scale', 'normal');
+        applyFontScaleToDom('normal');
+      }
+    } catch {
+      // Fallback
     }
   }, []);
 
   useEffect(() => {
-    if (typeof document !== 'undefined') {
-      document.documentElement.classList.remove('font-scale-normal', 'font-scale-large', 'font-scale-xlarge');
-      document.documentElement.classList.add(`font-scale-${fontScale}`);
-    }
+    applyFontScaleToDom(fontScale);
   }, [fontScale]);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    }
+  }, []);
 
   useEffect(() => {
     fetchWorkspaceData(data.reconciled)
@@ -176,46 +241,51 @@ function Index() {
           </Button>
         </div>
         <div className="environment-right">
-          <div className="flex items-center gap-1.5 bg-background/80 border border-border/70 rounded-md px-2 py-1 text-xs">
-            <span className="text-muted-foreground text-[11px] font-medium hidden sm:inline">Perfil:</span>
-            <select
-              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer"
-              value={activeProfile}
-              aria-label="Perfil operacional ativo"
-              onChange={e => handleProfileChange(e.target.value as UserRoleProfile)}
-            >
-              <option value="Gabriel Furtado · Backoffice & Fiscal">Gabriel Furtado (Backoffice)</option>
-              <option value="Sérgio Soares · Sócio & Rua">Sérgio Soares (Sócio & Rua)</option>
-              <option value="Expedição · Romaneio Cego">Expedição (Romaneio Cego)</option>
-            </select>
-          </div>
+          <button
+            type="button"
+            onClick={() => setInfo('profile')}
+            className="flex items-center gap-2 bg-card/60 hover:bg-card border border-border/80 hover:border-border text-foreground rounded-md px-2.5 py-1 text-xs font-medium transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring"
+            aria-label="Perfil operacional ativo"
+            title="Clique para alternar o perfil operacional"
+          >
+            <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold">
+              {getProfileInitials(activeProfile)}
+            </span>
+            <span className="font-semibold text-xs text-foreground tracking-tight max-w-[130px] sm:max-w-none truncate">
+              {getProfileShortName(activeProfile)}
+            </span>
+            <ChevronsUpDown size={13} className="text-muted-foreground ml-0.5 shrink-0" />
+          </button>
           <div className="font-scale-control" role="group" aria-label="Tamanho da letra (Conforto visual)">
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className={`font-scale-btn ${fontScale === 'normal' ? 'selected' : ''}`}
               onClick={() => updateFontScale('normal')}
-              title="Tamanho da letra (Conforto visual)"
+              title="Tamanho da letra normal (Padrão)"
               aria-label="Tamanho da letra normal"
             >
               A
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className={`font-scale-btn ${fontScale === 'large' ? 'selected' : ''}`}
               onClick={() => updateFontScale('large')}
-              title="Tamanho da letra (Conforto visual)"
+              title="Tamanho da letra grande (Conforto visual)"
               aria-label="Tamanho da letra grande"
             >
               A+
             </Button>
             <Button
+              type="button"
               variant="ghost"
               size="sm"
               className={`font-scale-btn ${fontScale === 'xlarge' ? 'selected' : ''}`}
               onClick={() => updateFontScale('xlarge')}
-              title="Tamanho da letra (Conforto visual)"
+              title="Tamanho da letra extra grande (Máxima legibilidade)"
               aria-label="Tamanho da letra extra grande"
             >
               A++
@@ -289,7 +359,7 @@ function Index() {
               <div className="sidebar-user">
                 <Button variant="ghost" className="profile-button" onClick={() => setInfo('profile')}>
                   <span className="avatar">
-                    {activeProfile.includes('Sérgio') ? 'SS' : activeProfile.includes('Expedição') ? 'EX' : 'GF'}
+                    {getProfileInitials(activeProfile)}
                   </span>
                   {!collapsed && (
                     <div>
@@ -318,8 +388,9 @@ function Index() {
 
           <div className="main-shell">
             <header className="main-header">
-              <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 sm:gap-3">
                 <Button
+                  type="button"
                   variant="ghost"
                   size="icon"
                   className="mobile-menu-toggle"
@@ -330,11 +401,36 @@ function Index() {
                 </Button>
                 <span className="breadcrumb-workspace">Workspace</span>
                 <span className="breadcrumb-slash">/</span>
-                <span>{modules.find(m => m.id === module)?.label}</span>
+                {(() => {
+                  const currentMod = modules.find(m => m.id === module) ?? modules[0];
+                  const ModIcon = currentMod?.icon ?? FileCheck2;
+                  const modLabel = currentMod?.label ?? 'Mesa de conferência';
+                  return (
+                    <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-md bg-primary/10 text-primary font-bold text-sm tracking-tight border border-primary/20">
+                      <ModIcon size={16} className="text-primary shrink-0" />
+                      <span>{modLabel}</span>
+                    </div>
+                  );
+                })()}
               </div>
-              <div className="header-center-title">
-                <h2>{modules.find(m => m.id === module)?.label}</h2>
+
+              {/* Centro da Navbar: Barra de busca destacada centralizada (substitui o título duplicado) */}
+              <div className="hidden md:flex items-center justify-center absolute left-1/2 -translate-x-1/2 pointer-events-auto z-10">
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="global-search header-center-search h-8 px-3.5 w-72 lg:w-96 justify-between bg-muted/40 hover:bg-muted/80 border-border/70 text-xs text-muted-foreground hover:text-foreground shadow-2xs transition-colors rounded-lg"
+                  onClick={() => setGlobalSearch(true)}
+                  aria-label="Buscar pedidos, clientes ou atalhos"
+                >
+                  <div className="flex items-center gap-2 truncate">
+                    <Search size={14} className="text-muted-foreground shrink-0" />
+                    <span className="truncate">Buscar pedidos, clientes ou atalhos...</span>
+                  </div>
+                  <kbd className="ml-2 font-mono text-[10px] bg-background border border-border px-1.5 py-0.5 rounded text-muted-foreground shrink-0">⌘ K</kbd>
+                </Button>
               </div>
+
               <div className="header-actions">
                 {module === 'orders' && (
                   <div className="flex items-center gap-2">
@@ -347,18 +443,23 @@ function Index() {
                       className="h-8 text-xs gap-1.5 bg-primary text-primary-foreground font-semibold shadow-xs hover:opacity-95"
                       onClick={() => setMode('mobile')}
                     >
-                      <Plus size={14} />
-                      <span>+ Novo pedido</span>
+                      <Plus className="size-4 stroke-[2.75]" />
+                      <span>Novo pedido</span>
                     </Button>
                     <div className="header-separator" />
                   </div>
                 )}
-                <Button variant="ghost" className="global-search" onClick={() => setGlobalSearch(true)}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="md:hidden text-muted-foreground"
+                  aria-label="Buscar"
+                  title="Buscar"
+                  onClick={() => setGlobalSearch(true)}
+                >
                   <Search size={15} />
-                  <span>Buscar</span>
-                  <kbd>⌘ K</kbd>
                 </Button>
-                <div className="header-separator" />
+                <div className="header-separator md:hidden" />
                 <Button
                   variant="ghost"
                   size="icon"
@@ -377,7 +478,7 @@ function Index() {
                   onClick={() => setInfo('profile')}
                 >
                   <span className="avatar">
-                    {activeProfile.includes('Sérgio') ? 'SS' : activeProfile.includes('Expedição') ? 'EX' : 'GF'}
+                    {getProfileInitials(activeProfile)}
                   </span>
                 </Button>
               </div>
@@ -445,14 +546,85 @@ function Index() {
       />
 
       <Dialog open={Boolean(info)} onOpenChange={o => { if (!o) setInfo(null); }}>
-        <DialogContent>
+        <DialogContent className={info === 'profile' ? 'sm:max-w-xl' : ''}>
           <DialogTitle>
-            {info === 'settings' ? 'Configurações do workspace' : info === 'help' ? 'Central de ajuda' : info === 'notifications' ? 'Notificações' : 'Gabriel Furtado'}
+            {info === 'settings'
+              ? 'Configurações do workspace'
+              : info === 'help'
+              ? 'Central de ajuda'
+              : info === 'notifications'
+              ? 'Notificações'
+              : 'Perfil Operacional Ativo'}
           </DialogTitle>
           <DialogDescription>
-            {info === 'settings' ? '4S ERP · Total Trigo Comércio de Alimentos' : info === 'profile' ? 'Administrador · Workspace Total Trigo 4S' : info === 'help' ? 'Contato e informações do ambiente' : 'Atualizações da sua operação'}
+            {info === 'settings'
+              ? '4S ERP · Total Trigo Comércio de Alimentos'
+              : info === 'profile'
+              ? 'O perfil selecionado adapta as visões, permissões e assina todas as movimentações na Trilha de Auditoria.'
+              : info === 'help'
+              ? 'Contato e informações do ambiente'
+              : 'Atualizações da sua operação'}
           </DialogDescription>
-          {info === 'settings' ? (
+          {info === 'profile' ? (
+            <div className="space-y-3 pt-2">
+              <div className="grid gap-2.5">
+                {PROFILES_CONFIG.map(p => {
+                  const isActive = activeProfile === p.id;
+                  const Icon = p.icon;
+                  return (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => {
+                        handleProfileChange(p.id);
+                        setInfo(null);
+                      }}
+                      className={`w-full text-left p-3.5 rounded-lg border transition-all cursor-pointer flex items-start gap-3.5 ${
+                        isActive
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary/30 shadow-xs'
+                          : 'border-border/70 hover:border-border hover:bg-muted/40'
+                      }`}
+                    >
+                      <div
+                        className={`p-2.5 rounded-lg shrink-0 mt-0.5 ${
+                          isActive
+                            ? 'bg-primary text-primary-foreground'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                      >
+                        <Icon size={18} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-2">
+                          <div className="flex items-center gap-2">
+                            <span className="font-semibold text-sm text-foreground">
+                              {p.name}
+                            </span>
+                            <span className="text-[11px] px-2 py-0.5 rounded-full font-medium bg-muted text-muted-foreground border border-border/50">
+                              {p.badge}
+                            </span>
+                          </div>
+                          {isActive && (
+                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full border border-primary/20 shrink-0">
+                              <Check size={12} className="stroke-[3]" />
+                              Ativo
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+                          {p.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
+                <span>Operador conectado: <strong className="text-foreground">{activeProfile.split(' · ')[0]}</strong></span>
+                <span className="font-mono text-[11px]">Sessão 4S Segura</span>
+              </div>
+            </div>
+          ) : info === 'settings' ? (
             <>
               <div className="settings-row">
                 <div>
@@ -461,14 +633,16 @@ function Index() {
                 </div>
                 <div className="font-scale-control settings-scale" role="group" aria-label="Tamanho da fonte">
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className={`font-scale-btn ${fontScale === 'normal' ? 'selected' : ''}`}
                     onClick={() => updateFontScale('normal')}
                   >
-                    Normal
+                    Normal (A)
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className={`font-scale-btn ${fontScale === 'large' ? 'selected' : ''}`}
@@ -477,6 +651,7 @@ function Index() {
                     Grande (A+)
                   </Button>
                   <Button
+                    type="button"
                     variant="ghost"
                     size="sm"
                     className={`font-scale-btn ${fontScale === 'xlarge' ? 'selected' : ''}`}
@@ -533,7 +708,7 @@ function Index() {
                 </div>
               </div>
             </>
-          ) : info === 'help' ? (
+          ) : (
             <>
               <p className="text-sm text-muted-foreground leading-relaxed">
                 4S ERP · Força de Vendas, Suprimentos, SEFAZ Pré-Nota e Separação da Total Trigo.
@@ -541,20 +716,6 @@ function Index() {
               <p className="text-sm text-muted-foreground">
                 Todas as reservas de estoque, revisões de pré-nota, buscas de CNPJ e lotes de importação são persistidos no banco de dados.
               </p>
-            </>
-          ) : (
-            <>
-              <div className="flex gap-3 items-center py-3">
-                <span className="avatar">GF</span>
-                <div>
-                  <strong>Gabriel Furtado</strong>
-                  <p className="text-sm text-muted-foreground">Gestão comercial e fiscal</p>
-                </div>
-              </div>
-              <div className="settings-row">
-                <span>Permissão</span>
-                <strong>Administrador</strong>
-              </div>
             </>
           )}
         </DialogContent>

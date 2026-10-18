@@ -107,11 +107,30 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="pt-BR">
+    <html lang="pt-BR" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var scale = localStorage.getItem('totaltrigo_font_scale') || 'normal';
+                  if (scale === 'large' || scale === 'xlarge' || scale === 'normal') {
+                    document.documentElement.classList.remove('font-scale-normal', 'font-scale-large', 'font-scale-xlarge');
+                    document.documentElement.classList.add('font-scale-' + scale);
+                    if (document.body) {
+                      document.body.classList.remove('font-scale-normal', 'font-scale-large', 'font-scale-xlarge');
+                      document.body.classList.add('font-scale-' + scale);
+                    }
+                  }
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body>
+      <body suppressHydrationWarning>
         {children}
         <Scripts />
       </body>
