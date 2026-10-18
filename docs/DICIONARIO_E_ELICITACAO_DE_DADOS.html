@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dicionário & Elicitação de Dados — TotalTrigo / 4S ERP</title>
+  <link rel="stylesheet" href="assets/docs.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.8/dist/contrib/auto-render.min.js" onload="if (typeof renderMathInElement !== 'undefined') { renderMathInElement(document.body, { delimiters: [{left: '$$', right: '$$', display: true}, {left: '\\[', right: '\\]', display: true}], throwOnError: false }); }"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+</head>
+<body>
+
+  <!-- Barra Superior Global -->
+  <header class="docs-header">
+    <a href="index.html" class="brand-wrapper">
+      <svg class="brand-logo-svg" viewBox="0 0 48 48" fill="none">
+        <defs>
+          <linearGradient id="bgGrad" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#5E43F3" />
+            <stop offset="55%" stop-color="#4338CA" />
+            <stop offset="100%" stop-color="#1E1B4B" />
+          </linearGradient>
+          <linearGradient id="goldGrad" x1="18" y1="13" x2="35" y2="35" gradientUnits="userSpaceOnUse">
+            <stop offset="0%" stop-color="#FBBF24" />
+            <stop offset="100%" stop-color="#F59E0B" />
+          </linearGradient>
+        </defs>
+        <rect width="48" height="48" rx="12" fill="url(#bgGrad)" />
+        <rect x="0.75" y="0.75" width="46.5" height="46.5" rx="11.25" stroke="rgba(255,255,255,0.22)" stroke-width="1.5" />
+        <path d="M20 12.5L10.5 27.5H24.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M20.5 12.5V35.5" stroke="#FFFFFF" stroke-width="3.6" stroke-linecap="round" />
+        <path d="M34.5 17.5C33.2 14.6 30.6 13.5 27 13.5C23.2 13.5 21 15.6 21 18.8C21 24.2 34 22.8 34 28.5C34 32.2 31 34.5 26.2 34.5C22.2 34.5 19.5 32.6 18.2 30" stroke="url(#goldGrad)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round" />
+        <circle cx="34.5" cy="14" r="2.2" fill="#FDE68A" />
+      </svg>
+      <div class="brand-info">
+        <div class="brand-title-row">
+          <span class="brand-name">4S ERP</span>
+          <span class="brand-badge">Engenharia de Dados</span>
+        </div>
+        <span class="brand-tagline">TotalTrigo — Elicitação & Linhagem</span>
+      </div>
+    </a>
+
+    <div class="header-actions">
+      <button type="button" onclick="window.print()" class="btn-header">
+        🖨️ Imprimir / PDF
+      </button>
+      <a href="index.html" class="btn-header primary">
+        🏠 Hub de Docs
+      </a>
+    </div>
+  </header>
+
+  <!-- Layout Principal -->
+  <div class="docs-layout">
+    
+    <!-- Sidebar de Navegação -->
+    <aside class="docs-sidebar">
+      <div class="sidebar-heading">Documentação Oficial</div>
+      <ul class="nav-doc-list">
+        <li class="nav-doc-item">
+          <a href="index.html">
+            <span class="nav-doc-icon">🏠</span>
+            <span>Central & Sumário</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="DICIONARIO_E_ELICITACAO_DE_DADOS.html" class="active">
+            <span class="nav-doc-icon">🗄️</span>
+            <span>Dicionário & Dados</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_DE_USO_PLANILHA.html">
+            <span class="nav-doc-icon">📊</span>
+            <span>Automação da Planilha</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ARQUITETURA_DO_SISTEMA.html">
+            <span class="nav-doc-icon">🏗️</span>
+            <span>Arquitetura do Sistema</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="MANUAL_OPERACIONAL_ERP.html">
+            <span class="nav-doc-icon">🖥️</span>
+            <span>Manual do ERP Web</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="REGRAS_DE_NEGOCIO_E_FISCAL.html">
+            <span class="nav-doc-icon">⚖️</span>
+            <span>Regras Fiscais & ICMS</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_NFE_SEFAZ_A1.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>Estudo SEFAZ A1 (NF-e)</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="ESTUDO_TECNICO_API_SICREDI.html">
+            <span class="nav-doc-icon">🏦</span>
+            <span>Estudo API Sicredi</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="GUIA_DE_IMPLANTACAO_E_DESENVOLVIMENTO.html">
+            <span class="nav-doc-icon">🚀</span>
+            <span>Guia de Implantação</span>
+          </a>
+        </li>
+        <li class="nav-doc-item">
+          <a href="PRD_E_ARQUITETURA_EXPANSAO.html">
+            <span class="nav-doc-icon">📑</span>
+            <span>PRD & Expansão</span>
+          </a>
+        </li>
+      </ul>
+    </aside>
+
+    <!-- Conteúdo Central -->
+    <main class="docs-content">
+      <article class="docs-article">
+        
+        <div class="doc-header-banner">
+          <div class="doc-breadcrumbs">
+            <a href="index.html">Docs</a>
+            <span>/</span>
+            <span>Engenharia de Software</span>
+            <span>/</span>
+            <span>Elicitação & Dicionário de Dados</span>
+          </div>
+          <h1 class="doc-title">🗄️ Elicitação, Dicionário e Linhagem de Dados do Sistema</h1>
+          <p class="doc-lead">
+            Inventário exaustivo e estruturado de todos os dados do ecossistema <strong>TotalTrigo / 4S ERP</strong>. Este documento detalha campo a campo <strong>de onde vem</strong> cada informação, <strong>para que serve</strong> (regras de cálculo, validações e enquadramento legal) e <strong>onde será utilizada</strong> no software, nas integrações fiscais/bancárias e na automação de estoque, eliminando surpresas cadastrais e operacionais.
+          </p>
+        </div>
+
+        <div class="alert alert-info">
+          <div class="alert-icon">🛡️</div>
+          <div class="alert-content">
+            <div class="alert-title">Diretriz Zero Surpresas Cadastrais & Fiscais</div>
+            A correta circulação de trigo atacadista em São Paulo depende da sintonia fina entre dados comerciais (lançados no balcão da padaria), fiscais (regras SEFAZ SP, ICMS CST 20, IBGE 7 dígitos) e logísticos (sacas físicas entregues versus base faturada). Nenhum dado existe sem fonte rastreada ou finalidade explícita.
+          </div>
+        </div>
+
+        <!-- 1. Mapa de Linhagem -->
+        <h2>🗺️ Linhagem Geral e Fluxo de Dados (Data Lineage)</h2>
+        <p>
+          O diagrama a seguir rastreia as fontes originárias de dados, o trânsito pelo backend Spring Boot e seus múltiplos destinos operacionais, fiscais e contábeis:
+        </p>
+
+        <div class="mermaid">
+flowchart TD
+    subgraph SOURCES["1. Fontes de Entrada (De Onde Vem?)"]
+        SRC_RUA["Sr. Sérgio (PWA Mobile Rua)<br/>• Pedido comercial, preços memória<br/>• Sacas expedidas (DQ)<br/>• Notas de campo & CNPJ rápido"]
+        SRC_GAB["Gabriel Furtado (Backoffice)<br/>• Ajustes pré-nota (BQ)<br/>• Lotes de importação (PTAX, FOB)<br/>• Baixa manual de títulos"]
+        SRC_API["BrasilAPI / Sintegra SP<br/>• Razão Social, CNAE, Endereço<br/>• Código IBGE Município (7 dígitos)<br/>• Inscrição Estadual (IE)"]
+        SRC_SEFAZ["SEFAZ SP & Receita Federal<br/>• Regras tributárias CST 20 / cBenef<br/>• Protocolos de autorização NF-e<br/>• Chave 44 dígitos oficial"]
+        SRC_SICREDI["Sicredi Open Banking<br/>• Retornos de liquidação Pix/Boleto<br/>• Webhook de pagamento"]
+    end
+
+    subgraph CORE["2. Núcleo Transacional & Domínio (Spring Boot 3 + BD)"]
+        ENT_CLIENT["Entidade Clientes & Preços<br/>• Prontidão fiscal checada<br/>• Semáforo financeiro<br/>• Radar de Recompra"]
+        ENT_ORDER["Entidade Pedidos & Itens<br/>• Desacoplamento DQ vs BQ<br/>• Frete R$ 4,00/saca (DQ)<br/>• Margem Líquida (7% a 20%)"]
+        ENT_STOCK["Estoque Triplo & SKUs<br/>• Estoque Físico (DQ)<br/>• Estoque Reservado<br/>• Saldo Base Fiscal (BQ)"]
+        ENT_LOT["Lotes de Importação<br/>• Landed Cost nacionalizado<br/>• Recálculo atômico do CMP"]
+        ENT_REC["Contas a Receber (Boletos)<br/>• Calculados estritamente sobre BQ<br/>• Prazos 14/28 dias"]
+    end
+
+    subgraph TARGETS["3. Destinos & Consumidores (Onde Será Utilizado?)"]
+        OUT_APP["App Mobile do Vendedor<br/>• Radar de Recompra inteligente<br/>• Ficha 360º & Histórico<br/>• Lançador com margem oculta"]
+        OUT_BACK["Painel Backoffice Desktop<br/>• Mesa de Conferência Pré-Nota<br/>• Gestão de Boletos & Cobrança<br/>• Dashboard Executivo"]
+        OUT_SEFAZ["XML NF-e 4.00 & DANFE<br/>• Transmissão SEFAZ SP A1<br/>• DANFE de Retenção (Base BQ)"]
+        OUT_EXPED["Expedição & Galpão<br/>• Romaneio Cego de Carga (DQ)<br/>• Canhoto de Entrega"]
+        OUT_EXCEL["Módulo Satélite Python<br/>• Planilha de Estoques.xlsx<br/>• Backups rotativos diários"]
+        OUT_SICREDI["Emissão Bancária Sicredi<br/>• Boletos Híbridos (Barras + Pix)"]
+    end
+
+    SRC_RUA --> ENT_ORDER
+    SRC_RUA --> ENT_CLIENT
+    SRC_GAB --> ENT_ORDER
+    SRC_GAB --> ENT_LOT
+    SRC_GAB --> ENT_REC
+    SRC_API --> ENT_CLIENT
+    SRC_SEFAZ --> ENT_STOCK
+    SRC_SICREDI --> ENT_REC
+
+    ENT_CLIENT --> OUT_APP
+    ENT_CLIENT --> OUT_BACK
+    ENT_ORDER --> OUT_SEFAZ
+    ENT_ORDER --> OUT_EXPED
+    ENT_ORDER --> OUT_BACK
+    ENT_STOCK --> OUT_BACK
+    ENT_STOCK --> OUT_EXCEL
+    ENT_LOT --> ENT_STOCK
+    ENT_ORDER --> ENT_REC
+    ENT_REC --> OUT_SICREDI
+    ENT_REC --> OUT_BACK
+    OUT_SEFAZ --> OUT_EXCEL
+        </div>
+
+        <!-- 2. Catálogo: Clientes -->
+        <h2>👥 1. Dados de Clientes & Padarias (`clients`)</h2>
+        <p>
+          O cadastro de clientes alimenta tanto a frente de campo quanto a retaguarda fiscal. Ele previne rejeições SEFAZ e alertas de inadimplência no balcão:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14%;">Campo Técnico</th>
+                <th style="width: 13%;">Nome de Interface</th>
+                <th style="width: 11%;">Tipo & Restrição</th>
+                <th style="width: 18%;">De Onde Vem? (Origem)</th>
+                <th style="width: 22%;">Para Que Serve? (Finalidade)</th>
+                <th style="width: 22%;">Onde Será Utilizado? (Destino)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>id</code></td>
+                <td>ID do Cliente</td>
+                <td><code>BIGINT PK</code></td>
+                <td>Sequencial gerado pelo banco de dados.</td>
+                <td>Chave primária relacional única.</td>
+                <td>Relacionamentos com pedidos, títulos, notas e histórico.</td>
+              </tr>
+              <tr>
+                <td><code>cnpj</code></td>
+                <td>CNPJ da Padaria</td>
+                <td><code>VARCHAR(18) NOT NULL UNIQUE</code></td>
+                <td>Digitado pelo Sr. Sérgio no pré-cadastro rápido ou importado no cadastro base.</td>
+                <td>Identificação jurídica única e chave de busca na BrasilAPI.</td>
+                <td>Tag <code>&lt;CNPJ&gt;</code> na NF-e, sacado do boleto bancário Sicredi e busca de clientes.</td>
+              </tr>
+              <tr>
+                <td><code>corporate_name</code></td>
+                <td>Razão Social</td>
+                <td><code>VARCHAR(160) NOT NULL</code></td>
+                <td>Preenchido automaticamente pela <strong>BrasilAPI</strong> (Receita Federal) via CNPJ.</td>
+                <td>Razão Social jurídica oficial exigida por lei fiscal.</td>
+                <td>Tag <code>&lt;xNome&gt;</code> da NF-e, cabeçalho da DANFE, contratos e cadastro fiscal.</td>
+              </tr>
+              <tr>
+                <td><code>trade_name</code></td>
+                <td>Nome Fantasia</td>
+                <td><code>VARCHAR(120)</code></td>
+                <td>BrasilAPI ou ajustado pelo Sr. Sérgio com o nome comercial conhecido do estabelecimento.</td>
+                <td>Identificação rápida pelo vendedor na rua e pelo motorista da entrega.</td>
+                <td>App Mobile (lista de padarias), Ficha 360º, Romaneio Cego de entrega e recibo.</td>
+              </tr>
+              <tr>
+                <td><code>state_registration</code></td>
+                <td>Inscrição Estadual (IE)</td>
+                <td><code>VARCHAR(30)</code></td>
+                <td>Consulta ao Sintegra-SP / SEFAZ ou preenchido pelo Gabriel no Backoffice.</td>
+                <td>Comprovação de contribuinte do ICMS no Estado de SP. Evita Rejeição 209/210 da SEFAZ.</td>
+                <td>Tag <code>&lt;IE&gt;</code> do XML da NF-e e validação de prontidão fiscal pré-nota.</td>
+              </tr>
+              <tr>
+                <td><code>ie_indicator</code></td>
+                <td>Indicador de IE</td>
+                <td><code>VARCHAR(30) DEFAULT 'CONTRIBUINTE'</code></td>
+                <td>Definido pelas regras tributárias do cliente (1 = Contribuinte, 2 = Isento, 9 = Não Contribuinte).</td>
+                <td>Classificação fiscal obrigatória para a SEFAZ. Padarias de SP normalmente são <code>1</code>.</td>
+                <td>Tag <code>&lt;indIEDest&gt;</code> do XML da NF-e 4.00.</td>
+              </tr>
+              <tr>
+                <td><code>purchase_profile</code></td>
+                <td>Perfil de Compra</td>
+                <td><code>VARCHAR(30) DEFAULT 'INDUSTRIALIZACAO'</code></td>
+                <td>Parametrizado no cadastro do cliente conforme destinação da farinha (Padaria / Fábrica).</td>
+                <td>Define o CFOP correto (5102 - revenda/industrialização) e fundamenta a não aplicação de ST.</td>
+                <td>Mesa Pré-Nota e cálculo da tributação no faturamento.</td>
+              </tr>
+              <tr>
+                <td><code>zip_code</code></td>
+                <td>CEP</td>
+                <td><code>VARCHAR(12)</code></td>
+                <td>BrasilAPI ou digitação manual em campo.</td>
+                <td>Localização primária do endereço e validação de código de município.</td>
+                <td>Preenchimento de logradouro e cálculo de rotas no mapa da Zona Sul de SP.</td>
+              </tr>
+              <tr>
+                <td><code>street</code>, <code>number</code>, <code>neighborhood</code></td>
+                <td>Logradouro, Nº e Bairro</td>
+                <td><code>VARCHAR(160)</code></td>
+                <td>BrasilAPI com refinamento do número e complemento pelo vendedor na visita.</td>
+                <td>Endereço físico exato para entrega das sacas de trigo de 25 kg.</td>
+                <td>Tags do grupo <code>&lt;enderDest&gt;</code> da NF-e, Romaneio Cego para motoristas e DANFE.</td>
+              </tr>
+              <tr>
+                <td><code>city</code>, <code>state</code></td>
+                <td>Cidade e UF</td>
+                <td><code>VARCHAR(80), VARCHAR(2)</code></td>
+                <td>BrasilAPI (Padrão: São Paulo / SP).</td>
+                <td>Determinação da jurisdição fiscal (operações internas CFOP 5102 vs interestaduais 6102).</td>
+                <td>Mesa Pré-Nota, XML da NF-e e apuração de ICMS.</td>
+              </tr>
+              <tr>
+                <td><code>ibge_city_code</code></td>
+                <td>Cód. Município IBGE</td>
+                <td><code>VARCHAR(7) NOT NULL</code></td>
+                <td>Preenchido automaticamente pela <strong>BrasilAPI</strong> (ex: <code>3550308</code> para São Paulo).</td>
+                <td>Código numérico de 7 dígitos exigido pela SEFAZ. Evita a clássica <strong>Rejeição 273</strong>.</td>
+                <td>Tag <code>&lt;cMun&gt;</code> do XML da NF-e e validação de prontidão fiscal.</td>
+              </tr>
+              <tr>
+                <td><code>contact_name</code>, <code>phone</code></td>
+                <td>Contato & WhatsApp</td>
+                <td><code>VARCHAR(80), VARCHAR(30)</code></td>
+                <td>Caderno de campo do Sr. Sérgio (nome do padeiro chefe ou proprietário).</td>
+                <td>Comunicação comercial direta, confirmação de pedido e cobrança amigável.</td>
+                <td>Ficha 360º no App Mobile, envio de PDF de boleto e instruções no Romaneio.</td>
+              </tr>
+              <tr>
+                <td><code>default_payment_terms</code></td>
+                <td>Prazo de Pagamento Padrão</td>
+                <td><code>VARCHAR(60) DEFAULT 'Boleto 28 dias'</code></td>
+                <td>Negociação comercial acordada pelo Sr. Sérgio no balcão.</td>
+                <td>Pré-carregar as condições de pagamento na abertura de novo pedido.</td>
+                <td>Lançador de pedidos no App Mobile e cálculo de datas de vencimento de boletos.</td>
+              </tr>
+              <tr>
+                <td><code>average_purchase_cycle_days</code></td>
+                <td>Ciclo Médio de Consumo</td>
+                <td><code>INT DEFAULT 20</code></td>
+                <td>Calculado a partir do histórico de faturamentos ou estimado pelo vendedor (ex: 15 ou 20 dias).</td>
+                <td>Métrica de consumo para prever quando o cliente está ficando sem farinha no estoque.</td>
+                <td>Algoritmo do <strong>Radar de Recompra</strong> no App Mobile (destaque no topo da lista).</td>
+              </tr>
+              <tr>
+                <td><code>last_purchase_date</code></td>
+                <td>Data da Última Compra</td>
+                <td><code>DATE</code></td>
+                <td>Atualizado atomicamente a cada pedido que atinge o status <code>FATURADO</code>.</td>
+                <td>Calcular os "dias sem comprar" (dias transcorridos desde o último fornecimento).</td>
+                <td>Ficha 360º e indicador de urgência no Radar de Recompra.</td>
+              </tr>
+              <tr>
+                <td><code>financial_status</code></td>
+                <td>Semáforo Financeiro</td>
+                <td><code>VARCHAR(30) DEFAULT 'EM_DIA'</code></td>
+                <td>Alimentado pelo módulo de Contas a Receber (<code>EM_DIA</code>, <code>BOLETO_VENCIDO</code>, <code>BLOQUEADO</code>).</td>
+                <td>Alertar o Sr. Sérgio no balcão sobre pendências e bloquear faturamento automático.</td>
+                <td>Alerta sonoro/visual na Ficha 360º do App Mobile e trava na Mesa Pré-Nota.</td>
+              </tr>
+              <tr>
+                <td><code>is_registration_complete</code></td>
+                <td>Prontidão Fiscal</td>
+                <td><code>BOOLEAN DEFAULT FALSE</code></td>
+                <td>Calculado pelo sistema ao verificar se CNPJ, IE, Endereço e Código IBGE 7d estão válidos.</td>
+                <td>Impedir que pedidos avancem para faturamento sem dados fiscais homologados.</td>
+                <td>Semáforo de prontidão fiscal na Mesa Pré-Nota do Gabriel Furtado.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 3. Catálogo: Produtos e 3 SKUs -->
+        <h2>🌾 2. Catálogo Fiscal dos 3 SKUs & Estoque Triplo (`products`)</h2>
+        <p>
+          O negócio opera estritamente sobre 3 SKUs padronizados em sacas de 25 kg. Os dados fiscais e de custo alimentam diretamente o faturamento e a calculadora de margem:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14%;">Campo Técnico</th>
+                <th style="width: 13%;">Nome de Interface</th>
+                <th style="width: 11%;">Tipo & Restrição</th>
+                <th style="width: 18%;">De Onde Vem? (Origem)</th>
+                <th style="width: 22%;">Para Que Serve? (Finalidade)</th>
+                <th style="width: 22%;">Onde Será Utilizado? (Destino)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>sku_code</code></td>
+                <td>Código SKU</td>
+                <td><code>VARCHAR(20) UNIQUE</code></td>
+                <td>Parametrização do catálogo oficial (<code>SKU-05</code>, <code>SKU-02</code>, <code>SKU-03</code>).</td>
+                <td>Identificador mnemônico padronizado para telas, relatórios e seletores.</td>
+                <td>Interface do App Mobile, botões de atalho (+5, +10, +50 sacas) e Backoffice.</td>
+              </tr>
+              <tr>
+                <td><code>erp_code</code></td>
+                <td>Código SEFAZ (`cProd`)</td>
+                <td><code>VARCHAR(30) NOT NULL</code></td>
+                <td>Códigos oficiais de faturamento (<code>0000200000001</code>/05, <code>PA02980502603</code>/02, <code>0002960502503</code>/03).</td>
+                <td>Identificador de mercadoria no XML da NF-e e na planilha de estoque legada.</td>
+                <td>Tag <code>&lt;cProd&gt;</code> do XML da NF-e e chave de parsing no robô <code>nfe_parser.py</code>.</td>
+              </tr>
+              <tr>
+                <td><code>name</code> / <code>short_name</code></td>
+                <td>Descrição do Produto</td>
+                <td><code>VARCHAR(120) / VARCHAR(60)</code></td>
+                <td>Cadastro oficial aprovado na SEFAZ e descrição amigável de balcão.</td>
+                <td>Exibição formal na DANFE e identificação facilitada em telas compactas de celular.</td>
+                <td>Tag <code>&lt;xProd&gt;</code> na NF-e, DANFE, Romaneio Cego e cards do App Mobile.</td>
+              </tr>
+              <tr>
+                <td><code>unit_of_measure</code></td>
+                <td>Unidade Comercial</td>
+                <td><code>VARCHAR(10) DEFAULT 'SA'</code></td>
+                <td>Padrão do agronegócio de farinhas: Saca de 25 kg (<code>SA</code>).</td>
+                <td>Indicação legal da unidade de medida comercializada e tributada.</td>
+                <td>Tags <code>&lt;uCom&gt;</code> e <code>&lt;uTrib&gt;</code> no XML da NF-e 4.00.</td>
+              </tr>
+              <tr>
+                <td><code>physical_stock</code></td>
+                <td>Estoque Físico Real</td>
+                <td><code>INT NOT NULL DEFAULT 0</code></td>
+                <td>Incrementado no recebimento de lotes e decrementado pela <strong>DQ</strong> no faturamento.</td>
+                <td>Controle das sacas físicas reais empilhadas no galpão de São Paulo.</td>
+                <td>Painel de Estoque, romaneio de expedição e cálculo de disponibilidade.</td>
+              </tr>
+              <tr>
+                <td><code>reserved_stock</code></td>
+                <td>Estoque Reservado</td>
+                <td><code>INT NOT NULL DEFAULT 0</code></td>
+                <td>Incrementado pela <strong>DQ</strong> ao lançar pedido (<code>AGUARDANDO_REVISAO</code>). Baixado ao faturar.</td>
+                <td>Garantir que sacas já vendidas na rua não sejam prometidas para outra padaria.</td>
+                <td>Mesa Pré-Nota, travas de validação de venda e cálculo de saldo livre.</td>
+              </tr>
+              <tr>
+                <td><code>available_stock</code></td>
+                <td>Estoque Disponível</td>
+                <td><code>INT (Calculado)</code></td>
+                <td>Fórmula dinâmica: <code>physical_stock - reserved_stock</code>.</td>
+                <td>Informar ao vendedor de campo quantas sacas estão livres para venda imediata.</td>
+                <td>App Mobile de Vendas e alertas de estoque crítico no Backoffice.</td>
+              </tr>
+              <tr>
+                <td><code>base_stock</code></td>
+                <td>Saldo Base Fiscal (BQ)</td>
+                <td><code>INT NOT NULL DEFAULT 0</code></td>
+                <td>Alimentado por entradas fiscais e decrementado pela <strong>BQ</strong> no faturamento.</td>
+                <td>Controlar o saldo contábil e fiscal acumulado de saídas emitidas por NF-e.</td>
+                <td>Conciliação contábil, conferência fiscal e sincronização com a planilha.</td>
+              </tr>
+              <tr>
+                <td><code>current_landed_cost</code></td>
+                <td>Custo Médio Ponderado (CMP)</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Recalculado atomicamente a cada nacionalização de lote de importação.</td>
+                <td>Representa o custo real da saca internalizada no galpão (piso da mercadoria).</td>
+                <td>Cálculo do CMV por pedido, formação de preço e semáforo de margem líquida.</td>
+              </tr>
+              <tr>
+                <td><code>base_list_price</code></td>
+                <td>Preço Tabela Balcão</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Definido pela diretoria comercial da TotalTrigo como preço de referência.</td>
+                <td>Servir como valor sugerido quando um cliente novo não tiver histórico de compras.</td>
+                <td>Telas de primeiro pedido no App Mobile e tabela de preços sugerida.</td>
+              </tr>
+              <tr>
+                <td><code>ncm</code></td>
+                <td>Código NCM</td>
+                <td><code>VARCHAR(8) NOT NULL ('11010010')</code></td>
+                <td>Nomenclatura Comum do Mercosul para trigo e derivados.</td>
+                <td>Classificação fiscal internacional exigida pela SEFAZ e Receita Federal.</td>
+                <td>Tag <code>&lt;NCM&gt;</code> do XML da NF-e 4.00.</td>
+              </tr>
+              <tr>
+                <td><code>cest</code></td>
+                <td>Código CEST</td>
+                <td><code>VARCHAR(10) ('1704400' / '1704600')</code></td>
+                <td>Tabela de Substituição Tributária (1704400 trigo / 1704600 misturas de pão).</td>
+                <td>Identificação de mercadorias do segmento alimentício sujeitas a regras especiais.</td>
+                <td>Tag <code>&lt;CEST&gt;</code> do XML da NF-e 4.00.</td>
+              </tr>
+              <tr>
+                <td><code>c_benef</code></td>
+                <td>Benefício Fiscal SP</td>
+                <td><code>VARCHAR(20) ('SP020390')</code></td>
+                <td>Regulamento do ICMS de SP (Art. 3º do Anexo III do RICMS/SP).</td>
+                <td>Código exigido pela SEFAZ SP para validar a redução de base de cálculo CST 20.</td>
+                <td>Tag <code>&lt;cBenef&gt;</code> do XML da NF-e (evita Rejeição 931).</td>
+              </tr>
+              <tr>
+                <td><code>origin_code</code></td>
+                <td>Origem da Mercadoria</td>
+                <td><code>INT DEFAULT 1</code></td>
+                <td>Classificação fiscal: <code>1</code> (Estrangeira - Importação direta pela TotalTrigo).</td>
+                <td>Enquadramento de ICMS na emissão de mercadoria importada nacionalizada.</td>
+                <td>Tag <code>&lt;orig&gt;</code> do ICMS na NF-e 4.00.</td>
+              </tr>
+              <tr>
+                <td><code>default_cfop_internal</code></td>
+                <td>CFOP Estadual Padrão</td>
+                <td><code>VARCHAR(4) DEFAULT '5102'</code></td>
+                <td>Venda de mercadoria adquirida ou recebida de terceiros no Estado de SP.</td>
+                <td>Código fiscal da natureza de operação comercial interna.</td>
+                <td>Tag <code>&lt;CFOP&gt;</code> dos itens da NF-e nas operações para padarias paulistas.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 4. Catálogo: Pedidos e Itens -->
+        <h2>📦 3. Pedidos, Mesa Pré-Nota e Desacoplamento DQ vs BQ (`orders`, `order_items`)</h2>
+        <p>
+          O ciclo do pedido materializa o desacoplamento comercial entre a quantidade física entregue ($\text{DQ}$) e a quantidade faturada na nota fiscal ($\text{BQ}$), com apuração em tempo real de lucratividade e frete:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14%;">Campo Técnico</th>
+                <th style="width: 13%;">Nome de Interface</th>
+                <th style="width: 11%;">Tipo & Restrição</th>
+                <th style="width: 18%;">De Onde Vem? (Origem)</th>
+                <th style="width: 22%;">Para Que Serve? (Finalidade)</th>
+                <th style="width: 22%;">Onde Será Utilizado? (Destino)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>status</code></td>
+                <td>Status do Pedido</td>
+                <td><code>VARCHAR(30) NOT NULL</code></td>
+                <td>Controlado pela máquina de estados (<code>AGUARDANDO_REVISAO</code>, <code>EM_SEPARACAO</code>, <code>FATURADO</code>, <code>ENTREGUE</code>, <code>CANCELADO</code>).</td>
+                <td>Orquestrar as fases do pedido, travas de estoque e autorizações de perfis.</td>
+                <td>Filtros da Mesa Pré-Nota, painel de expedição e rastreamento no app mobile.</td>
+              </tr>
+              <tr>
+                <td><code>ordered_quantity</code></td>
+                <td>Qtd. Pedida na Rua</td>
+                <td><code>INT NOT NULL</code></td>
+                <td>Digitada pelo Sr. Sérgio no balcão da padaria via App Mobile.</td>
+                <td>Registrar o volume comercial original negociado com o cliente.</td>
+                <td>Ficha do pedido, histórico de negociação e memória comercial.</td>
+              </tr>
+              <tr>
+                <td><code>dispatch_quantity</code> ($\text{DQ}$)</td>
+                <td>Qtd. Expedição Física</td>
+                <td><code>INT NOT NULL</code></td>
+                <td>Definida no pedido rua e confirmada pelo Gabriel na Mesa Pré-Nota.</td>
+                <td>Determinar o volume físico de sacas de 25 kg a ser carregado no caminhão.</td>
+                <td><strong>Romaneio Cego</strong> de entrega, baixa em <code>physical_stock</code> e cálculo do frete.</td>
+              </tr>
+              <tr>
+                <td><code>quantity</code> ($\text{BQ}$)</td>
+                <td>Qtd. Base Faturada</td>
+                <td><code>INT NOT NULL</code></td>
+                <td>Mesa de Conferência Pré-Nota (Gabriel Furtado) conforme regras fiscais acordadas.</td>
+                <td>Volume oficial a ser consignado na NF-e e cobrado no boleto bancário.</td>
+                <td><strong>XML NF-e</strong>, DANFE de retenção, baixa em <code>base_stock</code> e títulos a receber.</td>
+              </tr>
+              <tr>
+                <td><code>ordered_unit_price</code></td>
+                <td>Preço Unitário Rua</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Lançado pelo Sr. Sérgio no ato da venda.</td>
+                <td>Registrar o valor comercial combinado por saca com o comprador da padaria.</td>
+                <td>Histórico comercial na Ficha 360º e conferência na Mesa Pré-Nota.</td>
+              </tr>
+              <tr>
+                <td><code>unit_sale_price</code></td>
+                <td>Preço Unitário NF-e</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Conferido e ajustado na Mesa Pré-Nota para faturamento.</td>
+                <td>Valor unitário tributado na nota fiscal e na base do título bancário.</td>
+                <td>Tag <code>&lt;vUnCom&gt;</code> do XML da NF-e, DANFE e cálculo da Receita Bruta.</td>
+              </tr>
+              <tr>
+                <td><code>shipping_cost_estimate</code></td>
+                <td>Custo de Frete</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Cálculo automático: <strong>$\text{DQ Total} \times \text{R\$}~4{,}00$</strong>.</td>
+                <td>Apurar o custo logístico real pago ao motorista/transportador por saca entregue.</td>
+                <td>Dedução do cálculo de lucro líquido e relatório de despesas de transporte.</td>
+              </tr>
+              <tr>
+                <td><code>total_cmv_snapshot</code></td>
+                <td>CMV do Pedido</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Cálculo automático: <strong>$\sum (\text{DQ}_i \times \text{CMP}_i)$</strong>.</td>
+                <td>Calcular o custo das mercadorias vendidas com base no estoque real expedido.</td>
+                <td>Dedução no cálculo da rentabilidade da venda e DRE gerencial.</td>
+              </tr>
+              <tr>
+                <td><code>gross_total</code></td>
+                <td>Total Faturado NF-e</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Cálculo automático: <strong>$\sum (\text{BQ}_i \times \text{Preço NF}_i)$</strong>.</td>
+                <td>Representa a Receita Bruta oficial da operação fiscal.</td>
+                <td>Tag <code>&lt;vNF&gt;</code> da NF-e, DANFE e base de geração dos boletos bancários.</td>
+              </tr>
+              <tr>
+                <td><code>estimated_tax_snapshot</code></td>
+                <td>Impostos Estimados</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Cálculo automático: <strong>$8{,}00\%$ da Receita Bruta (Base BQ)</strong>.</td>
+                <td>Provisão tributária (7% ICMS efetivo SP + PIS/COFINS proporcional).</td>
+                <td>Dedução no cálculo do Lucro Líquido Real.</td>
+              </tr>
+              <tr>
+                <td><code>net_profit_snapshot</code></td>
+                <td>Lucro Líquido Real</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Fórmula: <strong>$\text{Receita} - \text{CMV} - \text{Frete} - \text{Impostos}$</strong>.</td>
+                <td>Apurar o ganho financeiro efetivo da venda em Reais.</td>
+                <td>Painel executivo, histórico da Ficha 360º e conferência da Mesa Pré-Nota.</td>
+              </tr>
+              <tr>
+                <td><code>net_margin_percentage</code></td>
+                <td>Margem Líquida %</td>
+                <td><code>DECIMAL(6,2) NOT NULL</code></td>
+                <td>Fórmula: <strong>$(\text{Lucro Líquido} / \text{Receita Bruta}) \times 100$</strong>.</td>
+                <td>Classificar a rentabilidade no <strong>Semáforo de Margem</strong>:
+                  <br/>🟢 <strong>Verde</strong>: $\ge 20\%$ (Excelente)
+                  <br/>🟡 <strong>Amarelo</strong>: $7\% \le \text{Margem} < 20\%$ (Atenção)
+                  <br/>🔴 <strong>Vermelho</strong>: $< 7\%$ (Crítica)
+                </td>
+                <td>Card de margem do Sr. Sérgio (ocultável com 1 toque) e indicador na Mesa Pré-Nota.</td>
+              </tr>
+              <tr>
+                <td><code>nfe_access_key</code></td>
+                <td>Chave de Acesso NF-e</td>
+                <td><code>VARCHAR(44)</code></td>
+                <td>Gerada pelo adapter fiscal (UF + Data + CNPJ + Modelo + Série + Número + DV módulo 11).</td>
+                <td>Identificador unívoco nacional da NF-e junto à SEFAZ.</td>
+                <td>XML 4.00, DANFE de Retenção, consulta pública SEFAZ e robô Python da planilha.</td>
+              </tr>
+              <tr>
+                <td><code>notes_for_invoice_or_driver</code></td>
+                <td>Instruções de Entrega</td>
+                <td><code>VARCHAR(500)</code></td>
+                <td>Digitado pelo vendedor em campo (ex: "Entregar até as 06h pelo portão lateral").</td>
+                <td>Instruir a equipe de expedição e o motorista na rota de entrega.</td>
+                <td>Romaneio Cego de Separação e campo de informações complementares da NF-e.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 5. Catálogo: Boletos e Contas a Receber -->
+        <h2>🏦 4. Contas a Receber & Boletos Bancários (`receivable_titles`)</h2>
+        <p>
+          O módulo financeiro assegura que nenhuma cobrança seja emitida sobre sobras físicas ou bonificações: todos os títulos são calculados <strong>estritamente sobre a Base BQ</strong>:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14%;">Campo Técnico</th>
+                <th style="width: 13%;">Nome de Interface</th>
+                <th style="width: 11%;">Tipo & Restrição</th>
+                <th style="width: 18%;">De Onde Vem? (Origem)</th>
+                <th style="width: 22%;">Para Que Serve? (Finalidade)</th>
+                <th style="width: 22%;">Onde Será Utilizado? (Destino)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>document_number</code></td>
+                <td>Nº do Título / Boleto</td>
+                <td><code>VARCHAR(60) NOT NULL</code></td>
+                <td>Gerado pelo sistema combinando o número da NF-e e a parcela (ex: <code>BOL-NF012926-01</code>).</td>
+                <td>Identificador comercial do boleto perante o cliente e a instituição bancária.</td>
+                <td>Espelho do boleto, remessa bancária e conciliação de recebimentos.</td>
+              </tr>
+              <tr>
+                <td><code>installment_number</code> / <code>total_installments</code></td>
+                <td>Parcela Atual / Total</td>
+                <td><code>INT DEFAULT 1</code></td>
+                <td>Calculado a partir da condição de pagamento (ex: 1/1 para 28d; 1/2 e 2/2 para 14/28d).</td>
+                <td>Indicar a fração da cobrança em negociações parceladas.</td>
+                <td>Corpo do boleto, controle de fluxo de caixa e listagens financeiras.</td>
+              </tr>
+              <tr>
+                <td><code>amount_bq</code></td>
+                <td>Valor da Parcela (R$)</td>
+                <td><code>DECIMAL(12,2) NOT NULL</code></td>
+                <td>Calculado dividindo o <strong>Faturamento Bruto da NF-e (Base BQ)</strong> pelo número de parcelas.</td>
+                <td>Garantir que o valor cobrado corresponda estritamente à base faturada consignada na nota.</td>
+                <td>Linha digitável, QR Code Pix do boleto Sicredi e conciliação bancária.</td>
+              </tr>
+              <tr>
+                <td><code>due_date</code></td>
+                <td>Data de Vencimento</td>
+                <td><code>DATE NOT NULL</code></td>
+                <td>Calculada pela data de emissão somada aos prazos acordados (D+14, D+28).</td>
+                <td>Definir a data limite para pagamento sem juros ou encargos.</td>
+                <td>Boleto bancário, calendário financeiro e gatilho de sinalização de inadimplência.</td>
+              </tr>
+              <tr>
+                <td><code>status</code></td>
+                <td>Status do Título</td>
+                <td><code>VARCHAR(30) DEFAULT 'ABERTO'</code></td>
+                <td>Controlado pelo ciclo financeiro (<code>ABERTO</code>, <code>PAGO</code>, <code>VENCIDO</code>, <code>CANCELADO</code>).</td>
+                <td>Controlar a adimplência de cada título e acionar travas cadastrais.</td>
+                <td>Aba de Boletos no Backoffice e atualização do <code>financial_status</code> do cliente.</td>
+              </tr>
+              <tr>
+                <td><code>paid_at</code></td>
+                <td>Data da Liquidação</td>
+                <td><code>TIMESTAMP</code></td>
+                <td>Preenchido na baixa manual pelo Gabriel Furtado ou via retorno da API Sicredi.</td>
+                <td>Registrar o momento exato da entrada de caixa e comprovação da quitação.</td>
+                <td>Extrato de recebíveis, conciliação contábil e auditoria financeira.</td>
+              </tr>
+              <tr>
+                <td><code>pix_qr_code</code> / <code>txid</code></td>
+                <td>Pix Híbrido Sicredi</td>
+                <td><code>VARCHAR / TEXT</code></td>
+                <td>Gerado via API Sicredi Open Banking na emissão do boleto híbrido.</td>
+                <td>Permitir liquidação instantânea 24/7 com baixa automatizada por webhook.</td>
+                <td>Impressão da DANFE/Boleto e envio direto por WhatsApp ao cliente.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 6. Catálogo: Importação -->
+        <h2>🚢 5. Lotes de Importação & Custo Médio Ponderado (`import_batches`)</h2>
+        <p>
+          O trigo é importado do Mercosul (Argentina e Uruguai). A nacionalização dos lotes alimenta o estoque e recalcula atomicamente o piso de custos:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 14%;">Campo Técnico</th>
+                <th style="width: 13%;">Nome de Interface</th>
+                <th style="width: 11%;">Tipo & Restrição</th>
+                <th style="width: 18%;">De Onde Vem? (Origem)</th>
+                <th style="width: 22%;">Para Que Serve? (Finalidade)</th>
+                <th style="width: 22%;">Onde Será Utilizado? (Destino)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><code>batch_code</code></td>
+                <td>Código do Lote</td>
+                <td><code>VARCHAR(40) UNIQUE</code></td>
+                <td>Declaração de Importação (DI) / Despachante Aduaneiro (ex: <code>IMP-2026-09-ARG</code>).</td>
+                <td>Rastreabilidade da carga de trigo desde o moinho de origem até o armazém.</td>
+                <td>Aba de Importação no Backoffice, registros de auditoria e controle de lotes.</td>
+              </tr>
+              <tr>
+                <td><code>arrival_date</code></td>
+                <td>Data de Desembarque</td>
+                <td><code>DATE NOT NULL</code></td>
+                <td>Comprovante de entrega física no armazém da TotalTrigo em São Paulo.</td>
+                <td>Carimbo temporal da entrada de mercadoria e vigência do novo custo.</td>
+                <td>Histórico de entradas e controle de giro de estoque.</td>
+              </tr>
+              <tr>
+                <td><code>exchange_rate_usd</code></td>
+                <td>PTAX USD Fechamento</td>
+                <td><code>DECIMAL(10,4) NOT NULL</code></td>
+                <td>Fechamento de câmbio oficial da operação de importação (Banco Central).</td>
+                <td>Converter os custos FOB contratados em dólares para Reais (BRL).</td>
+                <td>Calculadora de Landed Cost de importação.</td>
+              </tr>
+              <tr>
+                <td><code>fob_total_usd</code></td>
+                <td>FOB Total (USD)</td>
+                <td><code>DECIMAL(14,2) NOT NULL</code></td>
+                <td>Fatura comercial do moinho exportador na Argentina/Uruguai.</td>
+                <td>Custo da mercadoria posta no porto de embarque de origem.</td>
+                <td>Composição do custo landed internacional.</td>
+              </tr>
+              <tr>
+                <td><code>international_freight_brl</code></td>
+                <td>Frete Internacional (BRL)</td>
+                <td><code>DECIMAL(14,2) NOT NULL</code></td>
+                <td>Conhecimento de transporte internacional (marítimo ou rodoviário).</td>
+                <td>Compor o custo logístico de deslocamento do trigo até o Brasil.</td>
+                <td>Calculadora de rateio de custo nacionalizado.</td>
+              </tr>
+              <tr>
+                <td><code>customs_expenses_brl</code></td>
+                <td>Despesas Aduaneiras (BRL)</td>
+                <td><code>DECIMAL(14,2) NOT NULL</code></td>
+                <td>Notas de despachante aduaneiro, taxas portuárias, armazenagem e SDA.</td>
+                <td>Internalizar todos os custos acessórios e desembaraço alfandegário.</td>
+                <td>Cálculo do Landed Cost total.</td>
+              </tr>
+              <tr>
+                <td><code>total_landed_cost_brl</code></td>
+                <td>Custo Landed Total (BRL)</td>
+                <td><code>DECIMAL(14,2) NOT NULL</code></td>
+                <td>Soma total de mercadoria convertida, fretes, impostos e despesas alfandegárias.</td>
+                <td>Expressar o investimento financeiro total desembolsado para colocar o trigo no galpão.</td>
+                <td>Rateio por saca de 25 kg e recálculo atômico do CMP.</td>
+              </tr>
+              <tr>
+                <td><code>quantity_imported</code></td>
+                <td>Sacas Recebidas</td>
+                <td><code>INT NOT NULL</code></td>
+                <td>Romaneio de descarga e conferência física de recebimento no armazém.</td>
+                <td>Na entrada, <strong>$\text{BQ} = \text{DQ}$</strong>. Alimenta o estoque físico e contábil.</td>
+                <td>Incremento de <code>physical_stock</code> e <code>base_stock</code> dos SKUs correspondentes.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 7. Matriz Zero Surpresas -->
+        <h2>🛡️ 6. Matriz "Zero Surpresas": Checklist Preventivo de Falhas</h2>
+        <p>
+          Para evitar paralisações de faturamento, perdas comerciais ou multas tributárias, a tabela abaixo mapeia os <strong>10 pontos críticos de risco cadastral e operacional</strong> e os dados responsáveis por neutralizá-los:
+        </p>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 5%;">#</th>
+                <th style="width: 22%;">Ponto de Risco / Surpresa Evitada</th>
+                <th style="width: 25%;">Dado Chave de Salvaguarda</th>
+                <th style="width: 28%;">Mecanismo de Proteção no Sistema</th>
+                <th style="width: 20%;">Impacto Financeiro / Operacional</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>1</td>
+                <td><strong>Rejeição SEFAZ 273</strong> (Código de município divergente)</td>
+                <td><code>ibge_city_code</code> (7 dígitos numéricos)</td>
+                <td>Preenchimento automatizado via BrasilAPI a partir do CEP e cidade.</td>
+                <td>Elimina retrabalho de digitação e emissão travada no balcão.</td>
+              </tr>
+              <tr>
+                <td>2</td>
+                <td><strong>Rejeição SEFAZ 209/210</strong> (IE inválida ou ausente para contribuinte)</td>
+                <td><code>state_registration</code> e <code>ie_indicator</code></td>
+                <td>Validação de prontidão fiscal pré-nota na Mesa do Gabriel Furtado.</td>
+                <td>Garante saída legal da mercadoria no mesmo dia sem atraso na rota.</td>
+              </tr>
+              <tr>
+                <td>3</td>
+                <td><strong>Venda com Prejuízo Operacional</strong> (Abaixo do piso)</td>
+                <td><code>current_landed_cost</code> (CMP) e <code>net_margin_percentage</code></td>
+                <td>Semáforo visual de margem: alerta vermelho para margens abaixo de 7%.</td>
+                <td>Preserva a rentabilidade mínima da empresa pós-impostos e frete.</td>
+              </tr>
+              <tr>
+                <td>4</td>
+                <td><strong>Cobrança Indevida sobre Sobras Físicas</strong></td>
+                <td><code>amount_bq</code> (estritamente sobre Base BQ)</td>
+                <td>Geração de títulos desacoplada de bonificações físicas ou volume DQ.</td>
+                <td>Evita disputas judiciais ou desgaste comercial com a padaria.</td>
+              </tr>
+              <tr>
+                <td>5</td>
+                <td><strong>Custo de Frete Subestimado</strong></td>
+                <td><code>shipping_cost_estimate</code> ($\text{DQ} \times \text{R\$}~4{,}00$)</td>
+                <td>Cálculo baseado no volume físico real transportado (DQ), e não na nota (BQ).</td>
+                <td>Garante que o pagamento ao motorista seja precisamente coberto.</td>
+              </tr>
+              <tr>
+                <td>6</td>
+                <td><strong>Entrega para Cliente Inadimplente</strong></td>
+                <td><code>financial_status = 'BOLETO_VENCIDO'</code></td>
+                <td>Cruzamento automático com vencimento de títulos e alerta sonoro no app.</td>
+                <td>Impede ampliação de dívidas e aciona negociação prévia amigável.</td>
+              </tr>
+              <tr>
+                <td>7</td>
+                <td><strong>Exposição de Margem ao Cliente no Balcão</strong></td>
+                <td>Card de Margem Recolhido por Padrão</td>
+                <td>Visão restrita de custos no App Mobile com expansão sob demanda com 1 toque.</td>
+                <td>Protege o poder de barganha da TotalTrigo durante a venda na rua.</td>
+              </tr>
+              <tr>
+                <td>8</td>
+                <td><strong>Vazamento de Preços para a Equipe de Carga</strong></td>
+                <td><strong>Romaneio Cego</strong> (apenas DQ e códigos)</td>
+                <td>Interface exclusiva de expedição sem exibição de valores ou faturamento.</td>
+                <td>Mantém sigilo comercial absoluto no galpão e na estrada.</td>
+              </tr>
+              <tr>
+                <td>9</td>
+                <td><strong>Duplicidade na Planilha de Estoques</strong></td>
+                <td>Chave de 44 dígitos no <code>nfe_parser.py</code></td>
+                <td>Verificação prévia de chaves já importadas antes de gravar linhas no Excel.</td>
+                <td>Garante integridade contábil na transição entre Excel e ERP.</td>
+              </tr>
+              <tr>
+                <td>10</td>
+                <td><strong>Ruptura de Estoque na Rota de Vendas</strong></td>
+                <td><code>reserved_stock</code> e <code>available_stock</code></td>
+                <td>Reserva física atômica no momento do lançamento do pedido pelo vendedor.</td>
+                <td>Evita vender sacas que já foram prometidas a outros clientes.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Rodapé do Documento -->
+        <div class="doc-footer">
+          <span>Total Trigo Comércio de Alimentos Ltda — 4S ERP Documentation</span>
+          <span>Versão da Release: Outubro/2026 · Engenharia de Dados</span>
+        </div>
+
+      </article>
+    </main>
+
+    <!-- Índice da Página (TOC) -->
+    <aside class="docs-toc">
+      <div class="toc-title">Nesta Página</div>
+      <ul class="toc-list" id="toc-list"></ul>
+    </aside>
+
+  </div>
+
+  <script src="assets/docs.js"></script>
+</body>
+</html>

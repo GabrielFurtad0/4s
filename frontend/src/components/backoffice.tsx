@@ -20,7 +20,9 @@ import {
   ExternalLink,
   Eye,
   FileCheck2,
+  FileCode2,
   FileText,
+  FileUp,
   History,
   Landmark,
   Layers,
@@ -34,6 +36,7 @@ import {
   SlidersHorizontal,
   TriangleAlert,
   Truck,
+  UploadCloud,
   Users,
   XCircle,
 } from 'lucide-react';
@@ -67,6 +70,7 @@ import {
   fiscalReady,
   formatCnpj,
   generatePickingApi,
+  importClientsXmlApi,
   invoiceOrder,
   issueNfeApi,
   itemBq,
@@ -90,6 +94,7 @@ import {
   type Order,
   type Product,
   type ReceivableTitle,
+  type XmlClientImportResult,
 } from '@/lib/business';
 import { Metric } from './management';
 import type { SharedProps } from './seller';
@@ -1477,6 +1482,33 @@ function RegistrationsSection({
   const [lookingUpCnpj, setLookingUpCnpj] = useState(false);
   const [savingClient, setSavingClient] = useState(false);
 
+  // Importação em Lote via XML
+  const [xmlImportModalOpen, setXmlImportModalOpen] = useState(false);
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [importingXml, setImportingXml] = useState(false);
+  const [xmlImportResult, setXmlImportResult] = useState<XmlClientImportResult | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
+
+  const handleImportXmlBatch = async () => {
+    if (selectedFiles.length === 0) {
+      notify('Selecione ao menos um arquivo XML ou ZIP para importar.');
+      return;
+    }
+    setImportingXml(true);
+    try {
+      const result = await importClientsXmlApi(selectedFiles);
+      setXmlImportResult(result);
+      const fresh = await fetchWorkspaceData(data.reconciled);
+      update(fresh);
+      fireConfetti();
+      notify(`Importação concluída: ${result.clientsCreated} novos clientes, ${result.clientsUpdated} atualizados!`);
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Falha ao importar arquivos XML.');
+    } finally {
+      setImportingXml(false);
+    }
+  };
+
   // Edição de Produto / Estoque
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [productModalOpen, setProductModalOpen] = useState(false);
@@ -1626,35 +1658,50 @@ function RegistrationsSection({
         </div>
 
         {subTab === 'clients' && (
-          <Button
-            size="sm"
-            className="gap-1.5 text-xs bg-primary text-primary-foreground font-semibold"
-            onClick={() => {
-              setEditingClient({
-                corporateName: '',
-                tradeName: '',
-                cnpj: '',
-                stateRegistration: '',
-                ieIndicator: 'CONTRIBUINTE',
-                purchaseProfile: 'INDUSTRIALIZACAO',
-                street: '',
-                number: '',
-                neighborhood: '',
-                city: 'São Paulo',
-                state: 'SP',
-                ibgeCityCode: '3550308',
-                contactName: '',
-                phone: '',
-                defaultPaymentTerms: 'Boleto 28 dias',
-                averagePurchaseCycleDays: 20,
-                financialStatus: 'EM_DIA',
-              });
-              setClientModalOpen(true);
-            }}
-          >
-            <Plus size={14} />
-            + Novo Cliente
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 text-xs font-medium border-border hover:bg-muted/60"
+              onClick={() => {
+                setXmlImportModalOpen(true);
+                setXmlImportResult(null);
+                setSelectedFiles([]);
+              }}
+            >
+              <FileUp size={14} className="text-primary" />
+              Importar XML (Lote)
+            </Button>
+            <Button
+              size="sm"
+              className="gap-1.5 text-xs bg-primary text-primary-foreground font-semibold"
+              onClick={() => {
+                setEditingClient({
+                  corporateName: '',
+                  tradeName: '',
+                  cnpj: '',
+                  stateRegistration: '',
+                  ieIndicator: 'CONTRIBUINTE',
+                  purchaseProfile: 'INDUSTRIALIZACAO',
+                  street: '',
+                  number: '',
+                  neighborhood: '',
+                  city: 'São Paulo',
+                  state: 'SP',
+                  ibgeCityCode: '3550308',
+                  contactName: '',
+                  phone: '',
+                  defaultPaymentTerms: 'Boleto 28 dias',
+                  averagePurchaseCycleDays: 20,
+                  financialStatus: 'EM_DIA',
+                });
+                setClientModalOpen(true);
+              }}
+            >
+              <Plus size={14} />
+              + Novo Cliente
+            </Button>
+          </div>
         )}
       </div>
 
@@ -2161,6 +2208,225 @@ function RegistrationsSection({
               {savingProduct ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               Salvar Alterações
             </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* MODAL: IMPORTAÇÃO EM LOTE DE CLIENTES VIA XML */}
+      <Dialog open={xmlImportModalOpen} onOpenChange={setXmlImportModalOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle className="flex items-center gap-2">
+            <FileUp className="text-primary" size={20} />
+            Cadastro em Lote de Clientes por XML
+          </DialogTitle>
+          <DialogDescription>
+            Importe ou atualize clientes a partir de arquivos XML (NF-e padrão SEFAZ, exportações de ERP ou arquivos ZIP).
+          </DialogDescription>
+
+          {!xmlImportResult ? (
+            <div className="space-y-4 my-2 text-xs">
+              {/* Drag and Drop Zone */}
+              <div
+                className={`border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all ${
+                  isDragOver
+                    ? 'border-primary bg-primary/10 scale-[1.01]'
+                    : 'border-border hover:border-primary/50 hover:bg-muted/40'
+                }`}
+                onDragOver={e => {
+                  e.preventDefault();
+                  setIsDragOver(true);
+                }}
+                onDragLeave={() => setIsDragOver(false)}
+                onDrop={e => {
+                  e.preventDefault();
+                  setIsDragOver(false);
+                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+                    const newFiles = Array.from(e.dataTransfer.files);
+                    setSelectedFiles(prev => [...prev, ...newFiles]);
+                  }
+                }}
+                onClick={() => {
+                  document.getElementById('xml-file-input')?.click();
+                }}
+              >
+                <input
+                  id="xml-file-input"
+                  type="file"
+                  multiple
+                  accept=".xml,.zip"
+                  className="hidden"
+                  onChange={e => {
+                    if (e.target.files && e.target.files.length > 0) {
+                      const newFiles = Array.from(e.target.files);
+                      setSelectedFiles(prev => [...prev, ...newFiles]);
+                    }
+                  }}
+                />
+                <div className="flex flex-col items-center gap-2">
+                  <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary mb-1">
+                    <UploadCloud size={24} />
+                  </div>
+                  <strong className="text-sm font-semibold text-foreground">
+                    Arraste seus arquivos XML ou ZIP aqui
+                  </strong>
+                  <p className="text-xs text-muted-foreground max-w-sm">
+                    Ou clique para selecionar do seu computador. Suporta múltiplos arquivos de uma só vez.
+                  </p>
+                </div>
+              </div>
+
+              {/* Arquivos Selecionados */}
+              {selectedFiles.length > 0 && (
+                <div className="border border-border rounded-lg p-3 bg-muted/20 space-y-2">
+                  <div className="flex items-center justify-between text-xs font-semibold text-foreground">
+                    <span>Arquivos selecionados ({selectedFiles.length})</span>
+                    <button
+                      type="button"
+                      className="text-[11px] text-destructive hover:underline"
+                      onClick={() => setSelectedFiles([])}
+                    >
+                      Limpar todos
+                    </button>
+                  </div>
+                  <div className="max-h-36 overflow-y-auto space-y-1 pr-1">
+                    {selectedFiles.map((f, idx) => (
+                      <div
+                        key={`${f.name}-${idx}`}
+                        className="flex items-center justify-between text-[11px] bg-background/60 border border-border/60 rounded px-2.5 py-1.5"
+                      >
+                        <div className="flex items-center gap-2 truncate">
+                          <FileCode2 size={13} className="text-primary shrink-0" />
+                          <span className="truncate font-mono">{f.name}</span>
+                          <span className="text-muted-foreground text-[10px]">
+                            ({(f.size / 1024).toFixed(1)} KB)
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive shrink-0 ml-2"
+                          onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                          title="Remover arquivo"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Informações dos Formatos Suportados */}
+              <div className="grid grid-cols-2 gap-3 text-[11px] text-muted-foreground">
+                <div className="bg-muted/30 border border-border/50 rounded-lg p-2.5 space-y-1">
+                  <strong className="text-foreground block font-medium">Formatos Suportados</strong>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>XML de NF-e (SEFAZ: &lt;dest&gt;, &lt;enderDest&gt;)</li>
+                    <li>Exportações de ERPs (&lt;clientes&gt;&lt;cliente&gt;)</li>
+                    <li>Arquivo compactado .ZIP com múltiplos XMLs</li>
+                  </ul>
+                </div>
+                <div className="bg-muted/30 border border-border/50 rounded-lg p-2.5 space-y-1">
+                  <strong className="text-foreground block font-medium">Regras de Negócio</strong>
+                  <ul className="list-disc list-inside space-y-0.5">
+                    <li>Upsert inteligente por CNPJ/CPF (sem duplicados)</li>
+                    <li>Memória de preços praticados por SKU atualizada</li>
+                    <li>Cadastro automático com endereço e código IBGE</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          ) : (
+            /* Resultados da Importação */
+            <div className="space-y-4 my-2 text-xs">
+              <div className="bg-success-soft/30 border border-success/40 rounded-xl p-4 space-y-2">
+                <div className="flex items-center gap-2 text-success font-semibold text-sm">
+                  <CheckCheck size={18} />
+                  <span>Importação Concluída com Sucesso!</span>
+                </div>
+                <p className="text-muted-foreground">{xmlImportResult.message}</p>
+                <div className="grid grid-cols-4 gap-2 pt-2 border-t border-success/20">
+                  <div className="bg-background/80 rounded p-2 text-center">
+                    <span className="text-[10px] text-muted-foreground block">Arquivos</span>
+                    <strong className="text-base text-foreground font-mono">{xmlImportResult.totalFilesProcessed}</strong>
+                  </div>
+                  <div className="bg-background/80 rounded p-2 text-center">
+                    <span className="text-[10px] text-muted-foreground block">Novos Clientes</span>
+                    <strong className="text-base text-success font-mono">+{xmlImportResult.clientsCreated}</strong>
+                  </div>
+                  <div className="bg-background/80 rounded p-2 text-center">
+                    <span className="text-[10px] text-muted-foreground block">Atualizados</span>
+                    <strong className="text-base text-primary font-mono">{xmlImportResult.clientsUpdated}</strong>
+                  </div>
+                  <div className="bg-background/80 rounded p-2 text-center">
+                    <span className="text-[10px] text-muted-foreground block">Preços SKU</span>
+                    <strong className="text-base text-foreground font-mono">{xmlImportResult.pricesUpdated}</strong>
+                  </div>
+                </div>
+              </div>
+
+              {xmlImportResult.importedClientNames.length > 0 && (
+                <div className="space-y-1.5">
+                  <span className="font-semibold text-foreground text-xs">Clientes cadastrados nesta remessa:</span>
+                  <div className="flex flex-wrap gap-1 max-h-28 overflow-y-auto p-1.5 bg-muted/20 border border-border rounded-lg">
+                    {xmlImportResult.importedClientNames.map((name, i) => (
+                      <span key={i} className="status-badge neutral text-[10px]">
+                        {name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {xmlImportResult.warnings.length > 0 && (
+                <div className="space-y-1">
+                  <span className="font-semibold text-amber-500 text-xs flex items-center gap-1">
+                    <AlertTriangle size={12} /> Avisos do processador:
+                  </span>
+                  <div className="max-h-24 overflow-y-auto space-y-0.5 text-[10px] text-muted-foreground font-mono bg-muted/20 p-2 rounded border border-border">
+                    {xmlImportResult.warnings.map((w, i) => (
+                      <div key={i}>• {w}</div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="flex justify-end gap-2 mt-4">
+            {!xmlImportResult ? (
+              <>
+                <Button variant="outline" onClick={() => setXmlImportModalOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button
+                  disabled={importingXml || selectedFiles.length === 0}
+                  onClick={handleImportXmlBatch}
+                  className="gap-1.5"
+                >
+                  {importingXml ? (
+                    <>
+                      <Loader2 size={14} className="animate-spin" />
+                      Processando XMLs...
+                    </>
+                  ) : (
+                    <>
+                      <FileUp size={14} />
+                      Importar {selectedFiles.length > 0 ? `(${selectedFiles.length} arquivos)` : ''}
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <Button
+                onClick={() => {
+                  setXmlImportModalOpen(false);
+                  setXmlImportResult(null);
+                  setSelectedFiles([]);
+                }}
+              >
+                Fechar e Atualizar Lista
+              </Button>
+            )}
           </div>
         </DialogContent>
       </Dialog>

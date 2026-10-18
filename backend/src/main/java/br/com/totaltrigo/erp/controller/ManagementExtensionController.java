@@ -4,10 +4,13 @@ import br.com.totaltrigo.erp.domain.model.ClientSkuPrice;
 import br.com.totaltrigo.erp.domain.model.Product;
 import br.com.totaltrigo.erp.domain.model.ReceivableTitle;
 import br.com.totaltrigo.erp.dto.ApiDtos.*;
+import br.com.totaltrigo.erp.service.ClientXmlImportService;
 import br.com.totaltrigo.erp.service.ManagementExtensionService;
 import jakarta.validation.Valid;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -16,9 +19,14 @@ import java.util.List;
 public class ManagementExtensionController {
 
     private final ManagementExtensionService managementService;
+    private final ClientXmlImportService clientXmlImportService;
 
-    public ManagementExtensionController(ManagementExtensionService managementService) {
+    public ManagementExtensionController(
+            ManagementExtensionService managementService,
+            ClientXmlImportService clientXmlImportService
+    ) {
         this.managementService = managementService;
+        this.clientXmlImportService = clientXmlImportService;
     }
 
     // ============================================================================
@@ -67,6 +75,44 @@ public class ManagementExtensionController {
             @RequestHeader(value = "X-Actor-Role", required = false, defaultValue = "Backoffice & Fiscal") String actorRole
     ) {
         return ResponseEntity.ok(managementService.updateClient(clientId, dto, actorName, actorRole));
+    }
+
+    @PostMapping(value = "/clients/import-xml", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<XmlClientImportResult> importClientsXml(
+            @RequestParam("files") MultipartFile[] files,
+            @RequestHeader(value = "X-Actor-Name", required = false, defaultValue = "Gabriel Furtado") String actorName,
+            @RequestHeader(value = "X-Actor-Role", required = false, defaultValue = "Backoffice & Fiscal") String actorRole
+    ) {
+        XmlClientImportResult result = clientXmlImportService.importFromFiles(files);
+        managementService.logAudit(
+                actorName,
+                actorRole,
+                "IMPORTACAO_XML_CLIENTES",
+                "Client",
+                "BATCH",
+                String.format("Importação XML em lote: %d processados, %d criados, %d atualizados.",
+                        result.totalFilesProcessed(), result.clientsCreated(), result.clientsUpdated())
+        );
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping(value = "/clients/import-xml/raw", consumes = {MediaType.APPLICATION_XML_VALUE, MediaType.TEXT_XML_VALUE, MediaType.TEXT_PLAIN_VALUE})
+    public ResponseEntity<XmlClientImportResult> importClientsRawXml(
+            @RequestBody String xmlContent,
+            @RequestHeader(value = "X-Actor-Name", required = false, defaultValue = "Gabriel Furtado") String actorName,
+            @RequestHeader(value = "X-Actor-Role", required = false, defaultValue = "Backoffice & Fiscal") String actorRole
+    ) {
+        XmlClientImportResult result = clientXmlImportService.importFromRawXml(xmlContent, "payload.xml");
+        managementService.logAudit(
+                actorName,
+                actorRole,
+                "IMPORTACAO_XML_CLIENTES_RAW",
+                "Client",
+                "RAW",
+                String.format("Importação XML texto: %d criados, %d atualizados.",
+                        result.clientsCreated(), result.clientsUpdated())
+        );
+        return ResponseEntity.ok(result);
     }
 
     @GetMapping("/products")

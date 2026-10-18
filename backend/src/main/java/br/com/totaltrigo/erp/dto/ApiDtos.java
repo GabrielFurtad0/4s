@@ -412,5 +412,15 @@ public class ApiDtos {
             @NotNull Long productId,
             @NotNull BigDecimal agreedPrice
     ) {}
+
+    public record XmlClientImportResult(
+            int totalFilesProcessed,
+            int clientsCreated,
+            int clientsUpdated,
+            int pricesUpdated,
+            List<String> importedClientNames,
+            List<String> warnings,
+            String message
+    ) {}
 }
 

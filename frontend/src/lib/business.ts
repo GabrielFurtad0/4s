@@ -454,12 +454,15 @@ async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const activeProfile = getActiveProfile();
   const [actorName, actorRole] = activeProfile.split(' · ').map(s => s.trim());
 
+  const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
     'X-Actor-Name': actorName || 'Gabriel Furtado',
     'X-Actor-Role': actorRole || 'Backoffice & Fiscal',
     ...((init?.headers as Record<string, string>) ?? {}),
   };
+  if (!isFormData && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
   const urls =
     typeof window !== 'undefined'
       ? [`/api${path}`, `http://localhost:8085/api${path}`]
@@ -1262,6 +1265,27 @@ export async function saveManagementClientApi(client: any): Promise<any> {
   return await apiFetch<any>('/backoffice/management/clients', {
     method: 'POST',
     body: JSON.stringify(client),
+  });
+}
+
+export type XmlClientImportResult = {
+  totalFilesProcessed: number;
+  clientsCreated: number;
+  clientsUpdated: number;
+  pricesUpdated: number;
+  importedClientNames: string[];
+  warnings: string[];
+  message: string;
+};
+
+export async function importClientsXmlApi(files: File[]): Promise<XmlClientImportResult> {
+  const formData = new FormData();
+  for (const f of files) {
+    formData.append('files', f);
+  }
+  return await apiFetch<XmlClientImportResult>('/backoffice/management/clients/import-xml', {
+    method: 'POST',
+    body: formData,
   });
 }
 
