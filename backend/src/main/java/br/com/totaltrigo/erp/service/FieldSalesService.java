@@ -152,8 +152,8 @@ public class FieldSalesService {
                 .limit(6)
                 .map(o -> {
                     String itemsSummary = o.getItems().stream()
-                            .filter(i -> i.getQuantity() != null && i.getQuantity() > 0)
-                            .map(i -> i.getQuantity() + "x " + i.getProduct().getShortName())
+                            .filter(i -> i.getDispatchQuantity() != null && i.getDispatchQuantity() > 0)
+                            .map(i -> i.getDispatchQuantity() + "x " + i.getProduct().getShortName())
                             .collect(Collectors.joining(", "));
                     String nfMeta = o.getInvoiceData() != null && o.getInvoiceData().getNfeNumber() != null
                             ? "NF-e #" + o.getInvoiceData().getNfeNumber()
@@ -285,7 +285,7 @@ public class FieldSalesService {
 
     /**
      * Fecha o pedido na rua e envia para a Mesa de Conferência (AGUARDANDO_REVISAO),
-     * reservando o estoque imediatamente e congelando o snapshot financeiro de custos e lucro.
+     * reservando o estoque físico pela Qtd. Expedição (DQ) e calculando impostos sobre a Qtd. Base (BQ).
      */
     @Transactional
     public BackofficeOrderDto createOrderFromStreet(CreateOrderRequest req) {
@@ -293,11 +293,18 @@ public class FieldSalesService {
                 .orElseThrow(() -> new IllegalArgumentException("Cliente não encontrado."));
 
         List<OrderItemRequest> activeItems = req.items().stream()
-                .filter(i -> i.quantity() != null && i.quantity() > 0)
+                .filter(i -> i.resolvedDispatchQuantity() > 0)
                 .toList();
 
         if (activeItems.isEmpty()) {
-            throw new IllegalArgumentException("Adicione pelo menos 1 saco nos produtos para fechar o pedido.");
+            throw new IllegalArgumentException("Adicione pelo menos 1 saco na Qtd. Expedição (DQ) para fechar o pedido.");
+        }
+
+        int totalDq = activeItems.stream().mapToInt(OrderItemRequest::resolvedDispatchQuantity).sum();
+        int totalBq = activeItems.stream().mapToInt(OrderItemRequest::resolvedBaseQuantity).sum();
+
+        if (totalBq < 1) {
+            throw new IllegalArgumentException("A Qtd. Base (BQ) total do pedido nunca pode ser zero (mínimo 1 saca).");
         }
 
         Order order = new Order();
@@ -307,8 +314,6 @@ public class FieldSalesService {
         order.setPaymentTerms(req.paymentTerms());
         order.setDeliveryForecast(req.deliveryForecast() != null ? req.deliveryForecast() : "Amanhã (Manhã)");
         order.setNotesForInvoiceOrDriver(req.notesForInvoiceOrDriver());
-        BigDecimal shipping = req.shippingCostEstimate() != null ? req.shippingCostEstimate() : new BigDecimal("45.00");
-        order.setShippingCostEstimate(shipping);
 
         BigDecimal grossTotal = BigDecimal.ZERO;
         BigDecimal totalCmv = BigDecimal.ZERO;
@@ -318,33 +323,45 @@ public class FieldSalesService {
             Product product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + itemReq.productId()));
 
-            if (itemReq.quantity() > product.getAvailableStock()) {
+            int dq = itemReq.resolvedDispatchQuantity();
+            int bq = itemReq.resolvedBaseQuantity();
+
+            if (bq < 0 || bq > dq) {
                 throw new IllegalArgumentException(String.format(
-                        "Estoque disponível insuficiente para %s! Solicitado: %d %s, Disponível: %d %s.",
-                        product.getShortName(), itemReq.quantity(), product.getUnitOfMeasure(),
+                        "A Qtd. Base (BQ = %d) de %s deve estar entre 0 e a Qtd. Expedição (DQ = %d).",
+                        bq, product.getShortName(), dq
+                ));
+            }
+
+            if (dq > product.getAvailableStock()) {
+                throw new IllegalArgumentException(String.format(
+                        "Estoque disponível insuficiente para %s! Solicitado (DQ): %d %s, Disponível: %d %s.",
+                        product.getShortName(), dq, product.getUnitOfMeasure(),
                         product.getAvailableStock(), product.getUnitOfMeasure()
                 ));
             }
 
-            // Reserva imediata de estoque (aumenta reservedStock, reduz availableStock)
-            product.setReservedStock(product.getReservedStock() + itemReq.quantity());
+            // Reserva imediata de estoque físico (movimentado exclusivamente pela DQ)
+            product.setReservedStock(product.getReservedStock() + dq);
             productRepository.save(product);
 
             OrderItem item = new OrderItem();
             item.setProduct(product);
-            item.setOrderedQuantity(itemReq.quantity());
-            item.setQuantity(itemReq.quantity());
+            item.setOrderedQuantity(dq);
+            item.setDispatchQuantity(dq);
+            item.setBaseQuantity(bq);
             item.setOrderedUnitPrice(itemReq.unitSalePrice());
             item.setUnitSalePrice(itemReq.unitSalePrice());
             item.setUnitCostSnapshot(product.getCurrentLandedCost());
             item.setPromotionalPrice(itemReq.isPromotionalPrice());
             order.addItem(item);
 
-            BigDecimal qtyBd = new BigDecimal(itemReq.quantity());
-            BigDecimal itemGross = itemReq.unitSalePrice().multiply(qtyBd);
-            BigDecimal itemCmv = product.getCurrentLandedCost().multiply(qtyBd);
+            BigDecimal dqBd = new BigDecimal(dq);
+            BigDecimal bqBd = new BigDecimal(bq);
+            BigDecimal itemGross = itemReq.unitSalePrice().multiply(dqBd);
+            BigDecimal itemCmv = product.getCurrentLandedCost().multiply(dqBd);
             BigDecimal taxRate = product.getEstimatedTaxRate().divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
-            BigDecimal itemTax = itemGross.multiply(taxRate);
+            BigDecimal itemTax = itemReq.unitSalePrice().multiply(bqBd).multiply(taxRate);
 
             grossTotal = grossTotal.add(itemGross);
             totalCmv = totalCmv.add(itemCmv);
@@ -368,6 +385,10 @@ public class FieldSalesService {
             }
             clientSkuPriceRepository.save(priceMem);
         }
+
+        // Frete oficial: R$ 4,00 por saca entregue (DQ)
+        BigDecimal shipping = new BigDecimal("4.00").multiply(new BigDecimal(totalDq)).setScale(2, RoundingMode.HALF_UP);
+        order.setShippingCostEstimate(shipping);
 
         BigDecimal netProfit = grossTotal.subtract(totalCmv).subtract(totalTax).subtract(shipping);
         BigDecimal marginPct = grossTotal.compareTo(BigDecimal.ZERO) > 0
@@ -406,6 +427,7 @@ public class FieldSalesService {
                 p.getPhysicalStock(),
                 p.getReservedStock(),
                 p.getAvailableStock(),
+                p.getBaseStock(),
                 p.getCurrentLandedCost(),
                 p.getBaseListPrice(),
                 p.getNcm(),
@@ -423,10 +445,13 @@ public class FieldSalesService {
         List<OrderItemDetailDto> itemDtos = o.getItems().stream()
                 .map(i -> {
                     Product p = i.getProduct();
+                    int dq = i.getDispatchQuantity() != null ? i.getDispatchQuantity() : 0;
+                    int bq = i.getBaseQuantity() != null ? i.getBaseQuantity() : 0;
                     BigDecimal sub = i.getUnitSalePrice()
-                            .multiply(new BigDecimal(i.getQuantity()))
+                            .multiply(new BigDecimal(dq))
                             .setScale(2, RoundingMode.HALF_UP);
-                    boolean adjusted = !Objects.equals(i.getOrderedQuantity(), i.getQuantity())
+                    boolean adjusted = !Objects.equals(i.getOrderedQuantity(), dq)
+                            || !Objects.equals(dq, bq)
                             || i.getOrderedUnitPrice().compareTo(i.getUnitSalePrice()) != 0;
                     String cfop = "SP".equalsIgnoreCase(c.getState()) ? p.getDefaultCfopInternal() : p.getDefaultCfopInterstate();
                     return new OrderItemDetailDto(
@@ -439,6 +464,8 @@ public class FieldSalesService {
                             p.getNcm(),
                             cfop,
                             i.getOrderedQuantity(),
+                            dq,
+                            bq,
                             i.getQuantity(),
                             i.getOrderedUnitPrice(),
                             i.getUnitSalePrice(),
@@ -447,7 +474,8 @@ public class FieldSalesService {
                             i.isPromotionalPrice(),
                             adjusted,
                             p.getAvailableStock(),
-                            p.getPhysicalStock()
+                            p.getPhysicalStock(),
+                            p.getBaseStock()
                     );
                 })
                 .toList();

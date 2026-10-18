@@ -5,6 +5,7 @@ import br.com.totaltrigo.erp.dto.ApiDtos.*;
 import br.com.totaltrigo.erp.service.BackofficeService;
 import br.com.totaltrigo.erp.service.BrasilApiService;
 import br.com.totaltrigo.erp.service.FieldSalesService;
+import br.com.totaltrigo.erp.service.XmlClientHistoryLoader;
 import jakarta.validation.Valid;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,15 +21,18 @@ public class BackofficeController {
     private final BackofficeService backofficeService;
     private final FieldSalesService fieldSalesService;
     private final BrasilApiService brasilApiService;
+    private final XmlClientHistoryLoader xmlClientHistoryLoader;
 
     public BackofficeController(
             BackofficeService backofficeService,
             FieldSalesService fieldSalesService,
-            BrasilApiService brasilApiService
+            BrasilApiService brasilApiService,
+            XmlClientHistoryLoader xmlClientHistoryLoader
     ) {
         this.backofficeService = backofficeService;
         this.fieldSalesService = fieldSalesService;
         this.brasilApiService = brasilApiService;
+        this.xmlClientHistoryLoader = xmlClientHistoryLoader;
     }
 
     @GetMapping("/stock")
@@ -92,5 +96,12 @@ public class BackofficeController {
     @PostMapping("/import-batches")
     public ResponseEntity<ImportBatch> createImportBatch(@Valid @RequestBody CreateImportBatchRequest request) {
         return ResponseEntity.ok(backofficeService.registerImportBatch(request));
+    }
+
+    @PostMapping("/import-xml-folder")
+    public ResponseEntity<Map<String, Object>> importXmlFolder(
+            @RequestParam(required = false) String folderPath
+    ) {
+        return ResponseEntity.ok(xmlClientHistoryLoader.importFromXmlFolder(folderPath));
     }
 }

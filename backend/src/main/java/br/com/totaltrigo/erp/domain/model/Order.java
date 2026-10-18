@@ -39,7 +39,7 @@ public class Order {
     private String backofficeAdjustmentNotes;
 
     @Column(name = "shipping_cost_estimate", nullable = false, precision = 12, scale = 2)
-    private BigDecimal shippingCostEstimate = new BigDecimal("45.00");
+    private BigDecimal shippingCostEstimate = BigDecimal.ZERO;
 
     @Column(name = "original_commercial_total", nullable = false, precision = 12, scale = 2)
     private BigDecimal originalCommercialTotal = BigDecimal.ZERO;

@@ -35,6 +35,9 @@ public class Product {
     @Column(name = "reserved_stock", nullable = false)
     private Integer reservedStock = 0;
 
+    @Column(name = "base_stock", nullable = false)
+    private Integer baseStock = 0;
+
     @Column(name = "current_landed_cost", nullable = false, precision = 12, scale = 2)
     private BigDecimal currentLandedCost;
 
@@ -85,6 +88,8 @@ public class Product {
     public void setPhysicalStock(Integer physicalStock) { this.physicalStock = physicalStock; }
     public Integer getReservedStock() { return reservedStock; }
     public void setReservedStock(Integer reservedStock) { this.reservedStock = reservedStock; }
+    public Integer getBaseStock() { return baseStock != null ? baseStock : physicalStock; }
+    public void setBaseStock(Integer baseStock) { this.baseStock = baseStock; }
     public BigDecimal getCurrentLandedCost() { return currentLandedCost; }
     public void setCurrentLandedCost(BigDecimal currentLandedCost) { this.currentLandedCost = currentLandedCost; }
     public BigDecimal getBaseListPrice() { return baseListPrice; }

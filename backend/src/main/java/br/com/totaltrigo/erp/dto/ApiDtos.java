@@ -24,6 +24,7 @@ public class ApiDtos {
             Integer physicalStock,
             Integer reservedStock,
             Integer availableStock,
+            Integer baseStock,
             BigDecimal currentLandedCost,
             BigDecimal baseListPrice,
             String ncm,
@@ -134,10 +135,23 @@ public class ApiDtos {
 
     public record OrderItemRequest(
             @NotNull Long productId,
-            @NotNull Integer quantity,
+            Integer quantity,
+            Integer dispatchQuantity,
+            Integer baseQuantity,
             @NotNull BigDecimal unitSalePrice,
             boolean isPromotionalPrice
-    ) {}
+    ) {
+        public int resolvedDispatchQuantity() {
+            if (dispatchQuantity != null) return dispatchQuantity;
+            return quantity != null ? quantity : 0;
+        }
+
+        public int resolvedBaseQuantity() {
+            if (baseQuantity != null) return baseQuantity;
+            if (quantity != null) return quantity;
+            return resolvedDispatchQuantity();
+        }
+    }
 
     public record CreateOrderRequest(
             @NotNull Long clientId,
@@ -158,6 +172,8 @@ public class ApiDtos {
             String ncm,
             String cfop,
             Integer orderedQuantity,
+            Integer dispatchQuantity,
+            Integer baseQuantity,
             Integer quantity,
             BigDecimal orderedUnitPrice,
             BigDecimal unitSalePrice,
@@ -166,7 +182,8 @@ public class ApiDtos {
             boolean isPromotionalPrice,
             boolean hasBackofficeAdjustment,
             Integer productAvailableStock,
-            Integer productPhysicalStock
+            Integer productPhysicalStock,
+            Integer productBaseStock
     ) {}
 
     public record BackofficeOrderDto(
@@ -212,9 +229,22 @@ public class ApiDtos {
 
     public record ReviewOrderItemUpdateDto(
             @NotNull Long productId,
-            @NotNull Integer quantity,
+            Integer quantity,
+            Integer dispatchQuantity,
+            Integer baseQuantity,
             @NotNull BigDecimal unitSalePrice
-    ) {}
+    ) {
+        public int resolvedDispatchQuantity() {
+            if (dispatchQuantity != null) return dispatchQuantity;
+            return quantity != null ? quantity : 0;
+        }
+
+        public int resolvedBaseQuantity() {
+            if (baseQuantity != null) return baseQuantity;
+            if (quantity != null) return quantity;
+            return resolvedDispatchQuantity();
+        }
+    }
 
     public record ReviewOrderRequest(
             @NotBlank String paymentTerms,

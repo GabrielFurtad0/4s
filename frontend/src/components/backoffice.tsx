@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   ArrowDownToLine,
   ArrowRight,
+  Ban,
   Check,
   CheckCheck,
   ChevronDown,
@@ -11,9 +12,9 @@ import {
   Clock3,
   FileCheck2,
   FileText,
+  Layers,
   Loader2,
   Package,
-  Plus,
   Search,
   ShieldCheck,
   SlidersHorizontal,
@@ -33,25 +34,36 @@ import { ProfitGauge } from '@/components/ui/profit-gauge';
 import { fireConfetti } from '@/components/ui/confetti';
 import {
   available,
+  baseBalance,
+  cancelOrderApi,
+  cancelOrderLocal,
   completeFiscalViaCnpjApi,
+  deliverOrderApi,
+  deliverOrderLocal,
   editOrder,
   financials,
   fiscalReady,
   generatePickingApi,
   invoiceOrder,
   issueNfeApi,
+  itemBq,
+  itemDq,
   marginLevel,
   money,
+  orderBaseValue,
+  orderTotalBq,
+  orderTotalDq,
   productLabel,
   reviewOrderApi,
   type Item,
   type Order,
 } from '@/lib/business';
-import { Metric, PageHeading } from './management';
+import { Metric } from './management';
 import type { SharedProps } from './seller';
 
-export function Backoffice({ data, update, notify, newOrder }: SharedProps & { newOrder: () => void }) {
+export function Backoffice({ data, update, notify }: SharedProps & { newOrder: () => void }) {
   const [tab, setTab] = useState('all');
+  const [stockMode, setStockMode] = useState<'dual' | 'physical' | 'base'>('dual');
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -64,8 +76,16 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
   const [period, setPeriod] = useState('today');
   const [page, setPage] = useState(1);
 
-  const pending = data.orders.filter(o => o.status === 'AGUARDANDO_REVISAO');
-  const billed = data.orders.filter(o => o.status === 'FATURADO');
+  const effectiveStatus = (o: Order) => o.rawStatus || o.status;
+
+  const pending = data.orders.filter(
+    o => effectiveStatus(o) === 'AGUARDANDO_REVISAO' || effectiveStatus(o) === 'EM_SEPARACAO'
+  );
+  const pickingOrders = data.orders.filter(o => effectiveStatus(o) === 'EM_SEPARACAO');
+  const billed = data.orders.filter(o => effectiveStatus(o) === 'FATURADO');
+  const delivered = data.orders.filter(o => effectiveStatus(o) === 'ENTREGUE');
+  const cancelled = data.orders.filter(o => effectiveStatus(o) === 'CANCELADO');
+
   const pendingValue = pending.reduce((a, o) => a + financials(o.items).total, 0);
   const ready = pending.filter(o => {
     const c = data.clients.find(c => c.id === o.clientId);
@@ -77,11 +97,21 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
   const visible = data.orders
     .filter(o => {
       const c = data.clients.find(c => c.id === o.clientId);
+      const st = effectiveStatus(o);
+      const matchesTab =
+        tab === 'all' ||
+        (tab === 'pending' && st === 'AGUARDANDO_REVISAO') ||
+        (tab === 'picking' && st === 'EM_SEPARACAO') ||
+        (tab === 'billed' && st === 'FATURADO') ||
+        (tab === 'delivered' && st === 'ENTREGUE') ||
+        (tab === 'cancelled' && st === 'CANCELADO');
       return (
-        (tab === 'all' || (tab === 'pending' && o.status === 'AGUARDANDO_REVISAO') || (tab === 'billed' && o.status === 'FATURADO')) &&
+        matchesTab &&
         `${o.id} ${c?.name}`.toLowerCase().includes(search.toLowerCase()) &&
-        (fiscalFilter === 'all' || (fiscalFilter === 'ready' && c && fiscalReady(c)) || (fiscalFilter === 'incomplete' && c && !fiscalReady(c))) &&
-        (period === 'all' || o.date !== 'Ontem' || tab === 'billed' || tab === 'all')
+        (fiscalFilter === 'all' ||
+          (fiscalFilter === 'ready' && c && fiscalReady(c)) ||
+          (fiscalFilter === 'incomplete' && c && !fiscalReady(c))) &&
+        (period === 'all' || o.date !== 'Ontem' || tab !== 'pending')
       );
     })
     .sort((a, b) => Number(b.id) - Number(a.id));
@@ -93,12 +123,13 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
     setCustomPackingText(null);
   };
 
+  // Romaneio Cego exibe exclusivamente a Qtd. Expedição (DQ)
   const fallbackPackingText =
     selected && selectedClient
-      ? `ROMANEIO #${selected.id}\n${selectedClient.name}\n${selectedClient.neighborhood}, São Paulo - SP\nComprador: ${selectedClient.buyer}\nEntrega: ${selected.delivery}\n\n${selected.items
-          .filter(i => i.quantity > 0)
-          .map(i => `${i.quantity} unidades — ${productLabel(data, i.productId)}`)
-          .join('\n')}\n\nObs: ${selected.note || 'Sem observações'}\nPagamento: ${selected.payment}`
+      ? `ROMANEIO DE SEPARAÇÃO & ENTREGA #${selected.id}\n${selectedClient.name}\n${selectedClient.neighborhood}, São Paulo - SP\nComprador: ${selectedClient.buyer}\nEntrega: ${selected.delivery}\n\nCARGA PARA SEPARAR NO GALPÃO (DQ):\n${selected.items
+          .filter(i => itemDq(i) > 0)
+          .map(i => `• ${itemDq(i)} sacas (${itemDq(i) * 25} kg) — ${productLabel(data, i.productId)}`)
+          .join('\n')}\n\nVolume Total (DQ): ${orderTotalDq(selected.items)} sacas (${orderTotalDq(selected.items) * 25} kg)\nObs: ${selected.note || 'Sem observações'}`
       : '';
   const packingText = customPackingText || fallbackPackingText;
 
@@ -111,32 +142,83 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
     URL.revokeObjectURL(url);
   };
 
+  const renderStatusBadge = (o: Order) => {
+    const st = effectiveStatus(o);
+    if (st === 'ENTREGUE') {
+      return (
+        <span className="status-badge success">
+          <CheckCheck size={12} />
+          Entregue
+        </span>
+      );
+    }
+    if (st === 'FATURADO') {
+      return (
+        <span className="status-badge success">
+          <CheckCheck size={12} />
+          Faturado
+        </span>
+      );
+    }
+    if (st === 'CANCELADO') {
+      return (
+        <span className="status-badge danger">
+          <Ban size={12} />
+          Cancelado
+        </span>
+      );
+    }
+    if (st === 'EM_SEPARACAO') {
+      return (
+        <span className="status-badge warning">
+          <Truck size={12} />
+          Em separação
+        </span>
+      );
+    }
+    return (
+      <span className="status-badge warning">
+        <Clock3 size={12} />
+        Em revisão
+      </span>
+    );
+  };
+
+  const activeModalItems = editing ? editItems : selected?.items ?? [];
+  const modalFin = financials(activeModalItems);
+  const modalTotalDq = orderTotalDq(activeModalItems);
+  const modalTotalBq = orderTotalBq(activeModalItems);
+  const modalBaseValue = orderBaseValue(activeModalItems);
+  const selectedEffectiveStatus = selected ? effectiveStatus(selected) : '';
+  const isLockedOrder =
+    selectedEffectiveStatus === 'FATURADO' ||
+    selectedEffectiveStatus === 'ENTREGUE' ||
+    selectedEffectiveStatus === 'CANCELADO';
+
   return (
     <>
-      {/* Grid de Métricas Compacto com Spotlight e Contadores Animados */}
-
       {/* Grid de Métricas com Spotlight e Contadores Animados */}
       <div className="metric-grid">
         <Metric
-          label="Aguardando revisão"
+          label="Fila pré-nota & separação"
           value={<NumberTicker value={pending.length} padZeroes={2} />}
           icon={<Clock3 />}
           footer={
             <>
               <span className="mini-dot warning-dot" />
-              {pending.length} pedidos na fila pré-nota
+              {pending.length} pedidos ativos na conferência
             </>
           }
         />
         <Metric
-          label="Valor em conferência"
+          label="Valor em conferência (DQ)"
           value={<NumberTicker value={pendingValue} prefix="R$ " decimals={2} />}
           icon={<ClipboardList />}
           footer={
             <>
-              <span className="text-muted-foreground">Estoque reservado ·</span>{' '}
+              <span className="text-muted-foreground">Estoque reservado (DQ) ·</span>{' '}
               <NumberTicker
-                value={pending.reduce((a, o) => a + o.items.reduce((s, i) => s + i.quantity, 0), 0)}
+                value={pending.reduce((a, o) => a + orderTotalDq(o.items), 0)}
                 suffix=" un."
               />
             </>
@@ -154,29 +236,48 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
           }
         />
         <Metric
-          label="Faturados"
-          value={<NumberTicker value={billed.length} padZeroes={2} />}
+          label="Faturados / Entregues"
+          value={<NumberTicker value={billed.length + delivered.length} padZeroes={2} />}
           icon={<FileCheck2 />}
           footer={
             <>
-              <span className="text-success"><CheckCheck size={13} /></span>
-              NF-e emitida com sucesso
+              <span className="text-success">
+                <CheckCheck size={13} />
+              </span>
+              {billed.length} faturados · {delivered.length} entregues
             </>
           }
         />
       </div>
 
-      {/* Cards de Estoque com Efeito Spotlight Interativo */}
+      {/* Cards de Estoque Dual (Saldo Físico DQ vs Saldo Base BQ) */}
       <section className="stock-section">
         <div className="section-heading">
           <h3>
             <Package size={16} />
             Posição de estoque
           </h3>
-          <span className="text-xs text-muted-foreground flex items-center gap-1.5">
-            <span className="online-dot" />
-            Atualizado em tempo real
-          </span>
+          <div className="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              className="h-7 text-xs gap-1.5"
+              onClick={() =>
+                setStockMode(m => (m === 'dual' ? 'physical' : m === 'physical' ? 'base' : 'dual'))
+              }
+            >
+              <Layers size={13} />
+              {stockMode === 'dual'
+                ? 'Visão Dual (Físico DQ + Base BQ)'
+                : stockMode === 'physical'
+                ? 'Apenas Saldo Físico (DQ)'
+                : 'Apenas Saldo Base (BQ)'}
+            </Button>
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5">
+              <span className="online-dot" />
+              Atualizado em tempo real
+            </span>
+          </div>
         </div>
         <div className="stock-grid">
           {data.products.map(p => (
@@ -193,33 +294,46 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                   <div>
                     <strong>{p.name}</strong>
                     <span className="stock-category">
-                      {p.category} <span className="mx-1">·</span> {p.skuCode ?? `SKU-00${p.id}`}
+                      {p.category} <span className="mx-1">·</span> {p.skuCode ?? `SKU-00${p.id}`} · Custo Médio: {money(p.cost)}
                     </span>
                   </div>
                   <span className="status-badge neutral">NCM {p.ncm}</span>
                 </div>
                 <div className="stock-numbers">
-                  <div>
-                    <span>Físico</span>
-                    <b className="numeric">
-                      <NumberTicker value={p.physical} />
-                      <small>un.</small>
-                    </b>
-                  </div>
-                  <div>
-                    <span>Reservado</span>
-                    <b className="numeric reserved">
-                      <NumberTicker value={p.reserved} />
-                      <small>un.</small>
-                    </b>
-                  </div>
-                  <div>
-                    <span>Disponível</span>
-                    <b className="numeric available">
-                      <NumberTicker value={available(p)} />
-                      <small>un.</small>
-                    </b>
-                  </div>
+                  {stockMode !== 'base' && (
+                    <>
+                      <div>
+                        <span>Físico (DQ)</span>
+                        <b className="numeric">
+                          <NumberTicker value={p.physical} />
+                          <small>un.</small>
+                        </b>
+                      </div>
+                      <div>
+                        <span>Reservado (DQ)</span>
+                        <b className="numeric reserved">
+                          <NumberTicker value={p.reserved} />
+                          <small>un.</small>
+                        </b>
+                      </div>
+                      <div>
+                        <span>Disponível (DQ)</span>
+                        <b className="numeric available">
+                          <NumberTicker value={available(p)} />
+                          <small>un.</small>
+                        </b>
+                      </div>
+                    </>
+                  )}
+                  {stockMode !== 'physical' && (
+                    <div>
+                      <span>Saldo Base (BQ)</span>
+                      <b className="numeric text-primary">
+                        <NumberTicker value={baseBalance(p)} />
+                        <small>un.</small>
+                      </b>
+                    </div>
+                  )}
                 </div>
               </div>
             </SpotlightCard>
@@ -227,14 +341,21 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
         </div>
       </section>
 
-      {/* Seção de Pedidos com Sliding Tabs e Filtros */}
+      {/* Seção de Pedidos com Sliding Tabs (Todos os Status) e Filtros */}
       <section className="orders-section">
         <div className="orders-toolbar">
           <SlidingTabs
             tabs={[
-              { id: 'all', label: 'Todos os pedidos', count: data.orders.length },
-              { id: 'pending', label: 'Pré-nota', count: pending.length },
+              { id: 'all', label: 'Todos', count: data.orders.length },
+              {
+                id: 'pending',
+                label: 'Pré-nota',
+                count: data.orders.filter(o => effectiveStatus(o) === 'AGUARDANDO_REVISAO').length,
+              },
+              { id: 'picking', label: 'Em separação', count: pickingOrders.length },
               { id: 'billed', label: 'Faturados', count: billed.length },
+              { id: 'delivered', label: 'Entregues', count: delivered.length },
+              { id: 'cancelled', label: 'Cancelados', count: cancelled.length },
             ]}
             activeTab={tab}
             onChange={t => {
@@ -304,7 +425,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                   Pedido <ChevronDown size={12} />
                 </th>
                 <th>Cliente</th>
-                <th>Valor total</th>
+                <th>Valor total (DQ / BQ)</th>
                 <th>Cadastro fiscal</th>
                 <th>Status</th>
                 <th />
@@ -315,6 +436,8 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                 const c = data.clients.find(c => c.id === o.clientId);
                 if (!c) return null;
                 const f = financials(o.items);
+                const dq = orderTotalDq(o.items);
+                const bq = orderTotalBq(o.items);
                 return (
                   <tr key={o.id} onClick={() => openOrder(o)}>
                     <td>
@@ -339,7 +462,8 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                     <td>
                       <strong className="numeric">{money(f.total)}</strong>
                       <p>
-                        {o.items.reduce((a, i) => a + i.quantity, 0)} unidades · {o.payment}
+                        DQ: {dq} un.
+                        {bq !== dq ? ` · BQ: ${bq} un.` : ''} · {o.payment}
                       </p>
                     </td>
                     <td>
@@ -349,16 +473,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                         <PulseBadge status="pending" label="Dados pendentes" sublabel="BrasilAPI" />
                       )}
                     </td>
-                    <td>
-                      <span className={`status-badge ${o.status === 'FATURADO' ? 'success' : 'warning'}`}>
-                        {o.status === 'FATURADO' ? <CheckCheck size={12} /> : <Clock3 size={12} />}
-                        {o.status === 'FATURADO'
-                          ? 'Faturado'
-                          : o.rawStatus === 'EM_SEPARACAO'
-                          ? 'Em separação'
-                          : 'Em revisão'}
-                      </span>
-                    </td>
+                    <td>{renderStatusBadge(o)}</td>
                     <td>
                       <Button variant="ghost" size="icon" aria-label={`Revisar pedido ${o.id}`}>
                         <ChevronRight />
@@ -419,7 +534,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
         </div>
         <div className="workflow-steps">
           <span>
-            <span className="step-number">1</span>Pedido em campo
+            <span className="step-number">1</span>Pedido em campo (DQ/BQ)
           </span>
           <ChevronRight />
           <span>
@@ -427,16 +542,16 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
           </span>
           <ChevronRight />
           <span>
-            <span className="step-number">3</span>Emissão NF-e
+            <span className="step-number">3</span>Emissão NF-e (BQ)
           </span>
           <ChevronRight />
           <span>
-            <span className="step-number">4</span>Entrega
+            <span className="step-number">4</span>Romaneio & Entrega (DQ)
           </span>
         </div>
       </div>
 
-      {/* Modal de Conferência e Romaneio */}
+      {/* Modal de Conferência Pré-Nota e Romaneio */}
       <Dialog
         open={Boolean(selected)}
         onOpenChange={open => {
@@ -444,7 +559,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
         }}
       >
         <DialogContent className="order-dialog">
-          <DialogTitle>{packing ? 'Romaneio de entrega' : `Pedido #${selected?.id}`}</DialogTitle>
+          <DialogTitle>{packing ? 'Romaneio Cego de Separação (DQ)' : `Pedido #${selected?.id}`}</DialogTitle>
           <DialogDescription>
             {selectedClient?.name} · {selectedClient?.neighborhood}
           </DialogDescription>
@@ -463,7 +578,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                       label="Copiar para WhatsApp"
                       copiedLabel="Romaneio Copiado!"
                       withConfetti={true}
-                      onCopied={() => notify('Romaneio copiado para enviar à equipe.')}
+                      onCopied={() => notify('Romaneio cego (DQ) copiado para enviar à equipe do galpão.')}
                     />
                   </div>
                 </>
@@ -477,7 +592,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                         <p>
                           {fiscalReady(selectedClient)
                             ? `${selectedClient.cnpj} · IE ${selectedClient.ie} · IBGE ${selectedClient.ibge}`
-                            : 'CNPJ, Inscrição Estadual e código IBGE não informados.'}
+                            : 'CNPJ, Inscrição Estadual ou código IBGE pendentes.'}
                         </p>
                       </div>
                     </div>
@@ -494,17 +609,12 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                             update(nextData);
                             fireConfetti();
                             notify(message);
-                          } catch {
-                            update({
-                              ...data,
-                              clients: data.clients.map(c =>
-                                c.id === selectedClient.id
-                                  ? { ...c, cnpj: c.cnpj || '48.936.777/0001-99', ie: '110.042.490.115', ibge: '3550308' }
-                                  : c,
-                              ),
-                            });
-                            fireConfetti();
-                            notify('Dados fiscais preenchidos via BrasilAPI.');
+                          } catch (e) {
+                            notify(
+                              e instanceof Error
+                                ? e.message
+                                : 'Não foi possível consultar o CNPJ: verifique se o servidor está conectado.'
+                            );
                           } finally {
                             setBusy(false);
                           }
@@ -517,54 +627,113 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                     )}
                   </div>
 
+                  {/* Itens do Pedido com Qtd. Expedição (DQ), Qtd. Base (BQ) e Preço Unitário */}
                   <div className="review-items">
-                    {(editing ? editItems : selected.items).map((i, index) => (
-                      <div key={i.productId}>
-                        <span className={`sku-symbol sku-${i.productId.toLowerCase()}`}>
-                          <Package size={19} />
-                        </span>
-                        <strong>{productLabel(data, i.productId)}</strong>
-                        {editing ? (
-                          <>
-                            <input
-                              type="number"
-                              className="form-input numeric"
-                              min="0"
-                              aria-label={`Revisar quantidade ${i.productId}`}
-                              value={i.quantity}
-                              onChange={e =>
-                                setEditItems(v =>
-                                  v.map((item, j) => (j === index ? { ...item, quantity: Number(e.target.value) } : item)),
-                                )
-                              }
-                            />
-                            <input
-                              type="number"
-                              className="form-input numeric"
-                              min="0.01"
-                              step="0.01"
-                              aria-label={`Revisar preço ${i.productId}`}
-                              value={i.price}
-                              onChange={e =>
-                                setEditItems(v =>
-                                  v.map((item, j) => (j === index ? { ...item, price: Number(e.target.value) } : item)),
-                                )
-                              }
-                            />
-                          </>
-                        ) : (
-                          <span className="text-muted-foreground text-xs numeric">
-                            {i.quantity} × {money(i.price)}
+                    {activeModalItems.map((i, index) => {
+                      const dq = itemDq(i);
+                      const bq = itemBq(i);
+                      return (
+                        <div key={i.productId}>
+                          <span className={`sku-symbol sku-${i.productId.toLowerCase()}`}>
+                            <Package size={19} />
                           </span>
-                        )}
-                        <b className="numeric">{money(i.quantity * i.price)}</b>
-                      </div>
-                    ))}
+                          <div>
+                            <strong>{productLabel(data, i.productId)}</strong>
+                            {!editing && (
+                              <p className="text-[11px] text-muted-foreground numeric">
+                                Expedição (DQ): <b>{dq} un.</b> · Base (BQ): <b>{bq} un.</b>
+                              </p>
+                            )}
+                          </div>
+                          {editing ? (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <label className="text-[10px] text-muted-foreground flex flex-col">
+                                Qtd. Expedição (DQ)
+                                <input
+                                  type="number"
+                                  className="form-input numeric w-20"
+                                  min="0"
+                                  aria-label={`Revisar quantidade ${i.productId}`}
+                                  value={dq}
+                                  onChange={e => {
+                                    const nextDq = Math.max(0, Math.floor(Number(e.target.value) || 0));
+                                    setEditItems(v =>
+                                      v.map((item, j) =>
+                                        j === index
+                                          ? {
+                                              ...item,
+                                              quantity: nextDq,
+                                              dispatchQuantity: nextDq,
+                                              baseQuantity: Math.min(nextDq, itemBq(item)),
+                                            }
+                                          : item
+                                      )
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="text-[10px] text-muted-foreground flex flex-col">
+                                Qtd. Base (BQ)
+                                <input
+                                  type="number"
+                                  className="form-input numeric w-20"
+                                  min="0"
+                                  max={dq}
+                                  aria-label={`Revisar base ${i.productId}`}
+                                  value={bq}
+                                  onChange={e => {
+                                    const nextBq = Math.max(0, Math.min(dq, Math.floor(Number(e.target.value) || 0)));
+                                    setEditItems(v =>
+                                      v.map((item, j) =>
+                                        j === index
+                                          ? {
+                                              ...item,
+                                              baseQuantity: nextBq,
+                                            }
+                                          : item
+                                      )
+                                    );
+                                  }}
+                                />
+                              </label>
+                              <label className="text-[10px] text-muted-foreground flex flex-col">
+                                Preço Unit. (R$)
+                                <input
+                                  type="number"
+                                  className="form-input numeric w-24"
+                                  min="0.01"
+                                  step="0.01"
+                                  aria-label={`Revisar preço ${i.productId}`}
+                                  value={i.price}
+                                  onChange={e =>
+                                    setEditItems(v =>
+                                      v.map((item, j) =>
+                                        j === index ? { ...item, price: Number(e.target.value) } : item
+                                      )
+                                    )
+                                  }
+                                />
+                              </label>
+                            </div>
+                          ) : (
+                            <span className="text-muted-foreground text-xs numeric">
+                              {dq} × {money(i.price)}
+                            </span>
+                          )}
+                          <b className="numeric">{money(dq * i.price)}</b>
+                        </div>
+                      );
+                    })}
                   </div>
 
                   <div className="review-total">
-                    <span>Total do pedido</span>
-                    <h2 className="numeric">{money(financials(editing ? editItems : selected.items).total)}</h2>
+                    <div>
+                      <span>Total Expedição (DQ: {modalTotalDq} sacas)</span>
+                      <p className="text-xs text-muted-foreground numeric">
+                        Total Base (BQ: {modalTotalBq} sacas): {money(modalBaseValue)} · Imposto 8% (BQ): {money(modalFin.tax)} · Frete (R$ 4/saca): {money(modalFin.logistics)}
+                      </p>
+                    </div>
+                    <h2 className="numeric">{money(modalFin.total)}</h2>
                   </div>
 
                   <div className="review-meta">
@@ -576,27 +745,29 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                       <span>Entrega prevista</span>
                       <strong>{selected.delivery}</strong>
                     </div>
+                    <div>
+                      <span>Status Atual</span>
+                      {renderStatusBadge(selected)}
+                    </div>
                   </div>
 
                   {selected.note && <p className="review-note">{selected.note}</p>}
 
                   {/* Profit Breakdown com o Anel Radial de Margem */}
                   <div className="review-profit flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/40">
-                    <ProfitGauge margin={financials(editing ? editItems : selected.items).margin} size={48} />
+                    <ProfitGauge margin={modalFin.margin} size={48} />
                     <div className="flex flex-col">
                       <span className="text-[10px] text-muted-foreground">Lucro líquido estimado</span>
                       <strong className="numeric text-base text-foreground">
-                        {money(financials(editing ? editItems : selected.items).profit)}
+                        {money(modalFin.profit)}
                       </strong>
                     </div>
-                    <span
-                      className={`status-badge ml-auto ${marginLevel(financials(editing ? editItems : selected.items).margin)}`}
-                    >
-                      Margem: {financials(editing ? editItems : selected.items).margin.toFixed(1)}%
+                    <span className={`status-badge ml-auto ${marginLevel(modalFin.margin)}`}>
+                      Margem: {modalFin.margin.toFixed(1)}%
                     </span>
                   </div>
 
-                  {selected.status === 'FATURADO' && (
+                  {(selectedEffectiveStatus === 'FATURADO' || selectedEffectiveStatus === 'ENTREGUE') && (
                     <div className="invoice-issued">
                       <div className="flex items-center gap-2">
                         <CheckCheck />
@@ -607,7 +778,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                           {selected.key}
                         </p>
                         <CopyButton
-                          textToCopy={selected.key}
+                          textToCopy={selected.key || ''}
                           iconOnly={true}
                           withConfetti={true}
                           title="Copiar Chave da NF-e"
@@ -623,10 +794,10 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                           onClick={() => {
                             download(
                               `DANFE DEMONSTRATIVO — TOTAL TRIGO\nNF-e ${selected.invoice}\nChave: ${selected.key}\n${selectedClient.name}\n${selected.items
-                                .filter(i => i.quantity > 0)
-                                .map(i => `${i.quantity}x ${productLabel(data, i.productId)} — ${money(i.price)}`)
-                                .join('\n')}\nTotal: ${money(financials(selected.items).total)}`,
-                              `DANFE-${selected.invoice}.txt`,
+                                .filter(i => itemBq(i) > 0)
+                                .map(i => `${itemBq(i)}x ${productLabel(data, i.productId)} — ${money(i.price)}`)
+                                .join('\n')}\nTotal Base (BQ): ${money(orderBaseValue(selected.items))}`,
+                              `DANFE-${selected.invoice}.txt`
                             );
                             notify('DANFE baixado.');
                           }}
@@ -644,7 +815,7 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                     </div>
                   )}
 
-                  <div className="dialog-actions">
+                  <div className="dialog-actions flex-wrap">
                     <Button
                       variant="outline"
                       onClick={async () => {
@@ -654,28 +825,39 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                       }}
                     >
                       <Truck />
-                      Gerar romaneio
+                      Gerar romaneio (DQ)
                     </Button>
-                    {selected.status !== 'FATURADO' && (
+
+                    {!isLockedOrder && (
                       <>
                         {editing ? (
                           <Button
                             variant="outline"
                             disabled={busy}
                             onClick={async () => {
+                              if (modalTotalDq < 1 || modalTotalBq < 1) {
+                                notify('A Qtd. Expedição (DQ) e a Qtd. Base (BQ) devem ser de pelo menos 1 saca.');
+                                return;
+                              }
                               setBusy(true);
                               try {
                                 const next = await reviewOrderApi(data, selected.id, editItems);
                                 update(next);
                                 setEditing(false);
-                                notify('Pedido revisado no servidor. Reserva de estoque atualizada.');
+                                notify('Pré-nota revisada (DQ e BQ). Reserva de estoque atualizada.');
                               } catch (e) {
                                 try {
                                   update(editOrder(data, selected.id, editItems));
                                   setEditing(false);
                                   notify('Pedido revisado. Reserva de estoque atualizada.');
                                 } catch (err) {
-                                  notify(e instanceof Error ? e.message : err instanceof Error ? err.message : 'Confira o pedido.');
+                                  notify(
+                                    e instanceof Error
+                                      ? e.message
+                                      : err instanceof Error
+                                      ? err.message
+                                      : 'Confira o pedido.'
+                                  );
                                 }
                               } finally {
                                 setBusy(false);
@@ -689,29 +871,41 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                           <Button
                             variant="outline"
                             onClick={() => {
-                              setEditItems(selected.items.map(i => ({ ...i })));
+                              setEditItems(
+                                selected.items.map(i => ({
+                                  ...i,
+                                  dispatchQuantity: itemDq(i),
+                                  baseQuantity: itemBq(i),
+                                }))
+                              );
                               setEditing(true);
                             }}
                           >
-                            Editar pedido
+                            Editar pré-nota (DQ/BQ)
                           </Button>
                         )}
                         <ShimmerButton
-                          disabled={busy || !fiscalReady(selectedClient) || editing}
+                          disabled={busy || !fiscalReady(selectedClient) || editing || modalTotalBq < 1}
                           onClick={async () => {
                             setBusy(true);
                             try {
                               const next = await issueNfeApi(data, selected.id);
                               update(next);
                               fireConfetti();
-                              notify('NF-e emitida no servidor. Estoque físico atualizado.');
+                              notify('NF-e emitida no servidor. Estoque físico (DQ) e Saldo Base (BQ) atualizados.');
                             } catch (e) {
                               try {
                                 update(invoiceOrder(data, selected.id));
                                 fireConfetti();
-                                notify('NF-e simulada emitida. Estoque físico atualizado.');
+                                notify('NF-e simulada emitida. Estoque físico (DQ) e Saldo Base (BQ) atualizados.');
                               } catch (err) {
-                                notify(e instanceof Error ? e.message : err instanceof Error ? err.message : 'Não foi possível emitir.');
+                                notify(
+                                  e instanceof Error
+                                    ? e.message
+                                    : err instanceof Error
+                                    ? err.message
+                                    : 'Não foi possível emitir.'
+                                );
                               }
                             } finally {
                               setBusy(false);
@@ -722,6 +916,58 @@ export function Backoffice({ data, update, notify, newOrder }: SharedProps & { n
                           Emitir NF-e
                         </ShimmerButton>
                       </>
+                    )}
+
+                    {/* Botão Confirmar Entrega (quando FATURADO) */}
+                    {selectedEffectiveStatus === 'FATURADO' && (
+                      <Button
+                        disabled={busy}
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const next = await deliverOrderApi(data, selected.id);
+                            update(next);
+                            fireConfetti();
+                            notify(`Entrega do Pedido #${selected.id} confirmada com sucesso!`);
+                          } catch {
+                            update(deliverOrderLocal(data, selected.id));
+                            fireConfetti();
+                            notify(`Pedido #${selected.id} marcado como ENTREGUE.`);
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        <CheckCheck size={15} />
+                        Confirmar Entrega
+                      </Button>
+                    )}
+
+                    {/* Botão Cancelar Pedido */}
+                    {selectedEffectiveStatus !== 'CANCELADO' && selectedEffectiveStatus !== 'ENTREGUE' && (
+                      <Button
+                        variant="outline"
+                        disabled={busy}
+                        className="text-destructive border-destructive/30 hover:bg-destructive/10"
+                        onClick={async () => {
+                          setBusy(true);
+                          try {
+                            const next = await cancelOrderApi(data, selected.id);
+                            update(next);
+                            setEditing(false);
+                            notify(`Pedido #${selected.id} cancelado e saldos estornados.`);
+                          } catch {
+                            update(cancelOrderLocal(data, selected.id));
+                            setEditing(false);
+                            notify(`Pedido #${selected.id} cancelado e saldos estornados.`);
+                          } finally {
+                            setBusy(false);
+                          }
+                        }}
+                      >
+                        <Ban size={14} />
+                        Cancelar Pedido
+                      </Button>
                     )}
                   </div>
                   <span className="text-xs text-muted-foreground">

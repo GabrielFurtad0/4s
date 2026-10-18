@@ -106,7 +106,7 @@ public class BackofficeService {
             order.setShippingCostEstimate(req.shippingCostEstimate());
         }
 
-        // 3. Ajusta quantidades e valores que vão para a Nota Fiscal vs. Pedido Original da Rua
+        // 3. Ajusta Qtd. Expedição (DQ), Qtd. Base (BQ) e Preço Unitário na Pré-Nota
         Map<Long, ReviewOrderItemUpdateDto> updatesByProduct = new HashMap<>();
         for (ReviewOrderItemUpdateDto u : req.items()) {
             updatesByProduct.put(u.productId(), u);
@@ -115,37 +115,53 @@ public class BackofficeService {
         for (OrderItem existingItem : order.getItems()) {
             ReviewOrderItemUpdateDto upd = updatesByProduct.remove(existingItem.getProduct().getId());
             if (upd != null) {
-                int oldQty = existingItem.getQuantity();
-                int newQty = Math.max(0, upd.quantity());
-                int delta = newQty - oldQty;
+                int oldDq = existingItem.getDispatchQuantity() != null ? existingItem.getDispatchQuantity() : 0;
+                int newDq = Math.max(0, upd.resolvedDispatchQuantity());
+                int newBq = Math.max(0, upd.resolvedBaseQuantity());
 
                 Product p = existingItem.getProduct();
-                if (delta > 0 && delta > p.getAvailableStock()) {
-                    throw new IllegalArgumentException("Estoque disponível insuficiente para aumentar " + p.getShortName() + " em +" + delta + " un.");
+                if (newBq > newDq) {
+                    throw new IllegalArgumentException(
+                            "A Qtd. Base (BQ = " + newBq + ") de " + p.getShortName() + " não pode ser maior que a Qtd. Expedição (DQ = " + newDq + ")."
+                    );
                 }
-                p.setReservedStock(Math.max(0, p.getReservedStock() + delta));
+
+                int deltaDq = newDq - oldDq;
+                if (deltaDq > 0 && deltaDq > p.getAvailableStock()) {
+                    throw new IllegalArgumentException("Estoque disponível insuficiente para aumentar " + p.getShortName() + " em +" + deltaDq + " un.");
+                }
+                p.setReservedStock(Math.max(0, p.getReservedStock() + deltaDq));
                 productRepository.save(p);
 
-                existingItem.setQuantity(newQty);
+                existingItem.setDispatchQuantity(newDq);
+                existingItem.setBaseQuantity(newBq);
                 existingItem.setUnitSalePrice(upd.unitSalePrice());
             }
         }
 
         // Se Gabriel adicionou na pré-nota algum dos 3 SKUs que estava zerado no pedido da rua:
         for (ReviewOrderItemUpdateDto newSkuUpd : updatesByProduct.values()) {
-            if (newSkuUpd.quantity() != null && newSkuUpd.quantity() > 0) {
+            int newDq = Math.max(0, newSkuUpd.resolvedDispatchQuantity());
+            int newBq = Math.max(0, newSkuUpd.resolvedBaseQuantity());
+            if (newDq > 0) {
                 Product p = productRepository.findById(newSkuUpd.productId())
                         .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado."));
-                if (newSkuUpd.quantity() > p.getAvailableStock()) {
+                if (newBq > newDq) {
+                    throw new IllegalArgumentException(
+                            "A Qtd. Base (BQ = " + newBq + ") de " + p.getShortName() + " não pode ser maior que a Qtd. Expedição (DQ = " + newDq + ")."
+                    );
+                }
+                if (newDq > p.getAvailableStock()) {
                     throw new IllegalArgumentException("Estoque insuficiente para " + p.getShortName());
                 }
-                p.setReservedStock(p.getReservedStock() + newSkuUpd.quantity());
+                p.setReservedStock(p.getReservedStock() + newDq);
                 productRepository.save(p);
 
                 OrderItem addedItem = new OrderItem();
                 addedItem.setProduct(p);
                 addedItem.setOrderedQuantity(0);
-                addedItem.setQuantity(newSkuUpd.quantity());
+                addedItem.setDispatchQuantity(newDq);
+                addedItem.setBaseQuantity(newBq);
                 addedItem.setOrderedUnitPrice(newSkuUpd.unitSalePrice());
                 addedItem.setUnitSalePrice(newSkuUpd.unitSalePrice());
                 addedItem.setUnitCostSnapshot(p.getCurrentLandedCost());
@@ -154,13 +170,23 @@ public class BackofficeService {
             }
         }
 
+        int totalDq = order.getItems().stream().mapToInt(i -> i.getDispatchQuantity() != null ? i.getDispatchQuantity() : 0).sum();
+        int totalBq = order.getItems().stream().mapToInt(i -> i.getBaseQuantity() != null ? i.getBaseQuantity() : 0).sum();
+        if (totalDq < 1) {
+            throw new IllegalArgumentException("A Qtd. Expedição (DQ) total do pedido deve ser de pelo menos 1 saca.");
+        }
+        if (totalBq < 1) {
+            throw new IllegalArgumentException("A Qtd. Base (BQ) total do pedido nunca pode ser zero (mínimo 1 saca).");
+        }
+
         recalculateOrderFinancialSnapshots(order);
         Order saved = orderRepository.save(order);
         return fieldSalesService.toBackofficeOrderDto(saved);
     }
 
     /**
-     * Gera o Romaneio de Separação e Entrega (sem preços/margens) e avança o pedido para EM_SEPARACAO.
+     * Gera o Romaneio Cego de Separação e Entrega (baseado exclusivamente na Qtd. Expedição — DQ)
+     * e avança o pedido para EM_SEPARACAO.
      */
     @Transactional
     public RomaneioDto generateRomaneioAndMoveToPicking(Long orderId) {
@@ -186,20 +212,21 @@ public class BackofficeService {
         StringBuilder itemsText = new StringBuilder();
 
         for (OrderItem item : order.getItems()) {
-            if (item.getQuantity() == null || item.getQuantity() <= 0) continue;
-            int qty = item.getQuantity();
-            int weightKg = qty * 25;
-            totalSacks += qty;
+            int dq = item.getDispatchQuantity() != null ? item.getDispatchQuantity() : 0;
+            if (dq <= 0) continue;
+            int weightKg = dq * 25;
+            totalSacks += dq;
 
             Map<String, Object> row = new LinkedHashMap<>();
             row.put("skuCode", item.getProduct().getSkuCode());
             row.put("productName", item.getProduct().getName());
             row.put("unitOfMeasure", item.getProduct().getUnitOfMeasure());
-            row.put("quantity", qty);
+            row.put("dispatchQuantity", dq);
+            row.put("quantity", dq);
             row.put("weightKg", weightKg);
             blindItems.add(row);
 
-            itemsText.append("• *").append(qty).append(" ").append(item.getProduct().getUnitOfMeasure())
+            itemsText.append("• *").append(dq).append(" ").append(item.getProduct().getUnitOfMeasure())
                     .append("* — ").append(item.getProduct().getName()).append(" (").append(weightKg).append(" kg)\n");
         }
 
@@ -214,7 +241,7 @@ public class BackofficeService {
                 "👤 *Contato:* " + (c.getContactName() != null ? c.getContactName() : "Comprador") +
                 (c.getPhone() != null ? " (" + c.getPhone() + ")" : "") + "\n" +
                 "📍 *Endereço:* " + fullAddress + "\n\n" +
-                "📦 *CARGA PARA SEPARAR NO GALPÃO:*\n" +
+                "📦 *CARGA PARA SEPARAR NO GALPÃO (DQ):*\n" +
                 itemsText +
                 "\n⚖️ *Total Volume:* " + totalSacks + " sacos (" + totalWeightKg + " kg)\n" +
                 (order.getNotesForInvoiceOrDriver() != null && !order.getNotesForInvoiceOrDriver().isBlank()
@@ -240,9 +267,9 @@ public class BackofficeService {
 
     /**
      * Emite a NF-e via NfeGatewayPort (Focus NFe / Nuvem Fiscal Adapter):
-     * - Valida prontidão fiscal do cliente
+     * - Valida prontidão fiscal do cliente e soma(BQ) >= 1
      * - Muda status para FATURADO
-     * - Realiza baixa definitiva no estoque_fisico e libera o estoque_reservado
+     * - Baixa DQ no physicalStock/reservedStock e baixa BQ no baseStock
      */
     @Transactional
     public BackofficeOrderDto issueNfe(Long orderId) {
@@ -254,6 +281,13 @@ public class BackofficeService {
         }
         if (order.getStatus() == OrderStatus.CANCELADO) {
             throw new IllegalStateException("Não é possível faturar um pedido cancelado.");
+        }
+
+        int totalBq = order.getItems().stream()
+                .mapToInt(i -> i.getBaseQuantity() != null ? i.getBaseQuantity() : 0)
+                .sum();
+        if (totalBq < 1) {
+            throw new IllegalStateException("A Qtd. Base (BQ) total do pedido nunca pode ser zero (mínimo 1 saca).");
         }
 
         Client client = order.getClient();
@@ -273,13 +307,19 @@ public class BackofficeService {
             throw new IllegalStateException(emissionResult.statusMessage());
         }
 
-        // Baixa definitiva no physicalStock e liberação do reservedStock
+        // Baixa definitiva de DQ no physicalStock/reservedStock e de BQ no baseStock
         for (OrderItem item : order.getItems()) {
-            int qty = item.getQuantity() != null ? item.getQuantity() : 0;
-            if (qty <= 0) continue;
+            int dq = item.getDispatchQuantity() != null ? item.getDispatchQuantity() : 0;
+            int bq = item.getBaseQuantity() != null ? item.getBaseQuantity() : 0;
+            if (dq <= 0 && bq <= 0) continue;
             Product p = item.getProduct();
-            p.setReservedStock(Math.max(0, p.getReservedStock() - qty));
-            p.setPhysicalStock(Math.max(0, p.getPhysicalStock() - qty));
+            if (dq > 0) {
+                p.setReservedStock(Math.max(0, p.getReservedStock() - dq));
+                p.setPhysicalStock(Math.max(0, p.getPhysicalStock() - dq));
+            }
+            if (bq > 0) {
+                p.setBaseStock(Math.max(0, p.getBaseStock() - bq));
+            }
             productRepository.save(p);
         }
 
@@ -319,15 +359,17 @@ public class BackofficeService {
         }
 
         for (OrderItem item : order.getItems()) {
-            int qty = item.getQuantity() != null ? item.getQuantity() : 0;
-            if (qty <= 0) continue;
+            int dq = item.getDispatchQuantity() != null ? item.getDispatchQuantity() : 0;
+            int bq = item.getBaseQuantity() != null ? item.getBaseQuantity() : 0;
+            if (dq <= 0 && bq <= 0) continue;
             Product p = item.getProduct();
             if (order.getStatus() == OrderStatus.AGUARDANDO_REVISAO || order.getStatus() == OrderStatus.EM_SEPARACAO) {
-                // Estorna a reserva de volta para o disponível
-                p.setReservedStock(Math.max(0, p.getReservedStock() - qty));
+                // Estorna a reserva de DQ de volta para o disponível físico
+                p.setReservedStock(Math.max(0, p.getReservedStock() - dq));
             } else if (order.getStatus() == OrderStatus.FATURADO) {
-                // Cancelamento fiscal: devolve ao estoque físico
-                p.setPhysicalStock(p.getPhysicalStock() + qty);
+                // Cancelamento de nota faturada: devolve DQ ao estoque físico e BQ ao saldo base
+                p.setPhysicalStock(p.getPhysicalStock() + dq);
+                p.setBaseStock(p.getBaseStock() + bq);
             }
             productRepository.save(p);
         }
@@ -351,7 +393,8 @@ public class BackofficeService {
     /**
      * Tela 5: Calculadora de Landed Cost & Entrada de Lote de Importação.
      * Rateia custos de frete internacional, impostos (II, IPI, PIS, COFINS, ICMS) e despachante/armazenagem
-     * proporcionalmente ao valor FOB de cada SKU, atualizando o physicalStock e o currentLandedCost.
+     * proporcionalmente ao valor FOB de cada SKU, somando a quantidade igualmente em physicalStock e baseStock (BQ = DQ)
+     * e recalculando o Custo Médio Ponderado de cada produto.
      */
     @Transactional(readOnly = true)
     public List<ImportBatch> listImportBatches() {
@@ -398,7 +441,8 @@ public class BackofficeService {
             Product product = productRepository.findById(itemReq.productId())
                     .orElseThrow(() -> new IllegalArgumentException("Produto não encontrado: " + itemReq.productId()));
 
-            BigDecimal qtyBd = new BigDecimal(itemReq.quantityImported());
+            int qtyImported = itemReq.quantityImported();
+            BigDecimal qtyBd = new BigDecimal(qtyImported);
             BigDecimal itemFobUsd = itemReq.fobUnitUsd().multiply(qtyBd);
             BigDecimal itemFobBrl = itemFobUsd.multiply(exchangeRate);
 
@@ -413,14 +457,30 @@ public class BackofficeService {
 
             ImportBatchItem batchItem = new ImportBatchItem();
             batchItem.setProduct(product);
-            batchItem.setQuantityImported(itemReq.quantityImported());
+            batchItem.setQuantityImported(qtyImported);
             batchItem.setFobUnitUsd(itemReq.fobUnitUsd());
             batchItem.setCalculatedUnitCostBrl(calculatedUnitCostBrl);
             batch.addItem(batchItem);
 
-            // Atualiza Estoque Físico e Custo Internalizado Atual (currentLandedCost)
-            product.setPhysicalStock(product.getPhysicalStock() + itemReq.quantityImported());
-            product.setCurrentLandedCost(calculatedUnitCostBrl);
+            // Custo Médio Ponderado entre estoque físico atual e novo lote importado
+            int currentPhysical = product.getPhysicalStock() != null ? product.getPhysicalStock() : 0;
+            int currentBase = product.getBaseStock() != null ? product.getBaseStock() : currentPhysical;
+            BigDecimal currentCost = product.getCurrentLandedCost() != null ? product.getCurrentLandedCost() : calculatedUnitCostBrl;
+
+            BigDecimal weightedAvgCost;
+            if (currentPhysical > 0) {
+                BigDecimal existingValue = currentCost.multiply(new BigDecimal(currentPhysical));
+                BigDecimal newBatchValue = calculatedUnitCostBrl.multiply(qtyBd);
+                weightedAvgCost = existingValue.add(newBatchValue)
+                        .divide(new BigDecimal(currentPhysical + qtyImported), 2, RoundingMode.HALF_UP);
+            } else {
+                weightedAvgCost = calculatedUnitCostBrl;
+            }
+
+            // Na entrada de importação, BQ = DQ (soma igualmente em physicalStock e baseStock)
+            product.setPhysicalStock(currentPhysical + qtyImported);
+            product.setBaseStock(currentBase + qtyImported);
+            product.setCurrentLandedCost(weightedAvgCost);
             productRepository.save(product);
         }
 
@@ -431,22 +491,31 @@ public class BackofficeService {
         BigDecimal grossTotal = BigDecimal.ZERO;
         BigDecimal totalCmv = BigDecimal.ZERO;
         BigDecimal totalTax = BigDecimal.ZERO;
+        int totalDq = 0;
 
         for (OrderItem item : order.getItems()) {
-            if (item.getQuantity() == null || item.getQuantity() <= 0) continue;
-            BigDecimal qtyBd = new BigDecimal(item.getQuantity());
-            BigDecimal itemGross = item.getUnitSalePrice().multiply(qtyBd);
-            BigDecimal itemCmv = item.getUnitCostSnapshot().multiply(qtyBd);
+            int dq = item.getDispatchQuantity() != null ? item.getDispatchQuantity() : 0;
+            int bq = item.getBaseQuantity() != null ? item.getBaseQuantity() : 0;
+            if (dq <= 0 && bq <= 0) continue;
+
+            totalDq += dq;
+            BigDecimal dqBd = new BigDecimal(dq);
+            BigDecimal bqBd = new BigDecimal(bq);
+            BigDecimal itemGross = item.getUnitSalePrice().multiply(dqBd);
+            BigDecimal itemCmv = item.getUnitCostSnapshot().multiply(dqBd);
             BigDecimal taxRate = item.getProduct().getEstimatedTaxRate()
                     .divide(new BigDecimal("100"), 4, RoundingMode.HALF_UP);
-            BigDecimal itemTax = itemGross.multiply(taxRate);
+            BigDecimal itemTax = item.getUnitSalePrice().multiply(bqBd).multiply(taxRate);
 
             grossTotal = grossTotal.add(itemGross);
             totalCmv = totalCmv.add(itemCmv);
             totalTax = totalTax.add(itemTax);
         }
 
-        BigDecimal shipping = order.getShippingCostEstimate() != null ? order.getShippingCostEstimate() : BigDecimal.ZERO;
+        // Frete oficial: R$ 4,00 por saca entregue (DQ)
+        BigDecimal shipping = new BigDecimal("4.00").multiply(new BigDecimal(totalDq)).setScale(2, RoundingMode.HALF_UP);
+        order.setShippingCostEstimate(shipping);
+
         BigDecimal netProfit = grossTotal.subtract(totalCmv).subtract(totalTax).subtract(shipping);
         BigDecimal marginPct = grossTotal.compareTo(BigDecimal.ZERO) > 0
                 ? netProfit.multiply(new BigDecimal("100")).divide(grossTotal, 2, RoundingMode.HALF_UP)

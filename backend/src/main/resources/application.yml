@@ -35,4 +35,6 @@ totaltrigo:
     state: "SP"
   fiscal:
     provider: "FOCUS_NFE_SIMULATOR" # Opções: FOCUS_NFE_SIMULATOR, NUVEM_FISCAL
-    default-shipping-estimate: 45.00
+    default-shipping-estimate: 4.00
+    shipping-per-sack: 4.00
+

@@ -24,8 +24,11 @@ public class OrderItem {
     @Column(name = "ordered_quantity", nullable = false)
     private Integer orderedQuantity;
 
-    @Column(nullable = false)
-    private Integer quantity;
+    @Column(name = "dispatch_quantity", nullable = false)
+    private Integer dispatchQuantity;
+
+    @Column(name = "quantity", nullable = false)
+    private Integer baseQuantity;
 
     @Column(name = "ordered_unit_price", nullable = false, precision = 12, scale = 2)
     private BigDecimal orderedUnitPrice;
@@ -47,8 +50,16 @@ public class OrderItem {
     public void setProduct(Product product) { this.product = product; }
     public Integer getOrderedQuantity() { return orderedQuantity; }
     public void setOrderedQuantity(Integer orderedQuantity) { this.orderedQuantity = orderedQuantity; }
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+    public Integer getDispatchQuantity() {
+        if (dispatchQuantity != null) return dispatchQuantity;
+        if (orderedQuantity != null && orderedQuantity > 0) return orderedQuantity;
+        return baseQuantity;
+    }
+    public void setDispatchQuantity(Integer dispatchQuantity) { this.dispatchQuantity = dispatchQuantity; }
+    public Integer getBaseQuantity() { return baseQuantity; }
+    public void setBaseQuantity(Integer baseQuantity) { this.baseQuantity = baseQuantity; }
+    public Integer getQuantity() { return baseQuantity; }
+    public void setQuantity(Integer quantity) { this.baseQuantity = quantity; }
     public BigDecimal getOrderedUnitPrice() { return orderedUnitPrice; }
     public void setOrderedUnitPrice(BigDecimal orderedUnitPrice) { this.orderedUnitPrice = orderedUnitPrice; }
     public BigDecimal getUnitSalePrice() { return unitSalePrice; }

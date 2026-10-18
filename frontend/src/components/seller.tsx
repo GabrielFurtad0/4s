@@ -37,6 +37,9 @@ import {
   lookupCnpjData,
   marginLevel,
   money,
+  orderBaseValue,
+  orderTotalBq,
+  orderTotalDq,
   productLabel,
   quickRegisterClientApi,
   scheduleVisitApi,
@@ -79,6 +82,8 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const [newNeighborhood, setNewNeighborhood] = useState('');
   const [time, setTime] = useState('11:00');
   const [quantities, setQuantities] = useState([0, 0, 0]);
+  const [bqMode, setBqMode] = useState<'100%' | '50%' | 'custom'>('100%');
+  const [customBq, setCustomBq] = useState([0, 0, 0]);
   const [prices, setPrices] = useState([85, 78, 92]);
   const [privateProfit, setPrivateProfit] = useState(true);
   const [payment, setPayment] = useState('Boleto 28 dias (1 parcela)');
@@ -109,16 +114,50 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   }, [data.clients, clientId]);
 
   const client = data.clients.find(c => c.id === clientId) ?? data.clients[0];
-  const items: Item[] = data.products.map((p, i) => ({
-    productId: p.id,
-    quantity: quantities[i] ?? 0,
-    price: prices[i] ?? p.price,
-    cost: p.cost,
-  }));
-  const f = financials(items);
 
-  const selectedTerm = paymentTermsList.find(t => t.label === payment) || paymentTermsList[0];
-  const installmentValue = f.total > 0 && selectedTerm.installments > 1 ? f.total / selectedTerm.installments : f.total;
+  const resolvedBaseQuantities = (() => {
+    const raw = data.products.map((_, i) => {
+      const dq = quantities[i] ?? 0;
+      if (dq <= 0) return 0;
+      if (bqMode === '100%') return dq;
+      if (bqMode === '50%') return Math.floor(dq / 2);
+      return Math.max(0, Math.min(dq, Math.floor(customBq[i] ?? dq)));
+    });
+    const totalDq = quantities.reduce((a, b) => a + b, 0);
+    const sumBq = raw.reduce((a, b) => a + b, 0);
+    if (totalDq > 0 && sumBq < 1) {
+      const firstActiveIdx = quantities.findIndex(q => q > 0);
+      if (firstActiveIdx >= 0) {
+        raw[firstActiveIdx] = 1;
+      }
+    }
+    return raw;
+  })();
+
+  const items: Item[] = data.products.map((p, i) => {
+    const dq = quantities[i] ?? 0;
+    const bq = resolvedBaseQuantities[i] ?? 0;
+    return {
+      productId: p.id,
+      quantity: dq,
+      dispatchQuantity: dq,
+      baseQuantity: bq,
+      price: prices[i] ?? p.price,
+      cost: p.cost,
+    };
+  });
+  const f = financials(items);
+  const baseTotal = orderBaseValue(items);
+  const totalDq = orderTotalDq(items);
+  const totalBq = orderTotalBq(items);
+
+  const selectedTerm = paymentTermsList.find(t => t.label === payment) ?? {
+    label: payment,
+    installments: 1,
+    desc: 'Vencimento em 28 dias',
+  };
+  const installmentValue =
+    baseTotal > 0 && selectedTerm.installments > 1 ? baseTotal / selectedTerm.installments : baseTotal;
 
   const openClient = (c: Client) => {
     setClientId(c.id);
@@ -129,6 +168,8 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     if (!client) return;
     setPrices([...client.prices]);
     setQuantities([0, 0, 0]);
+    setCustomBq([0, 0, 0]);
+    setBqMode('100%');
     setView('order');
     setPrivateProfit(true);
   };
@@ -136,9 +177,15 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const changeQuantity = (i: number, n: number) => {
     const product = data.products[i];
     if (!product) return;
-    setQuantities(q =>
-      q.map((v, j) => (j === i ? Math.max(0, Math.min(available(product), Math.floor(n || 0))) : v)),
-    );
+    const nextDq = Math.max(0, Math.min(available(product), Math.floor(n || 0)));
+    setQuantities(q => q.map((v, j) => (j === i ? nextDq : v)));
+    setCustomBq(b => b.map((v, j) => (j === i ? Math.min(nextDq, bqMode === '100%' ? nextDq : v) : v)));
+  };
+
+  const changeBaseQuantity = (i: number, n: number) => {
+    const maxDq = quantities[i] ?? 0;
+    const nextBq = Math.max(0, Math.min(maxDq, Math.floor(n || 0)));
+    setCustomBq(b => b.map((v, j) => (j === i ? nextBq : v)));
   };
 
   const resetQuickForm = () => {
@@ -518,17 +565,92 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       ))}
                     </div>
                     <div className="flex justify-between text-xs mt-4">
-                      <span className="text-muted-foreground">Subtotal</span>
+                      <span className="text-muted-foreground">
+                        Subtotal (DQ: {items[i]?.dispatchQuantity ?? 0} un.
+                        {bqMode !== '100%' && (items[i]?.dispatchQuantity ?? 0) > 0
+                          ? ` · BQ: ${items[i]?.baseQuantity ?? 0} un.`
+                          : ''}
+                        )
+                      </span>
                       <b className="numeric">
                         {money((items[i]?.quantity ?? 0) * (items[i]?.price ?? 0))}
                       </b>
                     </div>
+                    {bqMode === 'custom' && (quantities[i] ?? 0) > 0 && (
+                      <div className="mt-3 pt-2.5 border-t border-border/50 flex items-center justify-between gap-2 text-xs">
+                        <span className="text-muted-foreground font-medium">
+                          Qtd. Base (BQ) <small className="opacity-75">(máx. {quantities[i]})</small>
+                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => changeBaseQuantity(i, (resolvedBaseQuantities[i] ?? 0) - 1)}
+                          >
+                            -1
+                          </Button>
+                          <input
+                            type="number"
+                            className="price-input numeric w-14 text-center"
+                            min="0"
+                            max={quantities[i] ?? 0}
+                            aria-label={`Qtd. Base ${p.id}`}
+                            value={resolvedBaseQuantities[i] ?? 0}
+                            onChange={e => changeBaseQuantity(i, Number(e.target.value))}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            className="h-7 px-2 text-xs"
+                            onClick={() => changeBaseQuantity(i, (resolvedBaseQuantities[i] ?? 0) + 1)}
+                          >
+                            +1
+                          </Button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>
 
+              {/* Opção Discreta de Configuração de Base (BQ) vs Expedição (DQ) */}
+              <label className="field-label mt-5">
+                Base do Pedido (BQ vs. Expedição DQ)
+                <select
+                  className="form-input text-xs"
+                  aria-label="Configuração de Qtd. Base (BQ)"
+                  value={bqMode}
+                  onChange={e => {
+                    const nextMode = e.target.value as '100%' | '50%' | 'custom';
+                    setBqMode(nextMode);
+                    if (nextMode === 'custom') {
+                      setCustomBq(
+                        quantities.map(dq => (dq > 0 ? Math.max(1, Math.floor(dq / 2)) : 0))
+                      );
+                    }
+                  }}
+                >
+                  <option value="100%">Base (BQ): Igual à expedição (100%)</option>
+                  <option value="50%">Base (BQ): 50% da expedição</option>
+                  <option value="custom">Base (BQ): Personalizar BQ por item</option>
+                </select>
+              </label>
+
+              {totalDq > 0 && bqMode !== '100%' && (
+                <div className="bg-muted/40 border border-border/60 rounded-lg px-3 py-2 mt-2 flex items-center justify-between text-[11px]">
+                  <span className="text-muted-foreground">
+                    Expedição (DQ): <strong className="text-foreground numeric">{totalDq} un.</strong> · Base (BQ):{' '}
+                    <strong className="text-foreground numeric">{totalBq} un.</strong>
+                  </span>
+                  <span className="numeric font-semibold text-primary">Base: {money(baseTotal)}</span>
+                </div>
+              )}
+
               {/* Condição de Pagamento Especializada para Farinhas (Boletos a cada 7 dias) */}
-              <label className="field-label mt-6">
+              <label className="field-label mt-4">
                 Condição de Pagamento (Boletos / Prazos)
                 <select className="form-input text-xs" value={payment} onChange={e => setPayment(e.target.value)}>
                   {paymentTermsList.map(term => (
@@ -539,19 +661,21 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </select>
               </label>
 
-              {/* Detalhe do Parcelamento em Tempo Real */}
-              {f.total > 0 && selectedTerm.installments > 1 && (
+              {/* Detalhe do Parcelamento em Tempo Real (Calculado sobre a Base BQ) */}
+              {f.total > 0 && selectedTerm.installments >= 1 && (
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                       <CreditCard size={14} className="text-primary" />
-                      Divisão a cada 7 dias:
+                      {selectedTerm.installments > 1 ? 'Parcelas na Base (BQ):' : 'Valor em Boleto/Base (BQ):'}
                     </span>
                     <strong className="font-semibold text-primary font-mono text-sm">
                       {selectedTerm.installments}x de {money(installmentValue)}
                     </strong>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">{selectedTerm.desc}</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">
+                    {selectedTerm.desc} · Total Base (BQ): {money(baseTotal)}
+                  </p>
                 </div>
               )}
 
@@ -579,7 +703,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
 
               {/* Card de Valor Total e Breakdown de Lucro Oculto com ProfitGauge */}
               <div className="profit-box mt-5">
-                <span className="text-xs opacity-70">VALOR TOTAL DO PEDIDO</span>
+                <span className="text-xs opacity-70">VALOR TOTAL DO PEDIDO (EXPEDIÇÃO DQ)</span>
                 <h2 className="numeric mt-2">{money(f.total)}</h2>
                 <Button
                   variant="ghost"
@@ -592,10 +716,10 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 {!privateProfit && (
                   <div className="profit-breakdown">
                     {[
-                      ['Faturamento bruto', f.total],
-                      ['CMV importado', -f.cost],
-                      ['Impostos estimados · 8%', -f.tax],
-                      ['Entrega estimada', -45],
+                      ['Faturamento bruto (DQ)', f.total],
+                      ['CMV importado (DQ)', -f.cost],
+                      [`Impostos estimados · 8% (BQ: ${totalBq} un.)`, -f.tax],
+                      [`Frete estimado (R$ 4/saca · ${totalDq} un.)`, -f.logistics],
                     ].map(([label, v]) => (
                       <div key={String(label)}>
                         <span>{label}</span>
@@ -612,7 +736,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                         <span className="text-xs">Margem líquida</span>
                       </div>
                       <span className={`status-badge ${marginLevel(f.margin)}`}>
-                        {f.margin.toFixed(1)}% ({f.margin >= 15 ? 'Verde' : f.margin >= 8 ? 'Amarelo' : 'Vermelho'})
+                        {f.margin.toFixed(1)}% ({f.margin >= 20 ? 'Verde' : f.margin >= 7 ? 'Amarelo' : 'Vermelho'})
                       </span>
                     </div>
                   </div>
@@ -622,15 +746,16 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
               {/* Botão de Confirmação do Pedido */}
               <Button
                 className="w-full h-12 mt-4 text-sm font-semibold"
-                disabled={!items.some(i => i.quantity > 0)}
+                disabled={totalDq <= 0 || totalBq < 1}
                 onClick={() => {
                   const newId = String(1049 + data.orders.length);
-                  const totalItems = items.reduce((s, i) => s + i.quantity, 0);
+                  const totalItems = totalDq;
                   const success = submit({
                     id: newId,
                     clientId: client.id,
                     items,
                     status: 'AGUARDANDO_REVISAO',
+                    rawStatus: 'AGUARDANDO_REVISAO',
                     payment,
                     delivery: 'Próxima rota',
                     note: orderNote,
