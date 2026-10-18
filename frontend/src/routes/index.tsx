@@ -2,6 +2,14 @@ import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
 import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { Backoffice } from '@/components/backoffice';
 import { Management } from '@/components/management';
@@ -40,34 +48,52 @@ type FontScale = 'normal' | 'large' | 'xlarge';
 const PROFILES_CONFIG = [
   {
     id: 'Gabriel Furtado · Backoffice & Fiscal' as UserRoleProfile,
+    shortName: 'Gabriel Furtado',
+    fullName: 'Gabriel Furtado · Backoffice & Fiscal',
     name: 'Gabriel Furtado · Backoffice & Fiscal',
     initials: 'GF',
     icon: ShieldCheck,
     badge: 'Gestão & SEFAZ',
+    colorClasses: {
+      avatar: 'bg-indigo-500/15 text-indigo-400 border border-indigo-500/30',
+      badge: 'bg-indigo-500/10 text-indigo-300 border-indigo-500/25',
+    },
     description: 'Conferência de pré-notas (DQ/BQ), emissão de NF-e, baixa de boletos, cadastros e importação.',
   },
   {
     id: 'Sérgio Soares · Sócio & Rua' as UserRoleProfile,
+    shortName: 'Sérgio Soares',
+    fullName: 'Sérgio Soares · Sócio & Rua',
     name: 'Sérgio Soares · Sócio & Rua',
     initials: 'SS',
     icon: Smartphone,
     badge: 'Vendas & Diretoria',
+    colorClasses: {
+      avatar: 'bg-amber-500/15 text-amber-400 border border-amber-500/30',
+      badge: 'bg-amber-500/10 text-amber-300 border-amber-500/25',
+    },
     description: 'App mobile de rua (estoque físico disponível) e acesso ao Backoffice pelo notebook em casa.',
   },
   {
     id: 'Expedição · Romaneio Cego' as UserRoleProfile,
+    shortName: 'Expedição Galpão',
+    fullName: 'Expedição · Romaneio Cego',
     name: 'Expedição · Romaneio Cego',
     initials: 'EX',
     icon: Truck,
     badge: 'Galpão & Entrega',
+    colorClasses: {
+      avatar: 'bg-emerald-500/15 text-emerald-400 border border-emerald-500/30',
+      badge: 'bg-emerald-500/10 text-emerald-300 border-emerald-500/25',
+    },
     description: 'Visualização exclusiva de volumes físicos (DQ) e impressão de Romaneio Cego. Custos e margens ocultos.',
   },
 ] as const;
 
 function getProfileShortName(prof: string) {
-  if (prof.includes('Sérgio')) return 'Sérgio · Sócio & Rua';
-  if (prof.includes('Expedição')) return 'Expedição · Galpão';
-  return 'Gabriel · Backoffice';
+  if (prof.includes('Sérgio')) return 'Sérgio Soares';
+  if (prof.includes('Expedição')) return 'Expedição Galpão';
+  return 'Gabriel Furtado';
 }
 
 function getProfileInitials(prof: string) {
@@ -241,24 +267,96 @@ function Index() {
           </Button>
         </div>
         <div className="environment-right">
-          <div className="relative flex items-center bg-card/80 hover:bg-card border border-border/80 hover:border-primary/50 text-foreground rounded-lg pl-2 pr-2.5 py-1 text-xs font-medium transition-all shadow-2xs group focus-within:ring-1 focus-within:ring-primary/40 focus-within:border-primary">
-            <span className="flex items-center justify-center size-5 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0 pointer-events-none">
-              {getProfileInitials(activeProfile)}
-            </span>
-            <select
-              value={activeProfile}
-              onChange={e => handleProfileChange(e.target.value as UserRoleProfile)}
-              className="bg-transparent text-xs font-semibold text-foreground focus:outline-none cursor-pointer pl-1.5 pr-4 appearance-none py-0.5 tracking-tight"
-              aria-label="Selecionar perfil operacional"
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="profile-switcher-btn group relative flex items-center gap-2 h-8 pl-2 pr-2.5 rounded-lg border border-border/80 hover:border-primary/50 bg-card/80 hover:bg-card text-foreground transition-all shadow-2xs cursor-pointer select-none focus:outline-none focus:ring-1 focus:ring-primary/40"
+                aria-label="Alternar perfil operacional"
+                title="Clique para alternar o perfil operacional ativo"
+              >
+                {(() => {
+                  const curr = PROFILES_CONFIG.find(p => p.id === activeProfile) ?? PROFILES_CONFIG[0];
+                  return (
+                    <>
+                      <span className={`flex items-center justify-center size-5.5 rounded-md text-[10px] font-bold shrink-0 ${curr.colorClasses.avatar}`}>
+                        {curr.initials}
+                      </span>
+                      <div className="flex items-center gap-1.5 text-left">
+                        <span className="text-xs font-semibold text-foreground tracking-tight whitespace-nowrap">
+                          {curr.shortName}
+                        </span>
+                        <span className={`hidden sm:inline-flex text-[9px] font-semibold px-1.5 py-0.5 rounded border ${curr.colorClasses.badge}`}>
+                          {curr.badge}
+                        </span>
+                      </div>
+                      <ChevronDown size={13} className="text-muted-foreground group-hover:text-foreground transition-transform duration-200 group-data-[state=open]:rotate-180 shrink-0 ml-0.5" />
+                    </>
+                  );
+                })()}
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="end"
+              sideOffset={6}
+              className="w-80 p-1.5 bg-card/95 backdrop-blur-md border border-border/80 shadow-2xl rounded-xl z-50 text-foreground"
             >
-              {PROFILES_CONFIG.map(p => (
-                <option key={p.id} value={p.id} className="bg-popover text-popover-foreground py-1 font-medium">
-                  {p.name.split(' · ')[0]} ({p.badge})
-                </option>
-              ))}
-            </select>
-            <ChevronDown size={13} className="text-muted-foreground group-hover:text-foreground absolute right-2 pointer-events-none shrink-0 transition-colors" />
-          </div>
+              <div className="px-2.5 py-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
+                    Perfil Operacional Ativo
+                  </span>
+                  <span className="text-[10px] text-primary font-medium">Troca rápida</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Alterna permissões, visibilidade de custos e assinatura de auditoria.
+                </p>
+              </div>
+
+              <DropdownMenuSeparator className="my-1 bg-border/70" />
+
+              <div className="space-y-1">
+                {PROFILES_CONFIG.map(p => {
+                  const isSelected = activeProfile === p.id;
+                  const Icon = p.icon;
+                  return (
+                    <DropdownMenuItem
+                      key={p.id}
+                      onSelect={() => handleProfileChange(p.id)}
+                      className={`flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition-all ${
+                        isSelected
+                          ? 'bg-primary/10 border border-primary/30 text-foreground'
+                          : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground border border-transparent'
+                      }`}
+                    >
+                      <div className={`flex items-center justify-center size-8 rounded-lg shrink-0 mt-0.5 ${p.colorClasses.avatar}`}>
+                        <Icon size={16} />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <span className="font-semibold text-xs text-foreground truncate">
+                            {p.name}
+                          </span>
+                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${p.colorClasses.badge}`}>
+                            {p.badge}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
+                          {p.description}
+                        </p>
+                      </div>
+                      {isSelected && (
+                        <div className="flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground shrink-0 mt-1">
+                          <Check size={11} strokeWidth={3} />
+                        </div>
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <div className="font-scale-control" role="group" aria-label="Tamanho da letra (Conforto visual)">
             <Button
               type="button"
