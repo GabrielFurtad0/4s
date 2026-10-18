@@ -477,7 +477,7 @@ function Index() {
 
           <div className="main-shell">
             <header className="main-header">
-              <div className="flex items-center gap-2 sm:gap-3">
+              <div className="header-left flex items-center gap-2 sm:gap-3 min-w-0 justify-self-start">
                 <Button
                   type="button"
                   variant="ghost"
@@ -495,16 +495,16 @@ function Index() {
                   const ModIcon = currentMod?.icon ?? FileCheck2;
                   const modLabel = currentMod?.label ?? 'Mesa de conferência';
                   return (
-                    <div className="inline-flex items-center gap-1.5 text-foreground font-semibold text-sm tracking-tight select-none">
+                    <div className="inline-flex items-center gap-1.5 text-foreground font-semibold text-sm tracking-tight select-none truncate">
                       <ModIcon size={15} className="text-muted-foreground shrink-0" />
-                      <span>{modLabel}</span>
+                      <span className="truncate">{modLabel}</span>
                     </div>
                   );
                 })()}
               </div>
 
-              {/* Centro da Navbar: Barra de busca no fluxo natural flex sem absolute */}
-              <div className="hidden md:flex items-center justify-center flex-1 max-w-xs lg:max-w-md mx-3">
+              {/* Centro da Navbar: Rigorosamente no centro geométrico */}
+              <div className="header-center hidden md:flex items-center justify-center justify-self-center w-full max-w-sm lg:max-w-md">
                 <Button
                   type="button"
                   variant="outline"
@@ -520,7 +520,7 @@ function Index() {
                 </Button>
               </div>
 
-              <div className="header-actions shrink-0">
+              <div className="header-actions justify-self-end shrink-0">
                 {module === 'orders' && (
                   <div className="flex items-center gap-2">
                     <Button variant="outline" size="sm" className="h-8 text-xs gap-1.5" onClick={exportOrdersCsv}>
