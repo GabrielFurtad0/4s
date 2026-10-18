@@ -4,6 +4,7 @@ import {
   ArrowDownToLine,
   ArrowRight,
   Ban,
+  Barcode,
   Calendar,
   Check,
   CheckCheck,
@@ -633,35 +634,82 @@ export function Backoffice({
         </div>
       </section>
 
-      {/* Workflow Strip */}
-      <div className="workflow-strip">
-        <div className="workflow-label">
-          <span className="workflow-icon">
-            <ArrowRight />
-          </span>
-          <div>
-            <strong>Cada pedido, no caminho certo.</strong>
-            <p>Da visita ao cliente até a entrega.</p>
+      {/* Barra Inferior: Resumo de Carga do Caminhão do Dia (Expedição DQ) */}
+      {(() => {
+        const routeOrders = data.orders.filter(o => {
+          const st = effectiveStatus(o);
+          return st === 'EM_SEPARACAO' || st === 'FATURADO' || st === 'AGUARDANDO_REVISAO';
+        });
+        const readyForTruckOrders = data.orders.filter(o => {
+          const st = effectiveStatus(o);
+          return st === 'EM_SEPARACAO' || st === 'FATURADO';
+        });
+        const totalRouteSacks = routeOrders.reduce((acc, o) => acc + orderTotalDq(o.items), 0);
+        const readySacks = readyForTruckOrders.reduce((acc, o) => acc + orderTotalDq(o.items), 0);
+        const totalWeightKg = totalRouteSacks * 25;
+        const estimatedFreight = totalRouteSacks * 4;
+        const uniqueClientsCount = new Set(routeOrders.map(o => o.clientId)).size;
+
+        return (
+          <div className="workflow-strip">
+            <div className="workflow-label">
+              <span className="workflow-icon bg-primary/10 text-primary border-primary/20">
+                <Truck size={15} />
+              </span>
+              <div>
+                <div className="flex items-center gap-2">
+                  <strong>Carga do Caminhão do Dia (Expedição DQ)</strong>
+                  <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
+                    {readySacks} / {totalRouteSacks} sacas liberadas
+                  </span>
+                </div>
+                <p>
+                  Consolidação física da rota ativa ({uniqueClientsCount}{' '}
+                  {uniqueClientsCount === 1 ? 'parada programada' : 'paradas programadas'})
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-4 text-xs">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
+                <Package size={13} className="text-primary" />
+                <span className="text-muted-foreground">Volume (DQ):</span>
+                <strong className="numeric font-bold text-foreground">{totalRouteSacks} sacas</strong>
+              </div>
+
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
+                <span className="text-muted-foreground">Peso total:</span>
+                <strong className="numeric font-bold text-foreground">
+                  {totalWeightKg.toLocaleString('pt-BR')} kg ({(totalWeightKg / 1000).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} t)
+                </strong>
+              </div>
+
+              {!isExpedicao && (
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-muted/60 border border-border/70">
+                  <span className="text-muted-foreground">Frete estimado (R$ 4/un.):</span>
+                  <strong className="numeric font-bold text-foreground">{money(estimatedFreight)}</strong>
+                </div>
+              )}
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
+                disabled={routeOrders.length === 0}
+                onClick={() => {
+                  const targetOrder = readyForTruckOrders[0] ?? routeOrders[0];
+                  if (!targetOrder) return;
+                  const targetClient = data.clients.find(c => c.id === targetOrder.clientId);
+                  openPrintableRomaneio(targetOrder, targetClient, data.products);
+                }}
+              >
+                <Printer size={12} />
+                Imprimir Romaneio (DQ)
+              </Button>
+            </div>
           </div>
-        </div>
-        <div className="workflow-steps">
-          <span>
-            <span className="step-number">1</span>Pedido em campo (DQ/BQ)
-          </span>
-          <ChevronRight />
-          <span>
-            <span className="step-number">2</span>Revisão pré-nota
-          </span>
-          <ChevronRight />
-          <span>
-            <span className="step-number">3</span>Emissão NF-e (BQ)
-          </span>
-          <ChevronRight />
-          <span>
-            <span className="step-number">4</span>Romaneio & Entrega (DQ)
-          </span>
-        </div>
-      </div>
+        );
+      })()}
 
       {/* Modal de Conferência Pré-Nota e Romaneio */}
       <Dialog
@@ -1176,33 +1224,12 @@ function ReceivablesSection({
 
   return (
     <div className="space-y-6">
-      {/* Banner de Regra Oficial do Sr. Sérgio */}
-      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0">
-            <Landmark size={24} />
-          </div>
-          <div>
-            <h3 className="text-sm font-bold text-foreground">
-              Controle Oficial de Boletos Bancários sobre Qtd. Base (BQ)
-            </h3>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              <strong>Regra do Sr. Sérgio:</strong> O valor dos boletos bancários é calculado estritamente sobre a Base (BQ) = <span className="font-mono">soma(baseQuantity × unitSalePrice)</span>. A diferença comercial (DQ - BQ) nunca entra nos boletos!
-            </p>
-          </div>
-        </div>
-        <Button variant="outline" size="sm" className="gap-1.5 shrink-0 text-xs" onClick={loadTitles} disabled={loading}>
-          <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-          Atualizar Títulos
-        </Button>
-      </div>
-
-      {/* Cards de Métricas de Contas a Receber */}
+      {/* Cards de Métricas de Boletos */}
       <div className="metric-grid">
         <Metric
-          label="Total em Boletos (Base BQ)"
+          label="Total em Boletos"
           value={<NumberTicker value={totalBq} prefix="R$ " decimals={2} />}
-          icon={<CreditCard />}
+          icon={<Barcode />}
           footer={<span className="text-muted-foreground">{titles.length} boletos gerados</span>}
         />
         <Metric
@@ -1240,7 +1267,7 @@ function ReceivablesSection({
 
       {/* Tabela de Boletos com Filtros e Ação de Baixa Manual */}
       <section className="orders-section">
-        <div className="orders-toolbar">
+        <div className="orders-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <SlidingTabs
             tabs={[
               { id: 'ALL', label: 'Todos os Boletos', count: titles.length },
@@ -1252,14 +1279,27 @@ function ReceivablesSection({
             onChange={t => setFilter(t as any)}
           />
 
-          <div className="table-search flex-1 max-w-sm">
-            <Search size={16} />
-            <input
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              placeholder="Buscar por cliente, documento ou NF-e..."
-              aria-label="Buscar boletos"
-            />
+          <div className="flex items-center gap-2 flex-1 justify-end">
+            <div className="table-search flex-1 max-w-sm">
+              <Search size={16} />
+              <input
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                placeholder="Buscar por cliente, documento ou NF-e..."
+                aria-label="Buscar boletos"
+              />
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5 shrink-0 text-xs h-9"
+              onClick={loadTitles}
+              disabled={loading}
+              title="Recarregar títulos do servidor"
+            >
+              <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
+              <span>Atualizar Títulos</span>
+            </Button>
           </div>
         </div>
 
