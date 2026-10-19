@@ -108,3 +108,6 @@ A SEFAZ rejeita notas fiscais que contenham divergências no destinatário. A pl
 * 📑 [**Estudo Técnico NF-e SEFAZ A1**](ESTUDO_TECNICO_NFE_SEFAZ_A1.md): Aposentadoria do Emissor Sebrae, emissão direta gratuita no Spring Boot via `java-nfe` e Certificado A1.
 * 🏦 [**Estudo Técnico API Sicredi**](ESTUDO_TECNICO_API_SICREDI.md): Emissão de boletos híbridos (Código de Barras + Pix) calculados estritamente sobre a `BQ`.
 
+
+> [!NOTE] Atualização Automática (18/10/2026 · Commit `5e39772`):
+> Modificações estruturais registradas no domínio/banco. Consulte o [CHANGELOG](file:///docs/CHANGELOG.md) para detalhes.

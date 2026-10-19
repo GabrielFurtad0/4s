@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [5e39772] — 18/10/2026 às 22:14 (🔴 Estrutural / Crítico)
+
+- Implementação de seletor de data para a primeira parcela no módulo de vendas, com geração automática de
+
 ### [3f061cc] — 18/10/2026 às 22:04 (🔴 Estrutural / Crítico)
 
 - **Escopo**: fix(import): revamp import calculator layout to fit without scrolling and rename button to Adicionar Lote
