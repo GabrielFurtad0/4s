@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [ce1edc9] — 18/10/2026 às 22:57 (🟡 Médio / Feature)
+
+- **Escopo**: fix(ui): remove redundant expand button in stock header and redundant route buttons in bottom strip
+- **Componentes afetados**: `backoffice.tsx`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [d17296b] — 18/10/2026 às 22:48 (🔴 Estrutural / Crítico)
 
 - Implementação de integração entre a busca global (Command Palette) e a seção de Cadast
