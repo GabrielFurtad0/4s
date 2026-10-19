@@ -950,6 +950,14 @@ export function Backoffice({
                     <div>
                       <span>Pagamento</span>
                       <strong>{selected.payment}</strong>
+                      {selected.firstDueDate && (
+                        <span className="block text-[10.5px] text-primary font-mono mt-0.5">
+                          1ª parc: {selected.firstDueDate.split('-').reverse().join('/')}
+                          {selected.dueDates && selected.dueDates.length > 1 && (
+                            <span className="text-muted-foreground font-sans"> ({selected.dueDates.length}x a cada 7d)</span>
+                          )}
+                        </span>
+                      )}
                     </div>
                     <div>
                       <span>Entrega prevista</span>

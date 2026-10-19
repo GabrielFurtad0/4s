@@ -63,18 +63,29 @@ export type SharedProps = {
 };
 
 const paymentTermsList = [
-  { label: 'Boleto 28 dias (1 parcela)', installments: 1, desc: 'Vencimento em 28 dias' },
-  { label: 'Boleto 7/14/21/28 dias (4 parcelas a cada 7 dias)', installments: 4, desc: '4x semanais (7, 14, 21 e 28 dias)' },
-  { label: 'Boleto 14/21/28 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (14, 21 e 28 dias)' },
-  { label: 'Boleto 7/14/21 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (7, 14 e 21 dias)' },
-  { label: 'Boleto 7/14 dias (2 parcelas a cada 7 dias)', installments: 2, desc: '2x semanais (7 e 14 dias)' },
-  { label: 'Boleto 14/28 dias (2 parcelas a cada 14 dias)', installments: 2, desc: '2x quinzenais (14 e 28 dias)' },
-  { label: 'Boleto 21 dias (1 parcela)', installments: 1, desc: 'Vencimento em 21 dias' },
-  { label: 'Boleto 14 dias (1 parcela)', installments: 1, desc: 'Vencimento em 14 dias' },
-  { label: 'Boleto 7 dias (1 parcela)', installments: 1, desc: 'Vencimento em 7 dias' },
-  { label: 'Pix na Entrega (À vista)', installments: 1, desc: 'Pagamento imediato na entrega' },
-  { label: 'Dinheiro na Entrega (À vista)', installments: 1, desc: 'Pagamento em espécie ao motorista' },
+  { label: 'Boleto 28 dias (1 parcela)', installments: 1, desc: 'Vencimento em 28 dias', defaultDays: 28, intervalDays: 7 },
+  { label: 'Boleto 7/14/21/28 dias (4 parcelas a cada 7 dias)', installments: 4, desc: '4x semanais (7, 14, 21 e 28 dias)', defaultDays: 7, intervalDays: 7 },
+  { label: 'Boleto 14/21/28 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (14, 21 e 28 dias)', defaultDays: 14, intervalDays: 7 },
+  { label: 'Boleto 7/14/21 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (7, 14 e 21 dias)', defaultDays: 7, intervalDays: 7 },
+  { label: 'Boleto 7/14 dias (2 parcelas a cada 7 dias)', installments: 2, desc: '2x semanais (7 e 14 dias)', defaultDays: 7, intervalDays: 7 },
+  { label: 'Boleto 14/28 dias (2 parcelas a cada 14 dias)', installments: 2, desc: '2x quinzenais (14 e 28 dias)', defaultDays: 14, intervalDays: 14 },
+  { label: 'Boleto 21 dias (1 parcela)', installments: 1, desc: 'Vencimento em 21 dias', defaultDays: 21, intervalDays: 7 },
+  { label: 'Boleto 14 dias (1 parcela)', installments: 1, desc: 'Vencimento em 14 dias', defaultDays: 14, intervalDays: 7 },
+  { label: 'Boleto 7 dias (1 parcela)', installments: 1, desc: 'Vencimento em 7 dias', defaultDays: 7, intervalDays: 7 },
+  { label: 'Pix na Entrega (À vista)', installments: 1, desc: 'Pagamento imediato na entrega', defaultDays: 1, intervalDays: 0 },
+  { label: 'Dinheiro na Entrega (À vista)', installments: 1, desc: 'Pagamento em espécie ao motorista', defaultDays: 1, intervalDays: 0 },
 ];
+
+function computeDefaultFirstDueDate(termLabel: string): string {
+  const term = paymentTermsList.find(t => t.label === termLabel);
+  const days = term?.defaultDays ?? 14;
+  const d = new Date();
+  d.setDate(d.getDate() + days);
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, '0');
+  const dd = String(d.getDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
 
 export function Seller({ data, update, notify, submit }: SharedProps) {
   const [view, setView] = useState<'agenda' | 'client' | 'order'>('agenda');
@@ -92,6 +103,9 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const [prices, setPrices] = useState([85, 78, 92]);
   const [privateProfit, setPrivateProfit] = useState(true);
   const [payment, setPayment] = useState('Boleto 28 dias (1 parcela)');
+  const [firstDueDate, setFirstDueDate] = useState<string>(() =>
+    computeDefaultFirstDueDate('Boleto 28 dias (1 parcela)')
+  );
   const [orderNote, setOrderNote] = useState('');
   const [promotional, setPromotional] = useState(false);
 
@@ -193,9 +207,27 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     label: payment,
     installments: 1,
     desc: 'Vencimento em 28 dias',
+    defaultDays: 28,
+    intervalDays: 7,
   };
   const installmentValue =
     baseTotal > 0 && selectedTerm.installments > 1 ? baseTotal / selectedTerm.installments : baseTotal;
+
+  // Cronograma das parcelas: a cada 7 dias a partir da 1ª parcela
+  const computedDueDates: string[] = Array.from(
+    { length: Math.max(1, selectedTerm.installments) },
+    (_, idx) => {
+      if (!firstDueDate) return '';
+      const [y, m, d] = firstDueDate.split('-').map(Number);
+      const dateObj = new Date(y, (m || 1) - 1, d || 1);
+      const interval = selectedTerm.intervalDays || 7;
+      dateObj.setDate(dateObj.getDate() + idx * interval);
+      const yyyy = dateObj.getFullYear();
+      const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
+      const dd = String(dateObj.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+  );
 
   const openClient = (c: Client) => {
     setClientId(c.id);
@@ -210,6 +242,9 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     setBqMode('100%');
     setView('order');
     setPrivateProfit(true);
+    const initialPayment = client.defaultPaymentTerms || 'Boleto 28 dias (1 parcela)';
+    setPayment(initialPayment);
+    setFirstDueDate(computeDefaultFirstDueDate(initialPayment));
   };
 
   const changeQuantity = (i: number, n: number) => {
@@ -715,7 +750,15 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
               {/* Condição de Pagamento Especializada para Farinhas (Boletos a cada 7 dias) */}
               <label className="field-label mt-4">
                 Condição de Pagamento (Boletos / Prazos)
-                <select className="form-input text-xs" value={payment} onChange={e => setPayment(e.target.value)}>
+                <select
+                  className="form-input text-xs"
+                  value={payment}
+                  onChange={e => {
+                    const nextP = e.target.value;
+                    setPayment(nextP);
+                    setFirstDueDate(computeDefaultFirstDueDate(nextP));
+                  }}
+                >
                   {paymentTermsList.map(term => (
                     <option key={term.label} value={term.label}>
                       {term.label}
@@ -724,9 +767,23 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </select>
               </label>
 
+              {/* Seletor de Data da 1ª Parcela a ser paga */}
+              <label className="field-label mt-3">
+                <span className="flex items-center gap-1.5 font-medium text-foreground">
+                  <Calendar size={13} className="text-primary" />
+                  {selectedTerm.installments > 1 ? 'Data da 1ª parcela a ser paga' : 'Data de vencimento'}
+                </span>
+                <input
+                  type="date"
+                  className="form-input text-xs h-9 bg-card font-mono numeric cursor-pointer"
+                  value={firstDueDate}
+                  onChange={e => setFirstDueDate(e.target.value)}
+                />
+              </label>
+
               {/* Detalhe do Parcelamento em Tempo Real (Calculado sobre a Base BQ) */}
               {f.total > 0 && selectedTerm.installments >= 1 && (
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2 text-xs">
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 mt-2.5 text-xs">
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground flex items-center gap-1.5 font-medium">
                       <CreditCard size={14} className="text-primary" />
@@ -736,7 +793,43 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                       {selectedTerm.installments}x de {money(installmentValue)}
                     </strong>
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+
+                  {/* Cronograma detalhado de parcelas (7 em 7 dias a partir da 1ª) */}
+                  {selectedTerm.installments > 1 && (
+                    <div className="mt-2.5 pt-2 border-t border-primary/15 space-y-1">
+                      <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+                        Cronograma das parcelas (a cada 7 dias):
+                      </span>
+                      {computedDueDates.map((dStr, idx) => {
+                        const [yyyy, mm, dd] = dStr.split('-');
+                        const formatted = `${dd}/${mm}/${yyyy}`;
+                        return (
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between text-[11px] bg-background/60 px-2 py-1 rounded border border-border/40"
+                          >
+                            <span className="text-foreground">
+                              <strong>{idx + 1}ª parcela:</strong>{' '}
+                              <span className="font-mono text-primary font-medium">{formatted}</span>
+                              {idx > 0 && <span className="text-muted-foreground text-[9.5px] ml-1">(+7 dias)</span>}
+                            </span>
+                            <b className="numeric font-semibold text-foreground">{money(installmentValue)}</b>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {selectedTerm.installments === 1 && firstDueDate && (
+                    <div className="mt-2 pt-1.5 border-t border-primary/15 flex items-center justify-between text-[11px]">
+                      <span className="text-muted-foreground">Vencimento único:</span>
+                      <strong className="font-mono text-primary">
+                        {firstDueDate.split('-').reverse().join('/')}
+                      </strong>
+                    </div>
+                  )}
+
+                  <p className="text-[10px] text-muted-foreground mt-2">
                     {selectedTerm.desc} · Total Base (BQ): {money(baseTotal)}
                   </p>
                 </div>
@@ -795,7 +888,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                     </div>
                     <div className="flex items-center justify-between mt-3 pt-2 border-t border-chrome-selected">
                       <div className="flex items-center gap-2">
-                        <ProfitGauge margin={f.margin} size={36} strokeWidth={4} />
+                        <ProfitGauge margin={f.margin} size={38} strokeWidth={3.5} />
                         <span className="text-xs">Margem líquida</span>
                       </div>
                       <span className={`status-badge ${marginLevel(f.margin)}`}>
@@ -820,6 +913,8 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                     status: 'AGUARDANDO_REVISAO',
                     rawStatus: 'AGUARDANDO_REVISAO',
                     payment,
+                    firstDueDate,
+                    dueDates: computedDueDates,
                     delivery: 'Próxima rota',
                     note: orderNote,
                     promotional,

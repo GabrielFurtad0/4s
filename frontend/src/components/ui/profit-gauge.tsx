@@ -12,11 +12,12 @@ interface ProfitGaugeProps {
 export function ProfitGauge({
   margin,
   size = 54,
-  strokeWidth = 5,
+  strokeWidth,
   className,
   showLabel = true,
 }: ProfitGaugeProps) {
-  const radius = (size - strokeWidth) / 2;
+  const effectiveStrokeWidth = strokeWidth ?? Math.max(3, Math.round(size * 0.09));
+  const radius = (size - effectiveStrokeWidth) / 2;
   const circumference = 2 * Math.PI * radius;
   // Cap visual fill at 35% margin for display
   const clampedMargin = Math.max(0, Math.min(margin, 35));
@@ -36,20 +37,27 @@ export function ProfitGauge({
     textColor = 'text-amber-600 dark:text-amber-400';
   }
 
+  // Calculate proportional font size so text always fits comfortably inside inner circle
+  const innerDiameter = size - effectiveStrokeWidth * 2;
+  const fontSizePx = Math.max(7.5, Math.min(13, innerDiameter * 0.28));
+
   return (
-    <div className={cn('relative inline-flex items-center justify-center', className)}>
+    <div
+      className={cn('relative inline-flex items-center justify-center flex-shrink-0', className)}
+      style={{ width: size, height: size }}
+    >
       <svg
         width={size}
         height={size}
         className="rotate-[-90deg] transform"
-        style={{ filter: `drop-shadow(0 0 6px ${bgColor})` }}
+        style={{ filter: `drop-shadow(0 0 4px ${bgColor})` }}
       >
         <circle
           cx={size / 2}
           cy={size / 2}
           r={radius}
           stroke="currentColor"
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           className="text-muted/40"
           fill="transparent"
         />
@@ -58,7 +66,7 @@ export function ProfitGauge({
           cy={size / 2}
           r={radius}
           stroke={strokeColor}
-          strokeWidth={strokeWidth}
+          strokeWidth={effectiveStrokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
@@ -67,8 +75,11 @@ export function ProfitGauge({
         />
       </svg>
       {showLabel && (
-        <div className="absolute flex flex-col items-center justify-center text-center">
-          <span className={cn('text-[11px] font-bold font-mono tracking-tight', textColor)}>
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none select-none">
+          <span
+            className={cn('font-bold font-mono tracking-tighter leading-none whitespace-nowrap', textColor)}
+            style={{ fontSize: `${fontSizePx.toFixed(1)}px` }}
+          >
             {margin.toFixed(1)}%
           </span>
         </div>

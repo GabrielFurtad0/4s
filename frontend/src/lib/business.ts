@@ -57,6 +57,8 @@ export type Order = {
   status: OrderStatusType;
   rawStatus?: string | undefined;
   payment: string;
+  firstDueDate?: string | undefined;
+  dueDates?: string[] | undefined;
   delivery: string;
   note: string;
   promotional: boolean;
@@ -667,7 +669,9 @@ export async function createOrderApi(data: AppData, order: Order): Promise<AppDa
       clientId: Number(order.clientId),
       paymentTerms: order.payment,
       deliveryForecast: order.delivery,
-      notesForInvoiceOrDriver: order.note,
+      notesForInvoiceOrDriver: order.firstDueDate
+        ? `${order.note ? order.note + ' · ' : ''}1ª parcela: ${order.firstDueDate.split('-').reverse().join('/')}${order.dueDates && order.dueDates.length > 1 ? ` (${order.dueDates.length}x a cada 7 dias)` : ''}`
+        : order.note,
       shippingCostEstimate: totalDq * FREIGHT_PER_SACK_BRL,
       items: activeItems.map(i => ({
         productId: toDbProductId(i.productId, data.products),
