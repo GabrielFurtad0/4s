@@ -663,18 +663,19 @@ pre code {
   transform: scale(1.05);
 }
 
-/* Modal Pop-up do Diagrama */
+/* Modal Pop-up do Diagrama com Pan & Zoom Fluído */
 .mermaid-modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 23, 42, 0.84);
-  backdrop-filter: blur(10px);
+  background: rgba(15, 23, 42, 0.92);
+  backdrop-filter: blur(12px);
   z-index: 99999;
   display: flex;
   flex-direction: column;
   opacity: 0;
   visibility: hidden;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: opacity 0.2s ease, visibility 0.2s ease;
+  user-select: none;
 }
 
 .mermaid-modal-overlay.open {
@@ -686,20 +687,28 @@ pre code {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 24px;
-  background: rgba(30, 41, 59, 0.96);
+  padding: 10px 20px;
+  background: rgba(15, 23, 42, 0.98);
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
   flex-shrink: 0;
+  z-index: 10;
 }
 
 .mermaid-modal-title {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 700;
   color: #F8FAFC;
+}
+
+.mermaid-modal-hint {
+  font-size: 11.5px;
+  color: #94A3B8;
+  font-weight: 400;
+  margin-left: 10px;
 }
 
 .mermaid-modal-badge {
@@ -724,10 +733,10 @@ pre code {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #F8FAFC;
-  padding: 6px 14px;
+  padding: 6px 12px;
   border-radius: var(--radius-sm);
   font-size: 12px;
   font-weight: 600;
@@ -737,7 +746,7 @@ pre code {
 }
 
 .mermaid-modal-btn:hover {
-  background: rgba(255, 255, 255, 0.2);
+  background: rgba(255, 255, 255, 0.22);
   color: #FFFFFF;
   border-color: rgba(255, 255, 255, 0.35);
 }
@@ -746,7 +755,7 @@ pre code {
   background: #EF4444;
   border-color: #DC2626;
   color: #FFFFFF;
-  margin-left: 8px;
+  margin-left: 6px;
 }
 
 .mermaid-modal-btn.close:hover {
@@ -755,36 +764,40 @@ pre code {
 
 .mermaid-modal-body {
   flex: 1;
-  overflow: auto;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  padding: 36px;
-  cursor: grab;
+  width: 100%;
+  height: calc(100vh - 56px);
   position: relative;
+  overflow: hidden;
+  cursor: grab;
+  background: #0B1120;
 }
 
 .mermaid-modal-body:active {
   cursor: grabbing;
 }
 
-.mermaid-modal-content {
-  background: #FFFFFF;
-  padding: 40px;
-  border-radius: var(--radius-lg);
-  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6);
-  transition: transform 0.12s ease-out;
-  transform-origin: center center;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  max-width: 95vw;
+.mermaid-modal-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  transform-origin: 0 0;
+  will-change: transform;
+  display: inline-block;
+  pointer-events: auto;
 }
 
-.mermaid-modal-content svg {
-  max-width: none !important;
-  height: auto !important;
+.mermaid-modal-card {
+  background: #FFFFFF;
+  padding: 32px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  display: inline-block;
+}
+
+.mermaid-modal-card svg {
   display: block;
+  max-width: none !important;
+  max-height: none !important;
 }
 
 /* Sidebar Direita: Índice da Página (TOC) */

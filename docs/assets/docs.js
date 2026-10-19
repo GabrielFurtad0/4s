@@ -78,7 +78,7 @@ document.addEventListener('DOMContentLoaded', () => {
     pre.appendChild(btn);
   });
 
-  // 4. Modal Pop-up com Zoom e Pan para Diagramas Mermaid
+  // 4. Modal Pop-up com Pan & Zoom Fluído e Ocupação de Tela Inteira
   function setupMermaidModal() {
     let modal = document.querySelector('.mermaid-modal-overlay');
     if (!modal) {
@@ -87,46 +87,83 @@ document.addEventListener('DOMContentLoaded', () => {
       modal.innerHTML = `
         <div class="mermaid-modal-header">
           <div class="mermaid-modal-title">
-            <span>🔍 Visualização Ampliada do Diagrama</span>
+            <span>🔍 Visualização Ampliada</span>
             <span class="mermaid-modal-badge">TotalTrigo / 4S ERP</span>
+            <span class="mermaid-modal-hint">🖱️ Clique e arraste para mover • Roda do mouse para zoom na seção desejada • Duplo clique para ajustar</span>
           </div>
           <div class="mermaid-modal-actions">
             <button type="button" class="mermaid-modal-btn" id="btn-zoom-out" title="Reduzir (Zoom -)">➖ Reduzir</button>
-            <button type="button" class="mermaid-modal-btn" id="btn-zoom-reset" title="Tamanho Padrão (100%)">100%</button>
+            <button type="button" class="mermaid-modal-btn" id="btn-zoom-reset" title="Ajustar à Tela Cheia">Ajustar à Tela</button>
             <button type="button" class="mermaid-modal-btn" id="btn-zoom-in" title="Aumentar (Zoom +)">➕ Aumentar</button>
             <button type="button" class="mermaid-modal-btn close" id="btn-modal-close" title="Fechar (Esc)">✕ Fechar</button>
           </div>
         </div>
         <div class="mermaid-modal-body" id="mermaid-modal-body">
-          <div class="mermaid-modal-content" id="mermaid-modal-content"></div>
+          <div class="mermaid-modal-canvas" id="mermaid-modal-canvas">
+            <div class="mermaid-modal-card" id="mermaid-modal-card"></div>
+          </div>
         </div>
       `;
       document.body.appendChild(modal);
 
-      let currentScale = 1.0;
-      const modalContent = modal.querySelector('#mermaid-modal-content');
       const modalBody = modal.querySelector('#mermaid-modal-body');
+      const canvas = modal.querySelector('#mermaid-modal-canvas');
+      const card = modal.querySelector('#mermaid-modal-card');
       const btnZoomReset = modal.querySelector('#btn-zoom-reset');
 
-      function updateScale(newScale) {
-        currentScale = Math.min(3.5, Math.max(0.4, Math.round(newScale * 10) / 10));
-        modalContent.style.transform = `scale(${currentScale})`;
-        btnZoomReset.textContent = `${Math.round(currentScale * 100)}%`;
+      let scale = 1.0;
+      let panX = 0;
+      let panY = 0;
+      let isDragging = false;
+      let startX = 0;
+      let startY = 0;
+      let origTotalW = 800;
+      let origTotalH = 600;
+
+      function renderTransform() {
+        canvas.style.transform = `translate3d(${panX}px, ${panY}px, 0) scale(${scale})`;
+        btnZoomReset.textContent = `${Math.round(scale * 100)}% (Ajustar)`;
+      }
+
+      function zoomAt(targetScale, clientX, clientY) {
+        const clampedScale = Math.min(10.0, Math.max(0.15, targetScale));
+        const rect = modalBody.getBoundingClientRect();
+        const mouseX = (clientX !== undefined ? clientX : (rect.left + rect.width / 2)) - rect.left;
+        const mouseY = (clientY !== undefined ? clientY : (rect.top + rect.height / 2)) - rect.top;
+
+        panX = mouseX - (mouseX - panX) * (clampedScale / scale);
+        panY = mouseY - (mouseY - panY) * (clampedScale / scale);
+        scale = clampedScale;
+        renderTransform();
+      }
+
+      function fitToScreen() {
+        const bodyRect = modalBody.getBoundingClientRect();
+        const padW = bodyRect.width * 0.94;
+        const padH = bodyRect.height * 0.90;
+
+        const scaleW = padW / origTotalW;
+        const scaleH = padH / origTotalH;
+        scale = Math.min(scaleW, scaleH);
+
+        panX = (bodyRect.width - origTotalW * scale) / 2;
+        panY = (bodyRect.height - origTotalH * scale) / 2;
+        renderTransform();
       }
 
       modal.querySelector('#btn-zoom-in').addEventListener('click', (e) => {
         e.stopPropagation();
-        updateScale(currentScale + 0.25);
+        zoomAt(scale * 1.3);
       });
 
       modal.querySelector('#btn-zoom-out').addEventListener('click', (e) => {
         e.stopPropagation();
-        updateScale(currentScale - 0.25);
+        zoomAt(scale / 1.3);
       });
 
       btnZoomReset.addEventListener('click', (e) => {
         e.stopPropagation();
-        updateScale(1.0);
+        fitToScreen();
       });
 
       function closeModal() {
@@ -136,52 +173,92 @@ document.addEventListener('DOMContentLoaded', () => {
 
       modal.querySelector('#btn-modal-close').addEventListener('click', closeModal);
 
-      // Fecha ao clicar fora do conteúdo
-      modalBody.addEventListener('click', (e) => {
-        if (e.target === modalBody) {
-          closeModal();
+      modalBody.addEventListener('mousedown', (e) => {
+        if (e.button !== 0) return;
+        isDragging = true;
+        startX = e.clientX - panX;
+        startY = e.clientY - panY;
+        modalBody.style.cursor = 'grabbing';
+      });
+
+      window.addEventListener('mousemove', (e) => {
+        if (!isDragging) return;
+        panX = e.clientX - startX;
+        panY = e.clientY - startY;
+        renderTransform();
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isDragging) {
+          isDragging = false;
+          modalBody.style.cursor = 'grab';
         }
       });
 
-      // Fecha com a tecla Escape
-      document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && modal.classList.contains('open')) {
-          closeModal();
-        }
-      });
-
-      // Zoom com a roda do mouse (scroll)
       modalBody.addEventListener('wheel', (e) => {
         e.preventDefault();
-        const delta = e.deltaY < 0 ? 0.15 : -0.15;
-        updateScale(currentScale + delta);
+        const factor = e.deltaY < 0 ? 1.18 : 0.85;
+        zoomAt(scale * factor, e.clientX, e.clientY);
       }, { passive: false });
+
+      modalBody.addEventListener('dblclick', (e) => {
+        e.preventDefault();
+        fitToScreen();
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (!modal.classList.contains('open')) return;
+        if (e.key === 'Escape') closeModal();
+        if (e.key === '+' || e.key === '=') zoomAt(scale * 1.25);
+        if (e.key === '-' || e.key === '_') zoomAt(scale / 1.25);
+        if (e.key === '0') fitToScreen();
+      });
+
+      modal.openWithDiagram = function(wrapper) {
+        const svg = wrapper.querySelector('svg');
+        if (!svg) return;
+
+        card.innerHTML = '';
+        const clonedSvg = svg.cloneNode(true);
+        // Preserva o ID original para que todos os seletores CSS do Mermaid permaneçam ativos!
+        card.appendChild(clonedSvg);
+
+        let w = 800;
+        let h = 600;
+        if (svg.viewBox && svg.viewBox.baseVal && svg.viewBox.baseVal.width > 0) {
+          w = svg.viewBox.baseVal.width;
+          h = svg.viewBox.baseVal.height;
+        } else if (svg.getAttribute('viewBox')) {
+          const parts = svg.getAttribute('viewBox').split(/[\s,]+/).map(Number);
+          if (parts.length === 4 && parts[2] > 0) {
+            w = parts[2];
+            h = parts[3];
+          }
+        } else {
+          const b = svg.getBoundingClientRect();
+          w = b.width || 800;
+          h = b.height || 600;
+        }
+
+        clonedSvg.style.width = w + 'px';
+        clonedSvg.style.height = h + 'px';
+        clonedSvg.style.maxWidth = 'none';
+        clonedSvg.style.maxHeight = 'none';
+
+        origTotalW = w + 64;
+        origTotalH = h + 64;
+        card.style.width = origTotalW + 'px';
+        card.style.height = origTotalH + 'px';
+
+        modal.classList.add('open');
+        document.body.style.overflow = 'hidden';
+
+        requestAnimationFrame(() => {
+          fitToScreen();
+        });
+      };
     }
 
-    const modalContent = modal.querySelector('#mermaid-modal-content');
-
-    function openDiagramModal(wrapper) {
-      const svg = wrapper.querySelector('svg');
-      if (!svg) return;
-
-      modalContent.innerHTML = '';
-      const clonedSvg = svg.cloneNode(true);
-      clonedSvg.removeAttribute('id');
-      clonedSvg.style.width = '100%';
-      clonedSvg.style.height = 'auto';
-      clonedSvg.style.maxHeight = '78vh';
-      clonedSvg.style.maxWidth = '88vw';
-      modalContent.appendChild(clonedSvg);
-
-      modalContent.style.transform = 'scale(1.0)';
-      const btnZoomReset = modal.querySelector('#btn-zoom-reset');
-      if (btnZoomReset) btnZoomReset.textContent = '100%';
-
-      modal.classList.add('open');
-      document.body.style.overflow = 'hidden';
-    }
-
-    // Anexa o botão flutuante e listener de clique aos diagramas
     function attachWrappers() {
       document.querySelectorAll('.mermaid-wrapper').forEach(wrapper => {
         if (!wrapper.querySelector('.mermaid-expand-btn')) {
@@ -189,12 +266,11 @@ document.addEventListener('DOMContentLoaded', () => {
           expandBtn.type = 'button';
           expandBtn.className = 'mermaid-expand-btn';
           expandBtn.innerHTML = '🔍 Expandir Diagrama';
-          expandBtn.title = 'Clique para abrir o diagrama em tela cheia com zoom';
+          expandBtn.title = 'Clique para abrir em tela cheia com zoom interativo';
           wrapper.appendChild(expandBtn);
 
-          // Clique no wrapper ou botão abre o modal
           wrapper.addEventListener('click', () => {
-            openDiagramModal(wrapper);
+            modal.openWithDiagram(wrapper);
           });
         }
       });
