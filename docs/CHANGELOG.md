@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [902bf43] — 18/10/2026 às 22:35 (🟡 Médio / Feature)
+
+- **Escopo**: feat(mobile): make header date display dynamic and interactive with calendar picker
+- **Componentes afetados**: `seller.tsx`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [3784444] — 18/10/2026 às 22:22 (🟡 Médio / Feature)
 
 with automatic reset to the first page.
