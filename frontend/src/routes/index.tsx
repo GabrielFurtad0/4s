@@ -137,6 +137,8 @@ function Index() {
   const [info, setInfo] = useState<'settings' | 'help' | 'notifications' | 'profile' | null>(null);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [query, setQuery] = useState('');
+  const [clientSearchQuery, setClientSearchQuery] = useState('');
+  const [targetOrderId, setTargetOrderId] = useState<string | null>(null);
   const [fontScale, setFontScale] = useState<FontScale>(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('totaltrigo_font_scale');
@@ -579,6 +581,9 @@ function Index() {
                   activeModule={module}
                   userProfile={activeProfile}
                   newOrder={() => setMode('mobile')}
+                  initialClientSearch={clientSearchQuery}
+                  targetOrderId={targetOrderId}
+                  onClearTargetOrderId={() => setTargetOrderId(null)}
                 />
               ) : (
                 <Management {...shared} module={module} userProfile={activeProfile} />
@@ -612,6 +617,18 @@ function Index() {
         onSelectModule={(mod) => {
           setModule(mod);
           setMode('desktop');
+        }}
+        onSelectClient={(clientName) => {
+          setClientSearchQuery(clientName);
+          setModule('registrations');
+          setMode('desktop');
+          notify(`Filtrando cliente "${clientName}" em Cadastros & Estoque.`);
+        }}
+        onSelectOrder={(order) => {
+          setModule('orders');
+          setMode('desktop');
+          setTargetOrderId(order.id);
+          notify(`Abrindo conferência do Pedido #${order.id}.`);
         }}
         onNewOrder={() => {
           setMode('mobile');

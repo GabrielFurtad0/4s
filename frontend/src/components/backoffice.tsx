@@ -40,6 +40,7 @@ import {
   Truck,
   UploadCloud,
   Users,
+  X,
   XCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -109,12 +110,30 @@ export function Backoffice({
   activeModule = 'orders',
   userProfile = 'Gabriel Furtado · Backoffice & Fiscal',
   newOrder,
-}: SharedProps & { newOrder: () => void; activeModule?: string; userProfile?: string }) {
+  initialClientSearch,
+  targetOrderId,
+  onClearTargetOrderId,
+}: SharedProps & {
+  newOrder: () => void;
+  activeModule?: string;
+  userProfile?: string;
+  initialClientSearch?: string;
+  targetOrderId?: string | null;
+  onClearTargetOrderId?: () => void;
+}) {
   if (activeModule === 'receivables') {
     return <ReceivablesSection data={data} update={update} notify={notify} userProfile={userProfile} />;
   }
   if (activeModule === 'registrations') {
-    return <RegistrationsSection data={data} update={update} notify={notify} userProfile={userProfile} />;
+    return (
+      <RegistrationsSection
+        data={data}
+        update={update}
+        notify={notify}
+        userProfile={userProfile}
+        initialClientSearch={initialClientSearch}
+      />
+    );
   }
   if (activeModule === 'audit') {
     return <AuditSection notify={notify} userProfile={userProfile} />;
@@ -144,6 +163,14 @@ export function Backoffice({
 
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (targetOrderId) {
+      setSelectedId(targetOrderId);
+      setEditing(false);
+      onClearTargetOrderId?.();
+    }
+  }, [targetOrderId, onClearTargetOrderId]);
   const [editing, setEditing] = useState(false);
   const [editItems, setEditItems] = useState<Item[]>([]);
   const [packing, setPacking] = useState(false);
@@ -1588,14 +1615,24 @@ function RegistrationsSection({
   update,
   notify,
   userProfile,
+  initialClientSearch,
 }: {
   data: AppData;
   update: (next: AppData) => void;
   notify: (message: string) => void;
   userProfile?: string | undefined;
+  initialClientSearch?: string;
 }) {
   const [subTab, setSubTab] = useState<'clients' | 'products' | 'prices'>('clients');
-  const [clientSearch, setClientSearch] = useState('');
+  const [clientSearch, setClientSearch] = useState(initialClientSearch ?? '');
+
+  useEffect(() => {
+    if (initialClientSearch !== undefined && initialClientSearch !== '') {
+      setClientSearch(initialClientSearch);
+      setSubTab('clients');
+      setClientPage(1);
+    }
+  }, [initialClientSearch]);
   const [clientPage, setClientPage] = useState(1);
   const [clientPageSize, setClientPageSize] = useState(10);
   const [editingClient, setEditingClient] = useState<any | null>(null);
@@ -1848,6 +1885,20 @@ function RegistrationsSection({
                 placeholder="Buscar cliente por nome, CNPJ ou bairro..."
                 aria-label="Buscar cliente"
               />
+              {clientSearch && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setClientSearch('');
+                    setClientPage(1);
+                  }}
+                  className="text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
+                  title="Limpar busca"
+                  aria-label="Limpar busca"
+                >
+                  <X size={14} />
+                </button>
+              )}
             </div>
           </div>
 
