@@ -27,6 +27,7 @@ import {
   Landmark,
   Layers,
   Loader2,
+  NotebookPen,
   Package,
   Plus,
   Printer,
@@ -1661,7 +1662,7 @@ function RegistrationsSection({
             className="text-xs gap-1.5"
             onClick={() => setSubTab('prices')}
           >
-            <CreditCard size={14} />
+            <NotebookPen size={14} />
             Memória de Preços por Cliente
           </Button>
         </div>
@@ -1758,10 +1759,27 @@ function RegistrationsSection({
                   </tr>
                 ) : (
                   paginatedClients.map(c => (
-                    <tr key={c.id}>
+                    <tr
+                      key={c.id}
+                      className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                      onClick={() => {
+                        setSelectedPriceClient(c.id);
+                        setSubTab('prices');
+                      }}
+                      title={`Clique para abrir a Memória de Preços de ${c.name}`}
+                    >
                       <td>
-                        <strong>{c.name}</strong>
-                        <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
+                        <div className="flex items-center justify-between gap-2">
+                          <div>
+                            <strong className="group-hover:text-primary transition-colors">{c.name}</strong>
+                            <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
+                          </div>
+                          <NotebookPen
+                            size={13}
+                            className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mr-1"
+                            title="Ver memória de preços"
+                          />
+                        </div>
                       </td>
                       <td>
                         <span className="font-mono text-xs">{c.cnpj || 'Sem CNPJ'}</span>
@@ -1794,7 +1812,8 @@ function RegistrationsSection({
                           variant="outline"
                           size="sm"
                           className="h-7 text-xs gap-1"
-                          onClick={() => {
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setEditingClient({
                               id: c.dbId ?? Number(c.id),
                               corporateName: c.name,
@@ -1956,7 +1975,8 @@ function RegistrationsSection({
         <section className="orders-section">
           <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
             <div className="flex items-center gap-3">
-              <label className="text-xs font-semibold text-foreground">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <NotebookPen size={14} className="text-primary" />
                 Selecione o Cliente:
               </label>
               <select
