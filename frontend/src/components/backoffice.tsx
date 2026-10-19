@@ -1477,6 +1477,8 @@ function RegistrationsSection({
 }) {
   const [subTab, setSubTab] = useState<'clients' | 'products' | 'prices'>('clients');
   const [clientSearch, setClientSearch] = useState('');
+  const [clientPage, setClientPage] = useState(1);
+  const [clientPageSize, setClientPageSize] = useState(10);
   const [editingClient, setEditingClient] = useState<any | null>(null);
   const [clientModalOpen, setClientModalOpen] = useState(false);
   const [lookingUpCnpj, setLookingUpCnpj] = useState(false);
@@ -1623,6 +1625,13 @@ function RegistrationsSection({
     return c.name.toLowerCase().includes(q) || c.cnpj.includes(q) || c.neighborhood.toLowerCase().includes(q);
   });
 
+  const totalClientPages = Math.max(1, Math.ceil(filteredClients.length / clientPageSize));
+  const safeClientPage = Math.min(clientPage, totalClientPages);
+  const paginatedClients = filteredClients.slice(
+    (safeClientPage - 1) * clientPageSize,
+    safeClientPage * clientPageSize
+  );
+
   return (
     <div className="space-y-6">
       {/* Abas Superiores de Cadastros */}
@@ -1699,7 +1708,7 @@ function RegistrationsSection({
               }}
             >
               <Plus size={14} />
-              + Novo Cliente
+              Novo Cliente
             </Button>
           </div>
         )}
@@ -1713,14 +1722,17 @@ function RegistrationsSection({
               <Search size={16} />
               <input
                 value={clientSearch}
-                onChange={e => setClientSearch(e.target.value)}
+                onChange={e => {
+                  setClientSearch(e.target.value);
+                  setClientPage(1);
+                }}
                 placeholder="Buscar cliente por nome, CNPJ ou bairro..."
                 aria-label="Buscar cliente"
               />
             </div>
           </div>
 
-          <div className="table-scroll">
+          <div className="table-scroll max-h-[calc(100vh-320px)] min-h-[380px] overflow-y-auto">
             <table className="data-table">
               <thead>
                 <tr>
@@ -1734,72 +1746,131 @@ function RegistrationsSection({
                 </tr>
               </thead>
               <tbody>
-                {filteredClients.map(c => (
-                  <tr key={c.id}>
-                    <td>
-                      <strong>{c.name}</strong>
-                      <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
-                    </td>
-                    <td>
-                      <span className="font-mono text-xs">{c.cnpj || 'Sem CNPJ'}</span>
-                      <p className="text-[10px] text-muted-foreground">{c.ie ? `IE: ${c.ie}` : 'IE Pendente'}</p>
-                    </td>
-                    <td>
-                      <span className="text-xs">{c.neighborhood}, SP</span>
-                      <p className="text-[10px] text-muted-foreground">Ciclo: a cada {c.cycle} dias</p>
-                    </td>
-                    <td>
-                      <span className="text-xs">{c.buyer}</span>
-                      <p className="text-[10px] text-muted-foreground">{c.time || '10:00'}</p>
-                    </td>
-                    <td>
-                      <span className="status-badge neutral text-xs">Boleto 28 dias</span>
-                    </td>
-                    <td>
-                      {c.overdue ? (
-                        <span className="status-badge danger">
-                          <AlertTriangle size={12} /> Boleto Vencido
-                        </span>
-                      ) : (
-                        <span className="status-badge success">
-                          <CheckCheck size={12} /> Em dia
-                        </span>
-                      )}
-                    </td>
-                    <td>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-7 text-xs gap-1"
-                        onClick={() => {
-                          setEditingClient({
-                            id: c.dbId ?? Number(c.id),
-                            corporateName: c.name,
-                            tradeName: c.name,
-                            cnpj: c.cnpj,
-                            stateRegistration: c.ie,
-                            ieIndicator: 'CONTRIBUINTE',
-                            purchaseProfile: 'INDUSTRIALIZACAO',
-                            neighborhood: c.neighborhood,
-                            city: 'São Paulo',
-                            state: 'SP',
-                            ibgeCityCode: c.ibge || '3550308',
-                            contactName: c.buyer,
-                            defaultPaymentTerms: 'Boleto 28 dias',
-                            averagePurchaseCycleDays: c.cycle,
-                            financialStatus: c.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
-                          });
-                          setClientModalOpen(true);
-                        }}
-                      >
-                        <Edit size={12} />
-                        Editar
-                      </Button>
+                {paginatedClients.length === 0 ? (
+                  <tr>
+                    <td colSpan={7} className="text-center py-12 text-muted-foreground">
+                      <div className="flex flex-col items-center justify-center gap-2">
+                        <Search size={22} className="text-muted-foreground/60" />
+                        <strong className="text-sm text-foreground">Nenhum cliente encontrado</strong>
+                        <p className="text-xs">Tente buscar por outro termo ou cadastre um novo cliente.</p>
+                      </div>
                     </td>
                   </tr>
-                ))}
+                ) : (
+                  paginatedClients.map(c => (
+                    <tr key={c.id}>
+                      <td>
+                        <strong>{c.name}</strong>
+                        <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
+                      </td>
+                      <td>
+                        <span className="font-mono text-xs">{c.cnpj || 'Sem CNPJ'}</span>
+                        <p className="text-[10px] text-muted-foreground">{c.ie ? `IE: ${c.ie}` : 'IE Pendente'}</p>
+                      </td>
+                      <td>
+                        <span className="text-xs">{c.neighborhood}, SP</span>
+                        <p className="text-[10px] text-muted-foreground">Ciclo: a cada {c.cycle} dias</p>
+                      </td>
+                      <td>
+                        <span className="text-xs">{c.buyer}</span>
+                        <p className="text-[10px] text-muted-foreground">{c.time || '10:00'}</p>
+                      </td>
+                      <td>
+                        <span className="status-badge neutral text-xs">Boleto 28 dias</span>
+                      </td>
+                      <td>
+                        {c.overdue ? (
+                          <span className="status-badge danger">
+                            <AlertTriangle size={12} /> Boleto Vencido
+                          </span>
+                        ) : (
+                          <span className="status-badge success">
+                            <CheckCheck size={12} /> Em dia
+                          </span>
+                        )}
+                      </td>
+                      <td>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-7 text-xs gap-1"
+                          onClick={() => {
+                            setEditingClient({
+                              id: c.dbId ?? Number(c.id),
+                              corporateName: c.name,
+                              tradeName: c.name,
+                              cnpj: c.cnpj,
+                              stateRegistration: c.ie,
+                              ieIndicator: 'CONTRIBUINTE',
+                              purchaseProfile: 'INDUSTRIALIZACAO',
+                              neighborhood: c.neighborhood,
+                              city: 'São Paulo',
+                              state: 'SP',
+                              ibgeCityCode: c.ibge || '3550308',
+                              contactName: c.buyer,
+                              defaultPaymentTerms: 'Boleto 28 dias',
+                              averagePurchaseCycleDays: c.cycle,
+                              financialStatus: c.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
+                            });
+                            setClientModalOpen(true);
+                          }}
+                        >
+                          <Edit size={12} />
+                          Editar
+                        </Button>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
+          </div>
+
+          <div className="table-footer">
+            <div className="flex items-center gap-3">
+              <span>
+                Mostrando {filteredClients.length ? (safeClientPage - 1) * clientPageSize + 1 : 0}–{Math.min(safeClientPage * clientPageSize, filteredClients.length)} de {filteredClients.length} clientes
+              </span>
+              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span className="text-[11px]">Por pág:</span>
+                <select
+                  value={clientPageSize}
+                  onChange={e => {
+                    setClientPageSize(Number(e.target.value));
+                    setClientPage(1);
+                  }}
+                  className="bg-transparent border border-border rounded px-1.5 py-0.5 text-xs text-foreground cursor-pointer"
+                  aria-label="Clientes por página"
+                >
+                  <option value={10}>10</option>
+                  <option value={20}>20</option>
+                  <option value={50}>50</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Página anterior"
+                disabled={safeClientPage <= 1}
+                onClick={() => setClientPage(p => Math.max(1, p - 1))}
+              >
+                <ChevronLeft />
+              </Button>
+              <span className="page-number">
+                {safeClientPage} / {totalClientPages}
+              </span>
+              <Button
+                variant="outline"
+                size="icon"
+                aria-label="Próxima página"
+                disabled={safeClientPage >= totalClientPages}
+                onClick={() => setClientPage(p => Math.min(totalClientPages, p + 1))}
+              >
+                <ChevronRight />
+              </Button>
+            </div>
           </div>
         </section>
       )}
