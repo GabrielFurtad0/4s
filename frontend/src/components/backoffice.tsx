@@ -19,7 +19,6 @@ import {
   DollarSign,
   Edit,
   ExternalLink,
-  Eye,
   FileCheck2,
   FileCode2,
   FileText,
@@ -398,26 +397,19 @@ export function Backoffice({
                   : 'Apenas Saldo Base (BQ)'}
               </Button>
             )}
-            <Button
-              variant="outline"
-              size="sm"
-              className="h-7 text-xs gap-1.5 font-medium cursor-pointer"
-              onClick={toggleStockCollapsed}
-              aria-expanded={!stockCollapsed}
-              aria-label={stockCollapsed ? 'Expandir estoque detalhado' : 'Recolher estoque'}
-            >
-              {stockCollapsed ? (
-                <>
-                  <ChevronDown size={13} />
-                  <span>Expandir estoque detalhado</span>
-                </>
-              ) : (
-                <>
-                  <ChevronUp size={13} />
-                  <span>Recolher estoque</span>
-                </>
-              )}
-            </Button>
+            {!stockCollapsed && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5 font-medium cursor-pointer"
+                onClick={toggleStockCollapsed}
+                aria-expanded={true}
+                aria-label="Recolher estoque"
+              >
+                <ChevronUp size={13} />
+                <span>Recolher estoque</span>
+              </Button>
+            )}
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="online-dot" />
               Atualizado em tempo real
@@ -821,10 +813,6 @@ export function Backoffice({
                     <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20">
                       {readySacks} / {totalRouteSacks} sacas liberadas
                     </span>
-                    <span className="hidden sm:inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium bg-primary/10 text-primary border border-primary/20 hover:bg-primary/20 transition-colors">
-                      <Eye size={10} />
-                      Ver Detalhes da Rota
-                    </span>
                   </div>
                   <p>
                     Consolidação física da rota ativa ({uniqueClientsCount}{' '}
@@ -853,19 +841,6 @@ export function Backoffice({
                     <strong className="numeric font-bold text-foreground">{money(estimatedFreight)}</strong>
                   </div>
                 )}
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-7 px-2.5 text-[11px] font-semibold gap-1.5 border-primary/30 text-primary hover:bg-primary/5"
-                  onClick={e => {
-                    e.stopPropagation();
-                    setRouteModalOpen(true);
-                  }}
-                >
-                  <Eye size={12} />
-                  Ver Entregas
-                </Button>
 
                 <Button
                   variant="outline"
