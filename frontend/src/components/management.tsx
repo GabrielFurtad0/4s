@@ -161,14 +161,21 @@ export function Management({ module, data, update, notify, userProfile }: Shared
   if (module === 'import')
     return (
       <>
-        <div className="section-heading mb-2">
+        <div className="section-heading mb-2.5">
           <div className="flex items-center gap-2">
-            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
-              <Calculator size={16} className="text-primary" />
-              Calculadora de Importação & Landed Cost
-            </h3>
+            <div className="w-7 h-7 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+              <Calculator size={16} />
+            </div>
+            <div>
+              <h3 className="text-sm font-bold text-foreground">
+                Calculadora de Importação & Landed Cost
+              </h3>
+              <p className="text-[11px] text-muted-foreground">
+                Simule compra na origem (FOB), frete, impostos e calcule a entrada no Estoque Dual (BQ = DQ).
+              </p>
+            </div>
           </div>
-          <span className="status-badge neutral text-[10.5px] py-0.5 px-2.5">
+          <span className="status-badge neutral text-xs py-1 px-3">
             {data.backendConnected ? 'Integrado ao Estoque Dual (BQ = DQ)' : 'Simulação'}
           </span>
         </div>
@@ -178,11 +185,11 @@ export function Management({ module, data, update, notify, userProfile }: Shared
             <div className="import-card">
               <div className="import-card-section">
                 <span className="import-section-title">Câmbio e Custos Aduaneiros</span>
-                <div className="grid grid-cols-3 gap-2.5 mt-1.5">
+                <div className="grid grid-cols-3 gap-3.5 mt-2">
                   <label className="import-field">
                     <span>Dólar comercial (R$)</span>
                     <input
-                      className="form-input numeric import-input"
+                      className="form-input numeric import-input font-medium"
                       type="number"
                       min="0"
                       step="0.01"
@@ -193,7 +200,7 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                   <label className="import-field">
                     <span>Frete internacional (US$)</span>
                     <input
-                      className="form-input numeric import-input"
+                      className="form-input numeric import-input font-medium"
                       type="number"
                       min="0"
                       value={freight}
@@ -203,7 +210,7 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                   <label className="import-field">
                     <span>Despachante aduaneiro (R$)</span>
                     <input
-                      className="form-input numeric import-input"
+                      className="form-input numeric import-input font-medium"
                       type="number"
                       min="0"
                       value={broker}
@@ -213,9 +220,9 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                 </div>
               </div>
 
-              <div className="import-card-section mt-2 pt-2 border-t border-border/60">
+              <div className="import-card-section mt-3 pt-2.5 border-t border-border">
                 <span className="import-section-title">Impostos de Nacionalização</span>
-                <div className="grid grid-cols-4 gap-2.5 mt-1.5">
+                <div className="grid grid-cols-4 gap-3 mt-2">
                   {[
                     { label: 'II (Imp. Importação · R$)', val: taxes[0], idx: 0 },
                     { label: 'IPI (R$)', val: taxes[1], idx: 1 },
@@ -225,7 +232,7 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                     <label key={item.label} className="import-field">
                       <span>{item.label}</span>
                       <input
-                        className="form-input numeric import-input"
+                        className="form-input numeric import-input font-medium"
                         type="number"
                         min="0"
                         value={item.val}
@@ -237,16 +244,23 @@ export function Management({ module, data, update, notify, userProfile }: Shared
               </div>
             </div>
 
-            <div className="import-card">
-              <div className="flex items-center justify-between mb-1.5">
-                <span className="import-section-title">Mercadorias do Lote (Entrada Físico DQ = Base BQ)</span>
-                <span className="text-[10px] text-muted-foreground font-mono">3 SKUs ativos</span>
+            <div className="import-card import-card-goods">
+              <div className="flex items-center justify-between mb-2">
+                <div>
+                  <span className="import-section-title">Mercadorias do Lote (Entrada Físico DQ = Base BQ)</span>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Informe o valor total FOB (US$) e a quantidade de sacos (25kg) para cada SKU.
+                  </p>
+                </div>
+                <span className="text-xs text-muted-foreground font-mono bg-muted/60 px-2 py-0.5 rounded">
+                  3 SKUs ativos
+                </span>
               </div>
 
               <div className="import-skus-table">
                 <div className="import-skus-header">
                   <div>Produto</div>
-                  <div className="flex items-center gap-1 justify-end pr-1">
+                  <div className="flex items-center gap-1 justify-end pr-2">
                     <span>FOB Total (US$)</span>
                     <TooltipProvider delayDuration={100}>
                       <UiTooltip>
@@ -256,7 +270,7 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                             className="cursor-help text-muted-foreground hover:text-primary transition-colors inline-flex items-center p-0.5 rounded hover:bg-muted"
                             aria-label="O que é FOB?"
                           >
-                            <Info size={12} className="text-primary/70 hover:text-primary" />
+                            <Info size={13} className="text-primary/70 hover:text-primary" />
                           </button>
                         </TooltipTrigger>
                         <TooltipContent
@@ -273,28 +287,28 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                       </UiTooltip>
                     </TooltipProvider>
                   </div>
-                  <div className="text-right pr-1">Quantidade (DQ=BQ)</div>
-                  <div className="text-right pr-1">Custo Lote (un.)</div>
+                  <div className="text-right pr-2">Quantidade (DQ = BQ)</div>
+                  <div className="text-right pr-2">Custo Lote (un.)</div>
                   <div className="text-right">Novo Custo Médio</div>
                 </div>
 
                 {data.products.map((p, i) => (
                   <div key={p.id} className="import-sku-row">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className={`sku-symbol sku-${p.id.toLowerCase()} !w-6 !h-6 !rounded`}>
-                        <Package size={13} />
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className={`sku-symbol sku-${p.id.toLowerCase()} !w-8 !h-8 !rounded-lg`}>
+                        <Package size={17} />
                       </div>
                       <div className="min-w-0">
-                        <strong className="block text-xs font-semibold text-foreground truncate">{p.name}</strong>
-                        <span className="text-[9.5px] text-muted-foreground numeric block">
-                          Atual: {p.physical} un · {money(p.cost)}
+                        <strong className="block text-[13px] font-semibold text-foreground truncate">{p.name}</strong>
+                        <span className="text-[11px] text-muted-foreground numeric block mt-0.5">
+                          Estoque atual: {p.physical} un · Custo atual: {money(p.cost)}
                         </span>
                       </div>
                     </div>
 
                     <div className="import-cell-input">
                       <input
-                        className="form-input numeric import-input text-right"
+                        className="form-input numeric import-input text-right font-semibold"
                         type="number"
                         min="0"
                         value={fob[i]}
@@ -304,7 +318,7 @@ export function Management({ module, data, update, notify, userProfile }: Shared
 
                     <div className="import-cell-input">
                       <input
-                        className="form-input numeric import-input text-right"
+                        className="form-input numeric import-input text-right font-semibold"
                         type="number"
                         min="1"
                         value={quantities[i]}
@@ -314,13 +328,13 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                       />
                     </div>
 
-                    <div className="text-xs font-semibold numeric text-foreground text-right pr-1">
+                    <div className="text-sm font-semibold numeric text-foreground text-right pr-2">
                       {money(landed[i] ?? 0)}
-                      <span className="text-[9.5px] text-muted-foreground font-normal ml-0.5">/sc</span>
+                      <span className="text-[10px] text-muted-foreground font-normal ml-0.5">/sc</span>
                     </div>
 
                     <div className="text-right">
-                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold font-mono text-primary bg-primary/10 border border-primary/20">
+                      <span className="inline-flex items-center px-2.5 py-1 rounded-md text-xs font-bold font-mono text-primary bg-primary/10 border border-primary/20">
                         {money(weightedPreview[i] ?? p.cost)}
                       </span>
                     </div>
@@ -331,93 +345,97 @@ export function Management({ module, data, update, notify, userProfile }: Shared
           </section>
 
           <aside className="landed-summary">
-            <div className="flex items-center justify-between pb-2 border-b border-border/60">
-              <div className="flex items-center gap-2">
-                <div className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center">
-                  <Calculator size={14} />
+            <div>
+              <div className="flex items-center gap-2.5 pb-2.5 border-b border-border/80">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <Calculator size={18} />
                 </div>
                 <div>
-                  <h3 className="text-xs font-bold text-foreground">Landed Cost & Médio</h3>
-                  <span className="text-[9.5px] text-muted-foreground block -mt-0.5">Custo nacionalizado do lote</span>
+                  <h3 className="text-sm font-bold text-foreground">Landed Cost & Médio</h3>
+                  <span className="text-[11px] text-muted-foreground block -mt-0.5">Custo nacionalizado do lote</span>
+                </div>
+              </div>
+
+              <div className="my-3">
+                <span className="text-[10px] uppercase font-semibold tracking-wider text-muted-foreground block">
+                  Total Previsto do Lote
+                </span>
+                <h2 className="numeric text-2xl font-bold tracking-tight text-foreground mt-1">
+                  {money(fobTotal * fx + shared)}
+                </h2>
+              </div>
+
+              <div className="cost-details">
+                <div>
+                  <span>Mercadoria (FOB)</span>
+                  <b className="numeric">{money(fobTotal * fx)}</b>
+                </div>
+                <div>
+                  <span>Frete internacional</span>
+                  <b className="numeric">{money(freight * fx)}</b>
+                </div>
+                <div>
+                  <span>Impostos + despachante</span>
+                  <b className="numeric">{money(broker + taxes.reduce((a, b) => a + b, 0))}</b>
+                </div>
+              </div>
+
+              <div className="cost-details border-b-0 pb-0">
+                <span className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider block mb-1.5">
+                  Novo Custo Médio Ponderado
+                </span>
+                <div className="space-y-1.5">
+                  {data.products.map((p, i) => (
+                    <div key={p.id} className="flex items-center justify-between py-0.5">
+                      <span className="text-xs truncate pr-1 text-muted-foreground">
+                        {p.name.replace('Farinha de Trigo ', '')}
+                      </span>
+                      <b className="numeric text-xs font-bold text-primary" title="Novo Custo Médio Ponderado">
+                        {money(weightedPreview[i] ?? 0)}
+                      </b>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="my-2">
-              <span className="text-[9.5px] uppercase font-semibold tracking-wider text-muted-foreground block">
-                Total Previsto do Lote
-              </span>
-              <h2 className="numeric text-xl font-bold tracking-tight text-foreground mt-0.5">
-                {money(fobTotal * fx + shared)}
-              </h2>
+            <div className="mt-auto pt-3 border-t border-border/60">
+              <Button
+                className="w-full h-10 font-semibold text-xs shadow-sm flex items-center justify-center gap-2"
+                onClick={async () => {
+                  if (
+                    quantities.some(q => !Number.isInteger(q) || q <= 0) ||
+                    [fx, freight, broker, ...taxes, ...fob].some(v => v < 0) ||
+                    fx <= 0 ||
+                    fobTotal <= 0
+                  ) {
+                    notify('Confira os valores e as quantidades do lote.');
+                    return;
+                  }
+                  try {
+                    const next = await registerImportBatchApi(data, {
+                      fx,
+                      freightUsd: freight,
+                      brokerBrl: broker,
+                      taxesBrl: taxes,
+                      quantities,
+                      fobTotalUsdPerSku: fob,
+                    });
+                    update(next);
+                    notify('Lote registrado no servidor. Estoque Físico (DQ), Saldo Base (BQ) e Custo Médio Ponderado atualizados.');
+                  } catch {
+                    update(applyImportBatchLocal(data, quantities, landed));
+                    notify('Lote aplicado. Estoque Dual (BQ = DQ) e Custo Médio Ponderado atualizados.');
+                  }
+                }}
+              >
+                <Plus size={15} />
+                Adicionar Lote
+              </Button>
+              <p className="text-[10.5px] text-muted-foreground mt-2 leading-relaxed text-center">
+                Aplica entrada no Estoque Físico (DQ) e Base (BQ), recalculando o Custo Médio.
+              </p>
             </div>
-
-            <div className="cost-details">
-              <div>
-                <span>Mercadoria (FOB)</span>
-                <b className="numeric">{money(fobTotal * fx)}</b>
-              </div>
-              <div>
-                <span>Frete internacional</span>
-                <b className="numeric">{money(freight * fx)}</b>
-              </div>
-              <div>
-                <span>Impostos + despachante</span>
-                <b className="numeric">{money(broker + taxes.reduce((a, b) => a + b, 0))}</b>
-              </div>
-            </div>
-
-            <div className="cost-details">
-              <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block mb-0.5">
-                Novo Custo Médio Ponderado
-              </span>
-              {data.products.map((p, i) => (
-                <div key={p.id}>
-                  <span className="truncate pr-1">
-                    {p.name.replace('Farinha de Trigo ', '')}
-                  </span>
-                  <b className="numeric text-primary" title="Novo Custo Médio Ponderado">
-                    {money(weightedPreview[i] ?? 0)}
-                  </b>
-                </div>
-              ))}
-            </div>
-
-            <Button
-              className="w-full mt-3 h-8 font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
-              onClick={async () => {
-                if (
-                  quantities.some(q => !Number.isInteger(q) || q <= 0) ||
-                  [fx, freight, broker, ...taxes, ...fob].some(v => v < 0) ||
-                  fx <= 0 ||
-                  fobTotal <= 0
-                ) {
-                  notify('Confira os valores e as quantidades do lote.');
-                  return;
-                }
-                try {
-                  const next = await registerImportBatchApi(data, {
-                    fx,
-                    freightUsd: freight,
-                    brokerBrl: broker,
-                    taxesBrl: taxes,
-                    quantities,
-                    fobTotalUsdPerSku: fob,
-                  });
-                  update(next);
-                  notify('Lote registrado no servidor. Estoque Físico (DQ), Saldo Base (BQ) e Custo Médio Ponderado atualizados.');
-                } catch {
-                  update(applyImportBatchLocal(data, quantities, landed));
-                  notify('Lote aplicado. Estoque Dual (BQ = DQ) e Custo Médio Ponderado atualizados.');
-                }
-              }}
-            >
-              <Plus size={14} />
-              Adicionar Lote
-            </Button>
-            <p className="text-[9.5px] text-muted-foreground mt-1.5 leading-tight text-center">
-              Aplica entrada no Estoque Físico (DQ) e Base (BQ), recalculando o Custo Médio.
-            </p>
           </aside>
         </div>
       </>
