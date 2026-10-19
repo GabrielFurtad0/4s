@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [3261f18] — 18/10/2026 às 22:19 (🔴 Estrutural / Crítico)
+
+- Refatoração do layout da Calculadora de Importação para preenchimento integral do *viewport*,
+
 ### [5e39772] — 18/10/2026 às 22:14 (🔴 Estrutural / Crítico)
 
 - Implementação de seletor de data para a primeira parcela no módulo de vendas, com geração automática de
