@@ -15,17 +15,19 @@ Atualmente, muitas empresas distribuidoras realizam a emissão de cobranças ban
 ```mermaid
 flowchart LR
     subgraph LEGADO["Fluxo Legado (CNAB / Manual)"]
-        A1["Faturamento ERP"] -->|Gera Arquivo| A2["Arquivo Remessa .REM"]
-        A2 -->|Upload Manual| A3["Internet Banking Sicredi"]
-        A3 -->|Compensação D+1/D+2| A4["Arquivo Retorno .RET"]
-        A4 -->|Download Manual| A5["Baixa no ERP"]
+        direction TB
+        A1["Faturamento ERP"] -->|"Gera Arquivo"| A2["Arquivo Remessa .REM"]
+        A2 -->|"Upload Manual"| A3["Internet Banking Sicredi"]
+        A3 -->|"Compensação D+1 e D+2"| A4["Arquivo Retorno .RET"]
+        A4 -->|"Download Manual"| A5["Baixa no ERP"]
     end
 
     subgraph API_REST["Fluxo Moderno 4S ERP (API REST + Webhook)"]
-        B1["Aprovação Mesa Pré-Nota"] -->|POST REST (1s)| B2["API Cobrança Sicredi"]
-        B2 -->|PDF + QR Code Pix| B1
-        B3["Cliente Paga (Pix ou Boleto)"] -->|Notificação Instantânea| B4["Webhook Sicredi"]
-        B4 -->|Baixa Atômica| B5["4S ERP (Crédito Liberado)"]
+        direction TB
+        B1["Aprovação Mesa Pré-Nota"] -->|"Emissão Online (1s)"| B2["API Cobrança Sicredi"]
+        B2 -->|"Gera Boleto Híbrido"| B3["Cliente Paga (Pix ou Boleto)"]
+        B3 -->|"Notificação Instantânea"| B4["Webhook Sicredi"]
+        B4 -->|"Baixa Automática"| B5["4S ERP (Crédito Liberado)"]
     end
 ```
 

@@ -60,8 +60,9 @@ document.addEventListener('DOMContentLoaded', () => {
     headings.forEach(heading => observer.observe(heading));
   }
 
-  // 3. Botão de Copiar Código nos blocos <pre>
-  document.querySelectorAll('pre').forEach(pre => {
+  // 3. Botão de Copiar Código nos blocos <pre> (ignora diagramas Mermaid)
+  document.querySelectorAll('pre:not(.mermaid)').forEach(pre => {
+    if (pre.closest('.mermaid-wrapper') || pre.classList.contains('mermaid')) return;
     const btn = document.createElement('button');
     btn.className = 'copy-code-btn';
     btn.type = 'button';

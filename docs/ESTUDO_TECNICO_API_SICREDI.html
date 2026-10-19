@@ -146,17 +146,19 @@
           <pre class="mermaid">
 flowchart LR
     subgraph LEGADO["Fluxo Legado (CNAB / Manual)"]
-        A1["Faturamento ERP"] -->|Gera Arquivo| A2["Arquivo Remessa .REM"]
-        A2 -->|Upload Manual| A3["Internet Banking Sicredi"]
-        A3 -->|Compensação D+1/D+2| A4["Arquivo Retorno .RET"]
-        A4 -->|Download Manual| A5["Baixa no ERP"]
+        direction TB
+        A1["Faturamento ERP"] -->|"Gera Arquivo"| A2["Arquivo Remessa .REM"]
+        A2 -->|"Upload Manual"| A3["Internet Banking Sicredi"]
+        A3 -->|"Compensação D+1 e D+2"| A4["Arquivo Retorno .RET"]
+        A4 -->|"Download Manual"| A5["Baixa no ERP"]
     end
 
     subgraph API_REST["Fluxo Moderno 4S ERP (API REST + Webhook)"]
-        B1["Aprovação Mesa Pré-Nota"] -->|POST REST (1s)| B2["API Cobrança Sicredi"]
-        B2 -->|PDF + QR Code Pix| B1
-        B3["Cliente Paga (Pix ou Boleto)"] -->|Notificação Instantânea| B4["Webhook Sicredi"]
-        B4 -->|Baixa Atômica| B5["4S ERP (Crédito Liberado)"]
+        direction TB
+        B1["Aprovação Mesa Pré-Nota"] -->|"Emissão Online (1s)"| B2["API Cobrança Sicredi"]
+        B2 -->|"Gera Boleto Híbrido"| B3["Cliente Paga (Pix ou Boleto)"]
+        B3 -->|"Notificação Instantânea"| B4["Webhook Sicredi"]
+        B4 -->|"Baixa Automática"| B5["4S ERP (Crédito Liberado)"]
     end
           </pre>
         </div>
@@ -213,8 +215,8 @@ flowchart LR
 flowchart TD
     PED["Pedido Comercial Fechado pelo Sr. Sérgio"] --> SEPARACAO{"Desdobramento de Quantidades"}
     
-    SEPARACAO -->|Volume Físico Real| DQ["DQ (Delivered Quantity)<br/>Exemplo: 20 Sacas Entregues"]
-    SEPARACAO -->|Volume Faturado Oficial| BQ["BQ (Base Quantity)<br/>Exemplo: 15 Sacas Faturadas"]
+    SEPARACAO -->|"Volume Físico Real"| DQ["DQ (Delivered Quantity)<br/>Exemplo: 20 Sacas Entregues"]
+    SEPARACAO -->|"Volume Faturado Oficial"| BQ["BQ (Base Quantity)<br/>Exemplo: 15 Sacas Faturadas"]
 
     DQ --> ESTOQUE["Baixa no Estoque Físico: 20 Sacas"]
     DQ --> FRETE["Custo Frete: 20 × R$ 4,00 = R$ 80,00"]
@@ -243,18 +245,18 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor Cliente as Padaria / Padeiro
-    participant AppBanco as App Bancário (Qualquer Banco)
-    participant SPI as SPI / Pix (Banco Central)
+    participant AppBanco as App Bancário
+    participant SPI as Pix SPI (Banco Central)
     participant Sicredi as Sicredi Cobrança
-    participant Webhook as Endpoint 4S ERP (/api/webhooks/sicredi)
-    participant ERP as Banco 4S ERP
+    participant Webhook as Endpoint Webhook ERP
+    participant ERP as Banco de Dados 4S ERP
 
     Cliente->>AppBanco: Lê QR Code Pix do Boleto e Paga
     AppBanco->>SPI: Transfere valor instantaneamente
     SPI->>Sicredi: Liquidação financeira na conta Total Trigo
-    Sicredi->>Webhook: POST https://api.totaltrigo.com.br/api/webhooks/sicredi
-    Note over Sicredi,Webhook: Header: X-Sicredi-Signature (HMAC-SHA256)
-    Webhook->>Webhook: Valida assinatura de segurança com Chave Master
+    Sicredi->>Webhook: POST /api/webhooks/sicredi (Notificação)
+    Note over Sicredi,Webhook: Header X-Sicredi-Signature (HMAC-SHA256)
+    Webhook->>Webhook: Valida assinatura com Chave Master
     Webhook->>ERP: Baixa atômica do título e atualiza pedido para LIQUIDADO
     Webhook-->>Sicredi: HTTP 200 OK
           </pre>

@@ -14,11 +14,11 @@ Atualmente, a Total Trigo opera com um fluxo fragmentado e dependente do softwar
 ```mermaid
 flowchart LR
     subgraph ATUAL["Fluxo Legado (Manual e Lento)"]
-        A["Vendedor em Campo<br/>(Sr. Sérgio)"] -->|WhatsApp / Bloco| B["Operador Backoffice<br/>(Gabriel)"]
-        B -->|Redigitação Manual| C["Emissor Sebrae<br/>Desktop"]
-        C -->|Assina e Envia| D["SEFAZ-SP"]
-        D -->|XML / DANFE| C
-        C -->|Exportação ZIP Manual| E["Script Python<br/>Atualiza Estoque"]
+        A["Vendedor em Campo<br/>(Sr. Sérgio)"] -->|"WhatsApp ou Bloco"| B["Operador Backoffice<br/>(Gabriel)"]
+        B -->|"Redigitação Manual"| C["Emissor Sebrae<br/>Desktop"]
+        C -->|"Assina e Envia"| D["SEFAZ-SP"]
+        D -->|"XML e DANFE"| C
+        C -->|"Exportação ZIP Manual"| E["Script Python<br/>Atualiza Estoque"]
     end
 ```
 

@@ -150,11 +150,11 @@
           <pre class="mermaid">
 flowchart LR
     subgraph ATUAL["Fluxo Legado (Manual e Lento)"]
-        A["Vendedor em Campo<br/>(Sr. Sérgio)"] -->|WhatsApp / Bloco| B["Operador Backoffice<br/>(Gabriel)"]
-        B -->|Redigitação Manual| C["Emissor Sebrae<br/>Desktop"]
-        C -->|Assina e Envia| D["SEFAZ-SP"]
-        D -->|XML / DANFE| C
-        C -->|Exportação ZIP Manual| E["Script Python<br/>Atualiza Estoque"]
+        A["Vendedor em Campo<br/>(Sr. Sérgio)"] -->|"WhatsApp ou Bloco"| B["Operador Backoffice<br/>(Gabriel)"]
+        B -->|"Redigitação Manual"| C["Emissor Sebrae<br/>Desktop"]
+        C -->|"Assina e Envia"| D["SEFAZ-SP"]
+        D -->|"XML e DANFE"| C
+        C -->|"Exportação ZIP Manual"| E["Script Python<br/>Atualiza Estoque"]
     end
           </pre>
         </div>
@@ -233,13 +233,13 @@ flowchart LR
           <pre class="mermaid">
 flowchart TD
     subgraph AMBIENTE_LOCAL["Fase Atual (Servidor Local)"]
-        CFG1["application.yml / env"] -->|Path + Senha| S1["TOTALTRIGO_NFE_CERT_PATH<br/>TOTALTRIGO_NFE_CERT_PASSWORD"]
+        CFG1["application.yml / env"] -->|"Path e Senha"| S1["TOTALTRIGO_NFE_CERT_PATH<br/>TOTALTRIGO_NFE_CERT_PASSWORD"]
         S1 --> B1["Backend Spring Boot<br/>KeyStore.getInstance('PKCS12')"]
     end
 
     subgraph AMBIENTE_CLOUD["Fase Futura (Google Cloud Platform - GCP)"]
-        GSM["Google Secret Manager"] -->|Secret Payload (Base64)| B2["Backend Spring Boot (Cloud Run / GKE)"]
-        B2 -->|Leitura in-memory| KM["ByteArrayInputStream (Zero Disk Write)"]
+        GSM["Google Secret Manager"] -->|"Secret Payload Base64"| B2["Backend Spring Boot (Cloud Run / GKE)"]
+        B2 -->|"Leitura in-memory"| KM["ByteArrayInputStream (Zero Disk Write)"]
     end
           </pre>
         </div>
@@ -250,12 +250,12 @@ flowchart TD
 sequenceDiagram
     autonumber
     actor Operador as Backoffice (Gabriel)
-    participant ERP as 4S ERP Backend (Spring Boot)
+    participant ERP as 4S ERP Backend
     participant Lib as Biblioteca java-nfe
     participant SEFAZ as SEFAZ-SP (WebServices)
-    participant DB as Banco de Dados (H2 / PostgreSQL)
+    participant DB as Banco de Dados ERP
 
-    Operador->>ERP: Clica "Aprovar e Emitir NF-e"
+    Operador->>ERP: Aprovar e Emitir NF-e
     ERP->>DB: Bloqueia registro e obtém próximo nNF sequencial
     ERP->>Lib: Monta Objeto TNFe com dados reais da venda
     Lib->>Lib: Gera Chave de Acesso (44 dígitos, cDV Módulo 11)

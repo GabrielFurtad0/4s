@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [3f061cc] — 18/10/2026 às 22:04 (🔴 Estrutural / Crítico)
+
+- **Escopo**: fix(import): revamp import calculator layout to fit without scrolling and rename button to Adicionar Lote
+- **Componentes afetados**: `management.tsx`, `styles.css`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [5d34a9a] — 18/10/2026 às 21:57 (🟡 Médio / Feature)
 
 - **Interface:** Atualização do ícone da "Memória de Preços por Cliente" para o padrão `Notebook
