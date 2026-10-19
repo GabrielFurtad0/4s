@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [5d34a9a] — 18/10/2026 às 21:57 (🟡 Médio / Feature)
+
+- **Interface:** Atualização do ícone da "Memória de Preços por Cliente" para o padrão `Notebook
+
 ### [62153c8] — 18/10/2026 às 21:51 (🔴 Estrutural / Crítico)
 
 - **Escopo**: fix: remover prefixo + do botao Novo Cliente e adicionar paginacao e scroll na listagem de clientes
