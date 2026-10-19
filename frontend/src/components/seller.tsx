@@ -27,10 +27,13 @@ import {
   WifiOff,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Calendar as CalendarUi } from '@/components/ui/calendar';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { ProfitGauge } from '@/components/ui/profit-gauge';
 import { fireConfetti } from '@/components/ui/confetti';
 import { FourSIcon } from './logo';
+import { ptBR } from 'date-fns/locale';
 import {
   addClientNoteApi,
   available,
@@ -87,6 +90,19 @@ function computeDefaultFirstDueDate(termLabel: string): string {
   return `${yyyy}-${mm}-${dd}`;
 }
 
+function formatHeaderDate(date: Date): string {
+  const weekdays = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+  return `${weekdays[date.getDay()]}, ${date.getDate()} ${months[date.getMonth()]}`;
+}
+
+function getGreeting(date: Date = new Date()): string {
+  const hour = date.getHours();
+  if (hour >= 5 && hour < 12) return 'Bom dia';
+  if (hour >= 12 && hour < 18) return 'Boa tarde';
+  return 'Boa noite';
+}
+
 export function Seller({ data, update, notify, submit }: SharedProps) {
   const [view, setView] = useState<'agenda' | 'client' | 'order'>('agenda');
   const [clientId, setClientId] = useState(data.clients[0]?.id ?? '');
@@ -129,6 +145,21 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   // Fila Offline PWA do Sr. Sérgio
   const [offlineQueue, setOfflineQueue] = useState<Order[]>(() => getOfflineOrdersQueue());
   const [syncingOffline, setSyncingOffline] = useState(false);
+
+  // Mostrador de data dinâmico e calendário interativo
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date());
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+
+  useEffect(() => {
+    setCurrentDate(new Date());
+    const interval = setInterval(() => {
+      setCurrentDate(prev => {
+        const now = new Date();
+        return prev.toDateString() === now.toDateString() ? now : prev;
+      });
+    }, 60000);
+    return () => clearInterval(interval);
+  }, []);
 
   useEffect(() => {
     setOfflineQueue(getOfflineOrdersQueue());
@@ -378,14 +409,69 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
           {/* TELA 1: AGENDA & RADAR */}
           {view === 'agenda' && (
             <>
-              {/* Saudação Compacta — Ganho Expressivo de Espaço Vertical */}
+              {/* Saudação Compacta e Mostrador de Data Dinâmico em Tempo Real */}
               <div className="flex items-baseline justify-between mt-1 mb-2.5">
                 <h1 className="text-base font-bold text-foreground tracking-tight m-0">
-                  Bom dia, Sérgio <span className="text-muted-foreground text-xs font-normal">↗</span>
+                  {getGreeting(currentDate)}, Sérgio <span className="text-muted-foreground text-xs font-normal">↗</span>
                 </h1>
-                <span className="text-[10px] text-muted-foreground font-semibold uppercase tracking-wider">
-                  Sex, 16 Out
-                </span>
+                <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="text-[10px] text-muted-foreground hover:text-foreground font-semibold uppercase tracking-wider cursor-pointer transition-colors flex items-center gap-1.5 py-0.5 px-1.5 -mr-1.5 rounded hover:bg-muted/60 focus:outline-none focus:ring-1 focus:ring-ring"
+                      title={`Data: ${currentDate.toLocaleDateString('pt-BR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}. Clique para abrir o calendário.`}
+                      aria-label="Mostrador de data. Clique para abrir o calendário."
+                    >
+                      <CalendarDays size={13} className="text-muted-foreground shrink-0" />
+                      <span suppressHydrationWarning>{formatHeaderDate(currentDate)}</span>
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent align="end" className="w-auto p-3 shadow-lg border border-border bg-popover z-50">
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between border-b border-border/70 pb-2">
+                        <div className="flex flex-col">
+                          <span className="text-xs font-bold text-foreground capitalize">
+                            {currentDate.toLocaleDateString('pt-BR', { weekday: 'long' })}
+                          </span>
+                          <span className="text-[11px] text-muted-foreground">
+                            {currentDate.toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-semibold uppercase tracking-wider text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                          {new Date().toDateString() === currentDate.toDateString() ? 'Hoje' : 'Personalizado'}
+                        </span>
+                      </div>
+                      <CalendarUi
+                        mode="single"
+                        selected={currentDate}
+                        onSelect={d => {
+                          if (d) {
+                            setCurrentDate(d);
+                            setDatePickerOpen(false);
+                          }
+                        }}
+                        locale={ptBR}
+                        initialFocus
+                      />
+                      <div className="flex items-center justify-between pt-2 border-t border-border/70">
+                        <span className="text-[10px] text-muted-foreground">
+                          {new Date().toDateString() === currentDate.toDateString() ? 'Visualizando hoje' : 'Data selecionada'}
+                        </span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-7 px-2 text-xs text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={() => {
+                            setCurrentDate(new Date());
+                            setDatePickerOpen(false);
+                          }}
+                        >
+                          Voltar para hoje
+                        </Button>
+                      </div>
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               {/* Barra de Busca + Botão Agendar Visita (Tamanho Original) */}
