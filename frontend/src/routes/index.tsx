@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings2, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
+import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -438,7 +438,7 @@ function Index() {
                 </div>
               )}
               <Button variant="ghost" className="sidebar-link" title="Configurações" onClick={() => setInfo('settings')}>
-                <Settings2 />
+                <Settings />
                 {!collapsed && 'Configurações'}
               </Button>
               <Button variant="ghost" className="sidebar-link" title="Central de ajuda" onClick={() => setInfo('help')}>
