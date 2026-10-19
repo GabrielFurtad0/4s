@@ -663,28 +663,116 @@ kbd, .search-hint { border: 1px solid var(--border); border-radius: 4px; padding
   flex: 1;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 280px;
-  gap: 16px;
-  overflow-y: auto;
-  padding-right: 4px;
+  grid-template-columns: minmax(0, 1fr) 310px;
+  gap: 12px;
+  overflow: hidden;
+  align-items: start;
 }
-.form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-.import-items > div {
+.import-layout > section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 0;
+  min-height: 0;
+}
+.import-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  box-shadow: var(--surface-shadow);
+  min-width: 0;
+}
+.import-section-title {
+  display: block;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+.import-field {
+  display: flex;
+  flex-direction: column;
+  gap: 3.5px;
+  min-width: 0;
+}
+.import-field span {
+  font-size: 10.5px;
+  color: var(--muted-foreground);
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.import-input {
+  height: 30px;
+  padding: 4px 8px;
+  font-size: 11.5px;
+  border-radius: 5px;
+  min-width: 0;
+}
+.import-skus-table {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+}
+.import-skus-header {
   display: grid;
-  grid-template-columns: 36px 1.2fr 1.3fr 1fr;
-  gap: 14px;
+  grid-template-columns: minmax(160px, 1.8fr) minmax(90px, 1fr) minmax(85px, 0.95fr) minmax(90px, 1fr) minmax(110px, 1.15fr);
+  gap: 10px;
   align-items: center;
-  padding: 12px 0;
+  padding: 4px 6px 6px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
 }
-.import-items > div > strong { font-size: 13.5px; font-weight: 600; color: var(--foreground); }
-.landed-summary { align-self: start; padding: 16px; background: var(--muted); border: 1px solid var(--border); border-radius: 10px; }
-.landed-summary > svg { color: var(--primary); }
-.landed-summary h2 { font-size: 22px; font-weight: 700; }
-.cost-details { padding-block: 10px; border-bottom: 1px solid var(--border); }
-.cost-details > div { display: flex; justify-content: space-between; gap: 10px; padding: 5px 0; font-size: 11.5px; }
-.cost-details > div > span { color: var(--muted-foreground); }
+.import-sku-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 1.8fr) minmax(90px, 1fr) minmax(85px, 0.95fr) minmax(90px, 1fr) minmax(110px, 1.15fr);
+  gap: 10px;
+  align-items: center;
+  padding: 7px 6px;
+  border-bottom: 1px solid var(--border);
+}
+.import-sku-row:last-child {
+  border-bottom: none;
+}
+.import-cell-input {
+  min-width: 0;
+}
+.landed-summary {
+  align-self: start;
+  padding: 12px 14px;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: var(--surface-shadow);
+  min-width: 0;
+}
+.landed-summary h2 {
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+.cost-details {
+  padding-block: 6px;
+  border-bottom: 1px solid var(--border);
+}
+.cost-details > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 2.5px 0;
+  font-size: 11px;
+}
+.cost-details > div > span {
+  color: var(--muted-foreground);
+}
 .property-banner {
   position: relative;
   height: 90px;
@@ -1248,6 +1336,15 @@ html.font-scale-xlarge {
   font-size: 12.5px;
 }
 
+/* Import Calculator (Font Large) */
+.font-scale-large .import-input { height: 32px; font-size: 12.5px; padding: 4px 8px; }
+.font-scale-large .import-field span { font-size: 11px; }
+.font-scale-large .import-section-title { font-size: 10.5px; }
+.font-scale-large .import-skus-header { font-size: 10.5px; }
+.font-scale-large .import-sku-row strong { font-size: 13px; }
+.font-scale-large .landed-summary h2 { font-size: 21px; }
+.font-scale-large .cost-details > div { font-size: 11.5px; }
+
 /* --- FONT SCALE: EXTRA LARGE (A++) --- */
 .font-scale-xlarge .text-\[8px\],
 .font-scale-xlarge .text-\[8\.5px\],
@@ -1450,6 +1547,15 @@ html.font-scale-xlarge {
 .font-scale-xlarge .profit-breakdown b {
   font-size: 13.5px;
 }
+
+/* Import Calculator (Font Extra Large) */
+.font-scale-xlarge .import-input { height: 34px; font-size: 13.5px; padding: 4px 8px; }
+.font-scale-xlarge .import-field span { font-size: 12px; }
+.font-scale-xlarge .import-section-title { font-size: 11.5px; }
+.font-scale-xlarge .import-skus-header { font-size: 11.5px; }
+.font-scale-xlarge .import-sku-row strong { font-size: 14px; }
+.font-scale-xlarge .landed-summary h2 { font-size: 22px; }
+.font-scale-xlarge .cost-details > div { font-size: 12.5px; }
 
 /* Desktop Seller Phone enlargement (390px/408px -> 440px) */
 @media (min-width: 768px) {

@@ -161,145 +161,204 @@ export function Management({ module, data, update, notify, userProfile }: Shared
   if (module === 'import')
     return (
       <>
-        <PageHeading
-          eyebrow="COMÉRCIO EXTERIOR"
-          title="Calculadora de importação"
-          description="Do valor de compra na origem (FOB) ao Custo Médio Ponderado nacionalizado (entrada BQ = DQ)."
-        />
+        <div className="section-heading mb-2">
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <Calculator size={16} className="text-primary" />
+              Calculadora de Importação & Landed Cost
+            </h3>
+          </div>
+          <span className="status-badge neutral text-[10.5px] py-0.5 px-2.5">
+            {data.backendConnected ? 'Integrado ao Estoque Dual (BQ = DQ)' : 'Simulação'}
+          </span>
+        </div>
+
         <div className="import-layout">
           <section>
-            <div className="section-heading">
-              <h3>Dados do novo lote</h3>
-              <span className="status-badge neutral">
-                {data.backendConnected ? 'Integrado ao Estoque Dual (BQ = DQ)' : 'Simulação'}
-              </span>
-            </div>
-            <div className="form-grid">
-              <label className="field-label">
-                Dólar comercial · R$
-                <input
-                  className="form-input numeric"
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={fx}
-                  onChange={e => setFx(Number(e.target.value))}
-                />
-              </label>
-              <label className="field-label">
-                Frete internacional · US$
-                <input
-                  className="form-input numeric"
-                  type="number"
-                  min="0"
-                  value={freight}
-                  onChange={e => setFreight(Number(e.target.value))}
-                />
-              </label>
-              <label className="field-label">
-                Despachante · R$
-                <input
-                  className="form-input numeric"
-                  type="number"
-                  min="0"
-                  value={broker}
-                  onChange={e => setBroker(Number(e.target.value))}
-                />
-              </label>
-            </div>
-            <h3 className="mt-8 mb-4">Impostos de nacionalização</h3>
-            <div className="form-grid">
-              {['II · R$', 'IPI · R$', 'PIS/COFINS · R$', 'ICMS · R$'].map((t, i) => (
-                <label key={t} className="field-label">
-                  {t}
-                  <input
-                    className="form-input numeric"
-                    type="number"
-                    min="0"
-                    value={taxes[i]}
-                    onChange={e => setTaxes(taxes.map((v, j) => (j === i ? Number(e.target.value) : v)))}
-                  />
-                </label>
-              ))}
-            </div>
-            <h3 className="mt-8 mb-4">Mercadorias do lote (Entrada Físico DQ = Base BQ)</h3>
-            <div className="import-items">
-              {data.products.map((p, i) => (
-                <div key={p.id}>
-                  <div className={`sku-symbol sku-${p.id.toLowerCase()}`}>
-                    <Package size={20} />
-                  </div>
-                  <div>
-                    <strong>{p.name}</strong>
-                    <p className="text-[11px] text-muted-foreground numeric">
-                      Atual: {p.physical} un. a {money(p.cost)} · Novo Custo Médio:{' '}
-                      <b className="text-primary">{money(weightedPreview[i] ?? p.cost)}</b>
-                    </p>
-                  </div>
-                  <label className="field-label">
-                    <span className="flex items-center gap-1.5 font-medium">
-                      Compra na Origem (FOB US$)
-                      <TooltipProvider delayDuration={100}>
-                        <UiTooltip>
-                          <TooltipTrigger asChild>
-                            <button
-                              type="button"
-                              className="cursor-help text-muted-foreground hover:text-primary transition-colors inline-flex items-center p-0.5 rounded hover:bg-muted"
-                              aria-label="O que é FOB?"
-                            >
-                              <Info size={13} className="text-primary/70 hover:text-primary" />
-                            </button>
-                          </TooltipTrigger>
-                          <TooltipContent
-                            side="top"
-                            className="max-w-xs text-xs p-3 shadow-xl bg-popover text-popover-foreground border border-border rounded-lg"
-                          >
-                            <p className="font-bold text-primary mb-1 flex items-center gap-1.5">
-                              <Info size={13} /> O que é FOB (Free On Board)?
-                            </p>
-                            <p className="text-muted-foreground leading-relaxed">
-                              É o <strong>preço de compra da mercadoria no país de origem</strong> (em dólares / US$), sem o frete internacional nem impostos.
-                            </p>
-                          </TooltipContent>
-                        </UiTooltip>
-                      </TooltipProvider>
-                    </span>
+            <div className="import-card">
+              <div className="import-card-section">
+                <span className="import-section-title">Câmbio e Custos Aduaneiros</span>
+                <div className="grid grid-cols-3 gap-2.5 mt-1.5">
+                  <label className="import-field">
+                    <span>Dólar comercial (R$)</span>
                     <input
-                      className="form-input numeric"
+                      className="form-input numeric import-input"
                       type="number"
                       min="0"
-                      value={fob[i]}
-                      onChange={e => setFob(fob.map((v, j) => (j === i ? Number(e.target.value) : v)))}
+                      step="0.01"
+                      value={fx}
+                      onChange={e => setFx(Number(e.target.value))}
                     />
                   </label>
-                  <label className="field-label">
-                    Quantidade (DQ = BQ)
+                  <label className="import-field">
+                    <span>Frete internacional (US$)</span>
                     <input
-                      className="form-input numeric"
+                      className="form-input numeric import-input"
                       type="number"
-                      min="1"
-                      value={quantities[i]}
-                      onChange={e =>
-                        setQuantities(quantities.map((v, j) => (j === i ? Number(e.target.value) : v)))
-                      }
+                      min="0"
+                      value={freight}
+                      onChange={e => setFreight(Number(e.target.value))}
+                    />
+                  </label>
+                  <label className="import-field">
+                    <span>Despachante aduaneiro (R$)</span>
+                    <input
+                      className="form-input numeric import-input"
+                      type="number"
+                      min="0"
+                      value={broker}
+                      onChange={e => setBroker(Number(e.target.value))}
                     />
                   </label>
                 </div>
-              ))}
+              </div>
+
+              <div className="import-card-section mt-2 pt-2 border-t border-border/60">
+                <span className="import-section-title">Impostos de Nacionalização</span>
+                <div className="grid grid-cols-4 gap-2.5 mt-1.5">
+                  {[
+                    { label: 'II (Imp. Importação · R$)', val: taxes[0], idx: 0 },
+                    { label: 'IPI (R$)', val: taxes[1], idx: 1 },
+                    { label: 'PIS / COFINS (R$)', val: taxes[2], idx: 2 },
+                    { label: 'ICMS (R$)', val: taxes[3], idx: 3 },
+                  ].map(item => (
+                    <label key={item.label} className="import-field">
+                      <span>{item.label}</span>
+                      <input
+                        className="form-input numeric import-input"
+                        type="number"
+                        min="0"
+                        value={item.val}
+                        onChange={e => setTaxes(taxes.map((v, j) => (j === item.idx ? Number(e.target.value) : v)))}
+                      />
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="import-card">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="import-section-title">Mercadorias do Lote (Entrada Físico DQ = Base BQ)</span>
+                <span className="text-[10px] text-muted-foreground font-mono">3 SKUs ativos</span>
+              </div>
+
+              <div className="import-skus-table">
+                <div className="import-skus-header">
+                  <div>Produto</div>
+                  <div className="flex items-center gap-1 justify-end pr-1">
+                    <span>FOB Total (US$)</span>
+                    <TooltipProvider delayDuration={100}>
+                      <UiTooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            className="cursor-help text-muted-foreground hover:text-primary transition-colors inline-flex items-center p-0.5 rounded hover:bg-muted"
+                            aria-label="O que é FOB?"
+                          >
+                            <Info size={12} className="text-primary/70 hover:text-primary" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent
+                          side="top"
+                          className="max-w-xs text-xs p-3 shadow-xl bg-popover text-popover-foreground border border-border rounded-lg"
+                        >
+                          <p className="font-bold text-primary mb-1 flex items-center gap-1.5">
+                            <Info size={13} /> O que é FOB (Free On Board)?
+                          </p>
+                          <p className="text-muted-foreground leading-relaxed">
+                            É o <strong>preço de compra da mercadoria no país de origem</strong> (em dólares / US$), sem frete internacional nem impostos.
+                          </p>
+                        </TooltipContent>
+                      </UiTooltip>
+                    </TooltipProvider>
+                  </div>
+                  <div className="text-right pr-1">Quantidade (DQ=BQ)</div>
+                  <div className="text-right pr-1">Custo Lote (un.)</div>
+                  <div className="text-right">Novo Custo Médio</div>
+                </div>
+
+                {data.products.map((p, i) => (
+                  <div key={p.id} className="import-sku-row">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <div className={`sku-symbol sku-${p.id.toLowerCase()} !w-6 !h-6 !rounded`}>
+                        <Package size={13} />
+                      </div>
+                      <div className="min-w-0">
+                        <strong className="block text-xs font-semibold text-foreground truncate">{p.name}</strong>
+                        <span className="text-[9.5px] text-muted-foreground numeric block">
+                          Atual: {p.physical} un · {money(p.cost)}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="import-cell-input">
+                      <input
+                        className="form-input numeric import-input text-right"
+                        type="number"
+                        min="0"
+                        value={fob[i]}
+                        onChange={e => setFob(fob.map((v, j) => (j === i ? Number(e.target.value) : v)))}
+                      />
+                    </div>
+
+                    <div className="import-cell-input">
+                      <input
+                        className="form-input numeric import-input text-right"
+                        type="number"
+                        min="1"
+                        value={quantities[i]}
+                        onChange={e =>
+                          setQuantities(quantities.map((v, j) => (j === i ? Number(e.target.value) : v)))
+                        }
+                      />
+                    </div>
+
+                    <div className="text-xs font-semibold numeric text-foreground text-right pr-1">
+                      {money(landed[i] ?? 0)}
+                      <span className="text-[9.5px] text-muted-foreground font-normal ml-0.5">/sc</span>
+                    </div>
+
+                    <div className="text-right">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[11px] font-bold font-mono text-primary bg-primary/10 border border-primary/20">
+                        {money(weightedPreview[i] ?? p.cost)}
+                      </span>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
+
           <aside className="landed-summary">
-            <Calculator size={23} />
-            <h3 className="mt-3">Landed cost & Custo Médio</h3>
-            <span className="text-xs text-muted-foreground">Custo total nacionalizado deste lote</span>
-            <h2 className="numeric mt-4">{money(fobTotal * fx + shared)}</h2>
+            <div className="flex items-center justify-between pb-2 border-b border-border/60">
+              <div className="flex items-center gap-2">
+                <div className="w-6 h-6 rounded bg-primary/10 text-primary flex items-center justify-center">
+                  <Calculator size={14} />
+                </div>
+                <div>
+                  <h3 className="text-xs font-bold text-foreground">Landed Cost & Médio</h3>
+                  <span className="text-[9.5px] text-muted-foreground block -mt-0.5">Custo nacionalizado do lote</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="my-2">
+              <span className="text-[9.5px] uppercase font-semibold tracking-wider text-muted-foreground block">
+                Total Previsto do Lote
+              </span>
+              <h2 className="numeric text-xl font-bold tracking-tight text-foreground mt-0.5">
+                {money(fobTotal * fx + shared)}
+              </h2>
+            </div>
+
             <div className="cost-details">
               <div>
-                <span>Mercadoria convertida</span>
+                <span>Mercadoria (FOB)</span>
                 <b className="numeric">{money(fobTotal * fx)}</b>
               </div>
               <div>
-                <span>Frete convertido</span>
+                <span>Frete internacional</span>
                 <b className="numeric">{money(freight * fx)}</b>
               </div>
               <div>
@@ -307,20 +366,25 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                 <b className="numeric">{money(broker + taxes.reduce((a, b) => a + b, 0))}</b>
               </div>
             </div>
+
             <div className="cost-details">
+              <span className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider block mb-0.5">
+                Novo Custo Médio Ponderado
+              </span>
               {data.products.map((p, i) => (
                 <div key={p.id}>
-                  <span>
-                    {p.name} · Lote: {money(landed[i] ?? 0)}
+                  <span className="truncate pr-1">
+                    {p.name.replace('Farinha de Trigo ', '')}
                   </span>
-                  <b className="numeric" title="Novo Custo Médio Ponderado">
-                    Médio: {money(weightedPreview[i] ?? 0)}
+                  <b className="numeric text-primary" title="Novo Custo Médio Ponderado">
+                    {money(weightedPreview[i] ?? 0)}
                   </b>
                 </div>
               ))}
             </div>
+
             <Button
-              className="w-full mt-6"
+              className="w-full mt-3 h-8 font-semibold text-xs shadow-sm flex items-center justify-center gap-1.5"
               onClick={async () => {
                 if (
                   quantities.some(q => !Number.isInteger(q) || q <= 0) ||
@@ -348,11 +412,11 @@ export function Management({ module, data, update, notify, userProfile }: Shared
                 }
               }}
             >
-              <Plus />
-              Aplicar lote ao estoque (BQ = DQ)
+              <Plus size={14} />
+              Adicionar Lote
             </Button>
-            <p className="text-xs text-muted-foreground mt-4 leading-relaxed">
-              Soma a quantidade em Saldo Físico (DQ) e Saldo Base (BQ) e recalcula o Custo Médio Ponderado.
+            <p className="text-[9.5px] text-muted-foreground mt-1.5 leading-tight text-center">
+              Aplica entrada no Estoque Físico (DQ) e Base (BQ), recalculando o Custo Médio.
             </p>
           </aside>
         </div>
