@@ -4,6 +4,11 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [3784444] — 18/10/2026 às 22:22 (🟡 Médio / Feature)
+
+with automatic reset to the first page.
+        - Otimização da interface para visualização de grandes
+
 ### [3261f18] — 18/10/2026 às 22:19 (🔴 Estrutural / Crítico)
 
 - Refatoração do layout da Calculadora de Importação para preenchimento integral do *viewport*,
