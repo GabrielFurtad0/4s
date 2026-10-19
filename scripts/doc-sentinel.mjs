@@ -230,28 +230,46 @@ ${diff.slice(0, 4000)}
 \`\`\`
 `;
 
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt }] }],
-          generationConfig: {
-            temperature: 0.2,
-            maxOutputTokens: 500,
-          }
-        })
-      });
+      const modelsToTry = ['gemini-3-flash-preview', 'gemini-flash-latest'];
+      let summaryText = null;
 
-      if (response.ok) {
-        const json = await response.json();
-        const candidateText = json?.candidates?.[0]?.content?.parts?.[0]?.text;
-        if (candidateText && candidateText.trim()) {
-          console.log('[DocSentinel] ✨ Síntese gerada com sucesso via Gemini Flash.');
-          return candidateText.trim();
+      for (const model of modelsToTry) {
+        try {
+          // Usa curl.exe como transportador nativo do SO para evitar problemas de IPv6/DNS no Windows
+          const payload = JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: {
+              temperature: 0.2,
+              maxOutputTokens: 600
+            }
+          });
+
+          const tmpPayloadPath = path.join(ROOT_DIR, '.tmp_sentinel_payload.json');
+          fs.writeFileSync(tmpPayloadPath, payload, 'utf8');
+
+          const curlCmd = `curl.exe -s -m 12 -X POST -H "Content-Type: application/json" -d "@${tmpPayloadPath}" "https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}"`;
+          const rawOutput = execSync(curlCmd, { cwd: ROOT_DIR, encoding: 'utf8' });
+
+          try { fs.unlinkSync(tmpPayloadPath); } catch {}
+
+          if (rawOutput && rawOutput.includes('"parts"')) {
+            const json = JSON.parse(rawOutput);
+            const text = json?.candidates?.[0]?.content?.parts?.[0]?.text;
+            if (text && text.trim()) {
+              console.log(`[DocSentinel] ✨ Síntese documental gerada com sucesso via ${model}!`);
+              summaryText = text.trim();
+              break;
+            }
+          }
+        } catch (innerErr) {
+          // Tenta o próximo modelo
         }
-      } else {
-        console.warn(`[DocSentinel] ⚠️  API Gemini retornou status ${response.status}. Usando motor heurístico.`);
       }
+
+      if (summaryText) {
+        return summaryText;
+      }
+      console.warn('[DocSentinel] ⚠️  Não foi possível obter resposta da API. Usando motor heurístico local.');
     } catch (e) {
       console.warn('[DocSentinel] ⚠️  Falha na requisição Gemini Flash:', e.message, '. Usando motor heurístico.');
     }
