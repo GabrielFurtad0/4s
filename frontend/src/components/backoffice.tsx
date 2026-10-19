@@ -2541,12 +2541,15 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
   const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const loadLogs = async () => {
     setLoading(true);
     try {
       const res = await fetchAuditLogsApi();
       setLogs(res);
+      setPage(1);
     } catch {
       notify('Não foi possível carregar a trilha de auditoria.');
     } finally {
@@ -2582,12 +2585,20 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
     return (
       l.actorName.toLowerCase().includes(q) ||
       l.summary.toLowerCase().includes(q) ||
-      l.actionType.toLowerCase().includes(q)
+      l.actionType.toLowerCase().includes(q) ||
+      (l.targetEntity && l.targetEntity.toLowerCase().includes(q))
     );
   });
 
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  const safePage = Math.min(page, totalPages);
+  const paginatedLogs = filteredLogs.slice(
+    (safePage - 1) * pageSize,
+    safePage * pageSize
+  );
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="bg-muted/30 border border-border rounded-xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-primary/10 rounded-lg text-primary shrink-0">
@@ -2614,7 +2625,10 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
             <Search size={16} />
             <input
               value={search}
-              onChange={e => setSearch(e.target.value)}
+              onChange={e => {
+                setSearch(e.target.value);
+                setPage(1);
+              }}
               placeholder="Buscar por ator, ação ou resumo..."
               aria-label="Buscar auditoria"
             />
@@ -2624,7 +2638,7 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
           </span>
         </div>
 
-        <div className="table-scroll">
+        <div className="table-scroll max-h-[calc(100vh-310px)] overflow-y-auto">
           <table className="data-table">
             <thead>
               <tr>
@@ -2636,7 +2650,7 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
               </tr>
             </thead>
             <tbody>
-              {filteredLogs.map(l => (
+              {paginatedLogs.map(l => (
                 <tr key={l.id}>
                   <td>
                     <span className="numeric text-xs font-mono text-muted-foreground">
@@ -2667,6 +2681,53 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
               <p>Os eventos operacionais registrados no servidor aparecerão aqui.</p>
             </div>
           )}
+        </div>
+
+        <div className="table-footer">
+          <div className="flex items-center gap-3">
+            <span>
+              Mostrando {filteredLogs.length ? (safePage - 1) * pageSize + 1 : 0}–{Math.min(safePage * pageSize, filteredLogs.length)} de {filteredLogs.length} eventos
+            </span>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span className="text-[11px]">Por pág:</span>
+              <select
+                value={pageSize}
+                onChange={e => {
+                  setPageSize(Number(e.target.value));
+                  setPage(1);
+                }}
+                className="bg-transparent border border-border rounded px-1.5 py-0.5 text-xs text-foreground cursor-pointer"
+                aria-label="Eventos por página"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+              </select>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Página anterior"
+              disabled={safePage <= 1}
+              onClick={() => setPage(p => Math.max(1, p - 1))}
+            >
+              <ChevronLeft size={14} />
+            </Button>
+            <span className="page-number">
+              {safePage} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              aria-label="Próxima página"
+              disabled={safePage >= totalPages}
+              onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+            >
+              <ChevronRight size={14} />
+            </Button>
+          </div>
         </div>
       </section>
     </div>
