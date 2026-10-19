@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [ae57329] — 18/10/2026 às 22:39 (🔴 Estrutural / Crítico)
+
+- Implementação de seção de estoque retrátil no Backoffice, otimizando o espaço em tela com
+
 ### [902bf43] — 18/10/2026 às 22:35 (🟡 Médio / Feature)
 
 - **Escopo**: feat(mobile): make header date display dynamic and interactive with calendar picker
