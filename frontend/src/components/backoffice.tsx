@@ -12,6 +12,7 @@ import {
   ChevronDown,
   ChevronLeft,
   ChevronRight,
+  ChevronUp,
   ClipboardList,
   Clock3,
   CreditCard,
@@ -122,6 +123,25 @@ export function Backoffice({
   const isExpedicao = userProfile === 'Expedição · Romaneio Cego';
   const [tab, setTab] = useState(isExpedicao ? 'picking' : 'all');
   const [stockMode, setStockMode] = useState<'dual' | 'physical' | 'base'>('dual');
+  const [stockCollapsed, setStockCollapsed] = useState<boolean>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('totaltrigo_stock_collapsed') === 'true';
+    }
+    return false;
+  });
+
+  const toggleStockCollapsed = () => {
+    setStockCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('totaltrigo_stock_collapsed', String(next));
+      } catch {
+        // ignore storage errors
+      }
+      return next;
+    });
+  };
+
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [editing, setEditing] = useState(false);
@@ -333,21 +353,43 @@ export function Backoffice({
             <Package size={16} />
             Posição de estoque
           </h3>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            {!stockCollapsed && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-7 text-xs gap-1.5"
+                onClick={() =>
+                  setStockMode(m => (m === 'dual' ? 'physical' : m === 'physical' ? 'base' : 'dual'))
+                }
+              >
+                <Layers size={13} />
+                {stockMode === 'dual'
+                  ? 'Visão Dual (Físico DQ + Base BQ)'
+                  : stockMode === 'physical'
+                  ? 'Apenas Saldo Físico (DQ)'
+                  : 'Apenas Saldo Base (BQ)'}
+              </Button>
+            )}
             <Button
               variant="outline"
               size="sm"
-              className="h-7 text-xs gap-1.5"
-              onClick={() =>
-                setStockMode(m => (m === 'dual' ? 'physical' : m === 'physical' ? 'base' : 'dual'))
-              }
+              className="h-7 text-xs gap-1.5 font-medium cursor-pointer"
+              onClick={toggleStockCollapsed}
+              aria-expanded={!stockCollapsed}
+              aria-label={stockCollapsed ? 'Expandir estoque detalhado' : 'Recolher estoque'}
             >
-              <Layers size={13} />
-              {stockMode === 'dual'
-                ? 'Visão Dual (Físico DQ + Base BQ)'
-                : stockMode === 'physical'
-                ? 'Apenas Saldo Físico (DQ)'
-                : 'Apenas Saldo Base (BQ)'}
+              {stockCollapsed ? (
+                <>
+                  <ChevronDown size={13} />
+                  <span>Expandir estoque detalhado</span>
+                </>
+              ) : (
+                <>
+                  <ChevronUp size={13} />
+                  <span>Recolher estoque</span>
+                </>
+              )}
             </Button>
             <span className="text-xs text-muted-foreground flex items-center gap-1.5">
               <span className="online-dot" />
@@ -355,66 +397,134 @@ export function Backoffice({
             </span>
           </div>
         </div>
-        <div className="stock-grid">
-          {data.products.map(p => (
-            <SpotlightCard
-              className="stock-card"
-              key={p.id}
-              spotlightColor="rgba(67, 97, 238, 0.14)"
+
+        {stockCollapsed ? (
+          <div
+            className="stock-ticker-bar bg-card hover:bg-muted/30 transition-colors border border-border/80 rounded-xl px-4 py-2.5 flex items-center justify-between gap-3 text-xs shadow-2xs cursor-pointer select-none"
+            onClick={toggleStockCollapsed}
+            role="button"
+            tabIndex={0}
+            onKeyDown={e => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                toggleStockCollapsed();
+              }
+            }}
+          >
+            <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap min-w-0">
+              <span className="inline-flex items-center gap-1.5 font-semibold text-foreground shrink-0">
+                <span className="text-sm">📦</span>
+                <span>Estoque Disponível:</span>
+              </span>
+              {data.products.map((p, idx) => {
+                const avail = available(p);
+                const base = baseBalance(p);
+                const shortName = p.name
+                  .replace(' (25kg)', '')
+                  .replace('Farinha Tipo 1', 'Farinha T1')
+                  .replace('Pré-Mistura Francês', 'Pré-Mistura')
+                  .replace('PM Pão Doce', 'Pão Doce');
+                const hasDivergence = avail !== base;
+
+                return (
+                  <span
+                    key={p.id}
+                    className="inline-flex items-center gap-1 text-muted-foreground whitespace-nowrap"
+                    title={`SKU: ${p.name} | Físico Disp. (DQ): ${avail} un. | Saldo Base (BQ): ${base} un.`}
+                  >
+                    {idx > 0 && <span className="text-border mx-1 select-none">·</span>}
+                    <span className="text-foreground font-medium">{shortName}:</span>
+                    <strong className="numeric font-bold text-emerald-600 dark:text-emerald-400">
+                      <NumberTicker value={avail} /> <small className="text-[10px] font-normal">un.</small>
+                    </strong>
+                    {hasDivergence && (
+                      <span className="text-[11px] text-muted-foreground/90 font-mono ml-0.5">
+                        (Base:{' '}
+                        <strong className="text-primary font-semibold">
+                          <NumberTicker value={base} /> un.
+                        </strong>
+                        )
+                      </span>
+                    )}
+                  </span>
+                );
+              })}
+            </div>
+            <button
+              type="button"
+              className="text-xs text-primary hover:text-primary/80 font-medium inline-flex items-center gap-1 shrink-0 ml-auto cursor-pointer underline-offset-2 hover:underline"
+              onClick={e => {
+                e.stopPropagation();
+                toggleStockCollapsed();
+              }}
+              aria-label="Expandir detalhes"
             >
-              <div className={`sku-symbol sku-${p.id.toLowerCase()}`}>
-                <Package size={22} />
-              </div>
-              <div className="stock-card-content">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <strong>{p.name}</strong>
-                    <span className="stock-category">
-                      {p.category} <span className="mx-1">·</span> {p.skuCode ?? `SKU-00${p.id}`} · Custo Médio: {money(p.cost)}
-                    </span>
-                  </div>
-                  <span className="status-badge neutral">NCM {p.ncm}</span>
+              <span>Expandir detalhes</span>
+              <ChevronDown size={13} />
+            </button>
+          </div>
+        ) : (
+          <div className="stock-grid">
+            {data.products.map(p => (
+              <SpotlightCard
+                className="stock-card"
+                key={p.id}
+                spotlightColor="rgba(67, 97, 238, 0.14)"
+              >
+                <div className={`sku-symbol sku-${p.id.toLowerCase()}`}>
+                  <Package size={22} />
                 </div>
-                <div className="stock-numbers">
-                  {stockMode !== 'base' && (
-                    <>
-                      <div>
-                        <span>Físico (DQ)</span>
-                        <b className="numeric">
-                          <NumberTicker value={p.physical} />
-                          <small>un.</small>
-                        </b>
-                      </div>
-                      <div>
-                        <span>Reservado (DQ)</span>
-                        <b className="numeric reserved">
-                          <NumberTicker value={p.reserved} />
-                          <small>un.</small>
-                        </b>
-                      </div>
-                      <div>
-                        <span>Disponível (DQ)</span>
-                        <b className="numeric available">
-                          <NumberTicker value={available(p)} />
-                          <small>un.</small>
-                        </b>
-                      </div>
-                    </>
-                  )}
-                  {stockMode !== 'physical' && (
+                <div className="stock-card-content">
+                  <div className="flex justify-between items-start">
                     <div>
-                      <span>Saldo Base (BQ)</span>
-                      <b className="numeric text-primary">
-                        <NumberTicker value={baseBalance(p)} />
-                        <small>un.</small>
-                      </b>
+                      <strong>{p.name}</strong>
+                      <span className="stock-category">
+                        {p.category} <span className="mx-1">·</span> {p.skuCode ?? `SKU-00${p.id}`} · Custo Médio: {money(p.cost)}
+                      </span>
                     </div>
-                  )}
+                    <span className="status-badge neutral">NCM {p.ncm}</span>
+                  </div>
+                  <div className="stock-numbers">
+                    {stockMode !== 'base' && (
+                      <>
+                        <div>
+                          <span>Físico (DQ)</span>
+                          <b className="numeric">
+                            <NumberTicker value={p.physical} />
+                            <small>un.</small>
+                          </b>
+                        </div>
+                        <div>
+                          <span>Reservado (DQ)</span>
+                          <b className="numeric reserved">
+                            <NumberTicker value={p.reserved} />
+                            <small>un.</small>
+                          </b>
+                        </div>
+                        <div>
+                          <span>Disponível (DQ)</span>
+                          <b className="numeric available">
+                            <NumberTicker value={available(p)} />
+                            <small>un.</small>
+                          </b>
+                        </div>
+                      </>
+                    )}
+                    {stockMode !== 'physical' && (
+                      <div>
+                        <span>Saldo Base (BQ)</span>
+                        <b className="numeric text-primary">
+                          <NumberTicker value={baseBalance(p)} />
+                          <small>un.</small>
+                        </b>
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            </SpotlightCard>
-          ))}
-        </div>
+              </SpotlightCard>
+            ))}
+          </div>
+        )}
       </section>
 
       {/* Seção de Pedidos com Sliding Tabs (Todos os Status) e Filtros */}
