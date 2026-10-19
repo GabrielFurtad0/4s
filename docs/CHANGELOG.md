@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [62153c8] — 18/10/2026 às 21:51 (🔴 Estrutural / Crítico)
+
+- **Escopo**: fix: remover prefixo + do botao Novo Cliente e adicionar paginacao e scroll na listagem de clientes
+- **Componentes afetados**: `backoffice.tsx`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [9cac798] — 18/10/2026 às 21:46 (🟡 Médio / Feature)
 
 - **Escopo**: fix: atualizar favicon e icones do site com o logotipo oficial 4S
