@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [33c16e5] — 19/10/2026 às 22:53 (🔴 Estrutural / Crítico)
+
+no Command Palette (`order-slip`) e botões de ação no Backoffice para emissão e visualização do
+
 ### [ce1edc9] — 18/10/2026 às 22:57 (🟡 Médio / Feature)
 
 - **Escopo**: fix(ui): remove redundant expand button in stock header and redundant route buttons in bottom strip
