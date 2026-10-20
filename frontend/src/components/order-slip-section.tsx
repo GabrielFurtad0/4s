@@ -11,8 +11,17 @@ import {
   Search,
   PenLine,
   Calculator,
+  User,
+  ChevronsUpDown,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import {
   type AppData,
   type Order,
@@ -330,6 +339,14 @@ export function OrderSlipSection({
     );
   });
 
+  const currentOrderTotal = currentOrder
+    ? currentOrder.items.reduce((acc, item) => acc + itemDq(item) * item.price, 0)
+    : 0;
+
+  const currentOrderSacks = currentOrder
+    ? currentOrder.items.reduce((acc, item) => acc + itemDq(item), 0)
+    : 0;
+
   return (
     <div className="h-full flex-1 min-h-0 flex flex-col space-y-4 overflow-y-auto pr-1 pb-24">
       {/* Cabeçalho da Seção com Ações */}
@@ -399,42 +416,164 @@ export function OrderSlipSection({
         </div>
       </div>
 
-      {/* Barra de Seleção e Busca de Pedidos */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-card border border-border/80 rounded-xl p-3 shadow-2xs shrink-0">
+      {/* Barra de Seleção e Controles (3 Colunas) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs shrink-0">
+        {/* 1. SELECIONE O PEDIDO (Custom Dropdown similar ao Perfil) */}
         <div>
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Selecione o Pedido para Gerar o Talão
+            Selecione o Pedido
           </label>
-          <select
-            className="form-input text-xs h-9 bg-background cursor-pointer pr-8 w-full"
-            value={selectedOrderId}
-            onChange={e => setSelectedOrderId(e.target.value)}
-          >
-            {filteredOrders.map(o => {
-              const c = data.clients.find(cli => cli.id === o.clientId);
-              const total = o.items.reduce((acc, i) => acc + itemDq(i) * i.price, 0);
-              return (
-                <option key={o.id} value={o.id}>
-                  Pedido #{o.id} — {c?.name ?? `Cliente #${o.clientId}`} ({money(total)})
-                </option>
-              );
-            })}
-          </select>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                className="w-full flex items-center justify-between gap-2 bg-background hover:bg-accent/40 text-foreground border border-input rounded-md px-3 py-1.5 text-xs font-semibold transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-ring select-none h-9 text-left"
+                aria-label="Selecione o Pedido"
+                title="Clique para alternar o pedido do talão"
+              >
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="flex items-center justify-center size-5 rounded bg-sky-500/15 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold shrink-0">
+                    #{currentOrder?.id ?? '—'}
+                  </span>
+                  <span className="font-semibold text-xs text-foreground truncate max-w-[130px] sm:max-w-[170px]">
+                    {currentClient?.name ?? `Cliente #${currentOrder?.clientId ?? '—'}`}
+                  </span>
+                  <span className="text-muted-foreground text-[11px] font-medium shrink-0 hidden lg:inline">
+                    ({money(currentOrderTotal)})
+                  </span>
+                </div>
+                <ChevronsUpDown size={13} className="text-muted-foreground hover:text-foreground shrink-0 ml-1" />
+              </button>
+            </DropdownMenuTrigger>
+
+            <DropdownMenuContent
+              align="start"
+              sideOffset={6}
+              className="w-[340px] sm:w-[420px] p-2 bg-card/95 backdrop-blur-md border border-border/80 shadow-2xl rounded-xl z-50 text-foreground"
+            >
+              <div className="px-2 py-1.5">
+                <div className="flex items-center justify-between">
+                  <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
+                    Pedidos da Carteira
+                  </span>
+                  <span className="text-[10px] text-sky-600 dark:text-sky-400 font-bold bg-sky-500/10 px-1.5 py-0.5 rounded">
+                    {filteredOrders.length} {filteredOrders.length === 1 ? 'disponível' : 'disponíveis'}
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-0.5">
+                  Selecione o pedido para carregar os dados no talão de notas.
+                </p>
+              </div>
+
+              <DropdownMenuSeparator className="my-1.5 bg-border/70" />
+
+              <div className="space-y-1 max-h-72 overflow-y-auto pr-1">
+                {filteredOrders.length === 0 ? (
+                  <div className="p-4 text-center text-xs text-muted-foreground">
+                    Nenhum pedido encontrado.
+                  </div>
+                ) : (
+                  filteredOrders.map(o => {
+                    const isSelected = o.id === selectedOrderId;
+                    const cli = data.clients.find(c => c.id === o.clientId);
+                    const total = o.items.reduce((acc, i) => acc + itemDq(i) * i.price, 0);
+                    const totalSacks = o.items.reduce((acc, i) => acc + itemDq(i), 0);
+
+                    return (
+                      <DropdownMenuItem
+                        key={o.id}
+                        onSelect={() => {
+                          setSelectedOrderId(o.id);
+                          const c = data.clients.find(item => item.id === o.clientId);
+                          setSlipData(buildInitialSlipData(o, c, data, userProfile));
+                        }}
+                        className={`flex items-start gap-2.5 p-2 rounded-lg cursor-pointer transition-all ${
+                          isSelected
+                            ? 'bg-sky-500/10 border border-sky-500/30 text-foreground'
+                            : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground border border-transparent'
+                        }`}
+                      >
+                        <div
+                          className={`flex items-center justify-center size-8 rounded-lg shrink-0 mt-0.5 text-xs font-bold ${
+                            isSelected
+                              ? 'bg-sky-500 text-white shadow-xs'
+                              : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          #{o.id}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center justify-between gap-1.5">
+                            <span className="font-semibold text-xs text-foreground truncate">
+                              {cli?.name ?? `Cliente #${o.clientId}`}
+                            </span>
+                            <span className="text-[11px] font-mono font-bold text-sky-600 dark:text-sky-400 shrink-0">
+                              {money(total)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground mt-0.5">
+                            <span className="truncate">{cli?.neighborhood || 'São Paulo'}</span>
+                            <span>·</span>
+                            <span className="shrink-0">{totalSacks} sc</span>
+                            <span>·</span>
+                            <span className="shrink-0">{o.date || 'Hoje'}</span>
+                          </div>
+                        </div>
+                        {isSelected && (
+                          <div className="flex items-center justify-center size-4 rounded-full bg-sky-600 text-white shrink-0 mt-1">
+                            <Check size={11} strokeWidth={3} />
+                          </div>
+                        )}
+                      </DropdownMenuItem>
+                    );
+                  })
+                )}
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
+        {/* 2. VENDEDOR RESPONSÁVEL (Com ícone perfeitamente alinhado e padding pl-9) */}
         <div>
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Filtrar por Cliente ou Nº
+            Vendedor Responsável
           </label>
-          <div className="relative">
-            <Search size={14} className="absolute left-2.5 top-2.5 text-muted-foreground" />
+          <div className="relative flex items-center">
+            <User size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
             <input
               type="text"
-              className="form-input text-xs h-9 bg-background pl-8 w-full"
-              placeholder="Buscar por nome, bairro ou número do pedido..."
+              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors shadow-2xs"
+              value={slipData.vendorName ?? ''}
+              onChange={e => setSlipData(prev => ({ ...prev, vendorName: e.target.value }))}
+              placeholder="Nome do vendedor..."
+            />
+          </div>
+        </div>
+
+        {/* 3. FILTRAR PEDIDOS (Com ícone perfeitamente alinhado e padding pl-9) */}
+        <div>
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+            Filtrar Pedidos
+          </label>
+          <div className="relative flex items-center">
+            <Search size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-8 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors shadow-2xs"
+              placeholder="Buscar por cliente ou ID..."
               value={searchTerm}
               onChange={e => setSearchTerm(e.target.value)}
             />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded cursor-pointer"
+                title="Limpar busca"
+              >
+                ✕
+              </button>
+            )}
           </div>
         </div>
       </div>
