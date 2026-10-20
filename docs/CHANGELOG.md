@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [dfad5d2] — 19/10/2026 às 23:05 (🔴 Estrutural / Crítico)
+
+- **Escopo**: feat(order-slip): make order slip directly editable inline and fix full vertical scrolling
+- **Componentes afetados**: `order-slip-section.tsx`, `documentPrint.ts`, `index.tsx`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [33c16e5] — 19/10/2026 às 22:53 (🔴 Estrutural / Crítico)
 
 no Command Palette (`order-slip`) e botões de ação no Backoffice para emissão e visualização do
