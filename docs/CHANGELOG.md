@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [5ba2f39] — 19/10/2026 às 23:11 (🔴 Estrutural / Crítico)
+
+- **Escopo**: feat(order-slip): style order selector like profile dropdown and fix input icon padding
+- **Componentes afetados**: `order-slip-section.tsx`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [dfad5d2] — 19/10/2026 às 23:05 (🔴 Estrutural / Crítico)
 
 - **Escopo**: feat(order-slip): make order slip directly editable inline and fix full vertical scrolling
