@@ -576,7 +576,7 @@ function Index() {
                 </Button>
               </div>
             </header>
-            <main className="main-content">
+            <main className={`main-content ${module === 'order-slip' ? 'overflow-y-auto' : ''}`}>
               {module === 'order-slip' ? (
                 <OrderSlipSection
                   data={data}

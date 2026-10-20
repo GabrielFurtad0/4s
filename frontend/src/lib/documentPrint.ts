@@ -710,11 +710,45 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
  * dados completos do cliente, grade pautada com produtos e vencimentos de boletos embutidos na descrição,
  * totalizador e termo legal de frete por conta e risco do comprador.
  */
+export interface OrderSlipCustomData {
+  orderId?: string;
+  vendorName?: string;
+  orderDate?: string;
+  clientName?: string;
+  clientRef?: string;
+  clientAddress?: string;
+  clientCep?: string;
+  clientCity?: string;
+  clientState?: string;
+  clientPhone?: string;
+  clientCnpj?: string;
+  clientIe?: string;
+  clientEmail?: string;
+  rows?: Array<{
+    qty: string;
+    desc: string;
+    unid: string;
+    total: string;
+    isInstallment?: boolean;
+    isNote?: boolean;
+  }>;
+  buyer?: string;
+  visto?: string;
+  totalValue?: string;
+}
+
+/**
+ * Abre janela de impressão/PDF do Talão de Pedido Comercial (Bloco de Notas Físico de Campo).
+ * Segue com fidelidade milimétrica o modelo impresso tradicional com cabeçalho azul "Pedido Nº",
+ * dados completos do cliente, grade pautada com produtos e vencimentos de boletos embutidos na descrição,
+ * totalizador e termo legal de frete por conta e risco do comprador.
+ */
 export function openPrintableOrderSlip(
   order: Order,
   client?: Client,
   products?: Product[],
-  vendorName: string = 'Sérgio Soares'
+  vendorName: string = 'Sérgio Soares',
+  customData?: Partial<OrderSlipCustomData>
 ): void {
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -722,7 +756,7 @@ export function openPrintableOrderSlip(
     return;
   }
 
-  const html = generateOrderSlipHtml(order, client, products, vendorName);
+  const html = generateOrderSlipHtml(order, client, products, vendorName, customData);
   printWindow.document.open();
   printWindow.document.write(html);
   printWindow.document.close();
@@ -732,20 +766,31 @@ export function generateOrderSlipHtml(
   order: Order,
   client?: Client,
   products?: Product[],
-  vendorName: string = 'Sérgio Soares'
+  vendorName: string = 'Sérgio Soares',
+  customData?: Partial<OrderSlipCustomData>
 ): string {
   const resolveProductName = (productId: string): string => {
     const found = products?.find(p => p.id === productId);
     return found ? found.name : `Produto #${productId}`;
   };
 
-  const clientName = client?.name ?? `Cliente #${order.clientId}`;
-  const clientAddress = client?.neighborhood
+  const finalOrderId = customData?.orderId ?? order.id;
+  const finalVendor = customData?.vendorName ?? vendorName;
+  const clientName = customData?.clientName ?? (client?.name ?? `Cliente #${order.clientId}`);
+  const clientRef = customData?.clientRef ?? (client?.id ?? order.clientId);
+  const clientAddress = customData?.clientAddress ?? (client?.neighborhood
     ? `${client.neighborhood}, São Paulo - SP`
-    : 'São Paulo - SP';
-  const buyer = client?.buyer ?? 'Comprador';
-  const orderDate = order.date || new Date().toLocaleDateString('pt-BR');
-  const deliveryDate = order.delivery || 'Próxima rota';
+    : 'São Paulo - SP');
+  const clientCep = customData?.clientCep ?? (client?.ibge ? '04' + client.ibge.slice(2) + '-000' : '04840-000');
+  const clientCity = customData?.clientCity ?? 'São Paulo';
+  const clientState = customData?.clientState ?? 'SP';
+  const clientPhone = customData?.clientPhone ?? '(11) 98765-4321';
+  const clientCnpj = customData?.clientCnpj ?? (client?.cnpj || '—');
+  const clientIe = customData?.clientIe ?? (client?.ie || 'ISENTO');
+  const clientEmail = customData?.clientEmail ?? `contato@${clientName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'padaria'}.com.br`;
+  const buyer = customData?.buyer ?? (client?.buyer ?? 'Comprador');
+  const visto = customData?.visto ?? '';
+  const orderDate = customData?.orderDate ?? (order.date || new Date().toLocaleDateString('pt-BR'));
 
   let grandTotal = 0;
   let totalSacks = 0;
@@ -757,6 +802,19 @@ export function generateOrderSlipHtml(
     isInstallment?: boolean;
     isNote?: boolean;
   }> = [];
+
+  if (customData?.rows && customData.rows.length > 0) {
+    for (const r of customData.rows) {
+      renderedRows.push({
+        qty: r.qty ?? '',
+        desc: r.desc ?? '',
+        unid: r.unid ?? '',
+        total: r.total ?? '',
+        isInstallment: r.isInstallment,
+        isNote: r.isNote,
+      });
+    }
+  } else {
 
   // 1. Itens de produto
   for (const item of order.items) {
@@ -824,6 +882,7 @@ export function generateOrderSlipHtml(
       total: '',
       isNote: true,
     });
+  }
   }
 
   // Preenche linhas pautadas em branco até atingir 13 linhas mínimas (para fidelidade ao bloco impresso)
@@ -1115,13 +1174,13 @@ export function generateOrderSlipHtml(
       <div class="badge-pedido">
         <span class="pill">Pedido</span>
         <span class="num-label">Nº</span>
-        <span class="num-val">${order.id}</span>
+        <span class="num-val">${finalOrderId}</span>
       </div>
 
       <div class="vendor-date-box">
         <div class="vendor-date-row">
           <span class="label">Vendedor:</span>
-          <span class="line">${vendorName}</span>
+          <span class="line">${finalVendor}</span>
         </div>
         <div class="vendor-date-row">
           <span class="label">Data:</span>
@@ -1136,7 +1195,7 @@ export function generateOrderSlipHtml(
         <td colspan="4">
           <span class="field-title">Cliente:</span>
           <span class="field-content">${clientName}</span>
-          <span style="float: right; font-size: 9pt; color: #64748b; font-weight: 700;">Cód. / Ref: ${client?.id ?? order.clientId}</span>
+          <span style="float: right; font-size: 9pt; color: #64748b; font-weight: 700;">Cód. / Ref: ${clientRef}</span>
         </td>
       </tr>
       <tr>
@@ -1148,35 +1207,35 @@ export function generateOrderSlipHtml(
       <tr>
         <td style="width: 25%;">
           <span class="field-title">CEP:</span>
-          <span class="field-content">${client?.ibge ? '04' + client.ibge.slice(2) + '-000' : '04840-000'}</span>
+          <span class="field-content">${clientCep}</span>
         </td>
         <td style="width: 35%;">
           <span class="field-title">Cidade:</span>
-          <span class="field-content">São Paulo</span>
+          <span class="field-content">${clientCity}</span>
         </td>
         <td style="width: 15%;">
           <span class="field-title">Estado:</span>
-          <span class="field-content">SP</span>
+          <span class="field-content">${clientState}</span>
         </td>
         <td style="width: 25%;">
           <span class="field-title">Tel:</span>
-          <span class="field-content">(11) 9${Math.floor(1000 + Math.random() * 8999)}-${Math.floor(1000 + Math.random() * 8999)}</span>
+          <span class="field-content">${clientPhone}</span>
         </td>
       </tr>
       <tr>
         <td colspan="2">
           <span class="field-title">C.N.P.J:</span>
-          <span class="field-content">${client?.cnpj || '—'}</span>
+          <span class="field-content">${clientCnpj}</span>
         </td>
         <td colspan="2">
           <span class="field-title">Inscr. Est.:</span>
-          <span class="field-content">${client?.ie || 'ISENTO'}</span>
+          <span class="field-content">${clientIe}</span>
         </td>
       </tr>
       <tr>
         <td colspan="4">
           <span class="field-title">E-mail:</span>
-          <span class="field-content">contato@${clientName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'padaria'}.com.br</span>
+          <span class="field-content">${clientEmail}</span>
         </td>
       </tr>
     </table>
@@ -1204,13 +1263,13 @@ export function generateOrderSlipHtml(
           <div class="sig-underline"></div>
         </td>
         <td style="width: 23%;">
-          <div class="sig-caption">Visto:</div>
+          <div class="sig-caption">Visto: <span style="font-weight: 700; color: #0f172a;">${visto}</span></div>
           <div class="sig-underline" style="width: 80%;"></div>
         </td>
         <td style="width: 35%;">
           <div class="total-box-inner">
             <div class="lbl">Valor total do pedido</div>
-            <div class="val">R$ ${grandTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+            <div class="val">${customData?.totalValue ?? ('R$ ' + grandTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }))}</div>
           </div>
         </td>
       </tr>
