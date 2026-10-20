@@ -100,7 +100,7 @@ import {
 } from '@/lib/business';
 import { Metric } from './management';
 import type { SharedProps } from './seller';
-import { openPrintableDanfe, openPrintableRomaneio } from '@/lib/documentPrint';
+import { openPrintableDanfe, openPrintableRomaneio, openPrintableOrderSlip } from '@/lib/documentPrint';
 
 export function Backoffice({
   data,
@@ -719,6 +719,18 @@ export function Backoffice({
                             </Button>
                           </>
                         )}
+                        {!isExpedicao && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="order-action-pill shadow-xs"
+                            title="Imprimir Talão de Pedido Comercial"
+                            onClick={() => openPrintableOrderSlip(o, c, data.products)}
+                          >
+                            <FileText size={12} />
+                            Talão
+                          </Button>
+                        )}
                         <Button
                           variant="ghost"
                           size="icon"
@@ -1140,6 +1152,17 @@ export function Backoffice({
                           <Truck size={14} />
                           Imprimir Romaneio (DQ)
                         </Button>
+                        {!isExpedicao && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="gap-1.5"
+                            onClick={() => openPrintableOrderSlip(selected, selectedClient, data.products)}
+                          >
+                            <FileText size={14} />
+                            Imprimir Talão
+                          </Button>
+                        )}
                         {selected.xmlUrl && (
                           <Button variant="outline" size="sm" onClick={() => window.open(selected.xmlUrl, '_blank')}>
                             <FileText size={14} />

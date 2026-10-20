@@ -16,6 +16,7 @@ import {
   Loader2,
   MapPin,
   Plus,
+  Printer,
   RefreshCw,
   Search,
   Send,
@@ -34,6 +35,7 @@ import { ProfitGauge } from '@/components/ui/profit-gauge';
 import { fireConfetti } from '@/components/ui/confetti';
 import { FourSIcon } from './logo';
 import { ptBR } from 'date-fns/locale';
+import { openPrintableOrderSlip } from '@/lib/documentPrint';
 import {
   addClientNoteApi,
   available,
@@ -66,24 +68,22 @@ export type SharedProps = {
 };
 
 const paymentTermsList = [
-  { label: 'Boleto 28 dias (1 parcela)', installments: 1, desc: 'Vencimento em 28 dias', defaultDays: 28, intervalDays: 7 },
-  { label: 'Boleto 7/14/21/28 dias (4 parcelas a cada 7 dias)', installments: 4, desc: '4x semanais (7, 14, 21 e 28 dias)', defaultDays: 7, intervalDays: 7 },
-  { label: 'Boleto 14/21/28 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (14, 21 e 28 dias)', defaultDays: 14, intervalDays: 7 },
-  { label: 'Boleto 7/14/21 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (7, 14 e 21 dias)', defaultDays: 7, intervalDays: 7 },
-  { label: 'Boleto 7/14 dias (2 parcelas a cada 7 dias)', installments: 2, desc: '2x semanais (7 e 14 dias)', defaultDays: 7, intervalDays: 7 },
-  { label: 'Boleto 14/28 dias (2 parcelas a cada 14 dias)', installments: 2, desc: '2x quinzenais (14 e 28 dias)', defaultDays: 14, intervalDays: 14 },
-  { label: 'Boleto 21 dias (1 parcela)', installments: 1, desc: 'Vencimento em 21 dias', defaultDays: 21, intervalDays: 7 },
-  { label: 'Boleto 14 dias (1 parcela)', installments: 1, desc: 'Vencimento em 14 dias', defaultDays: 14, intervalDays: 7 },
-  { label: 'Boleto 7 dias (1 parcela)', installments: 1, desc: 'Vencimento em 7 dias', defaultDays: 7, intervalDays: 7 },
-  { label: 'Pix na Entrega (À vista)', installments: 1, desc: 'Pagamento imediato na entrega', defaultDays: 1, intervalDays: 0 },
-  { label: 'Dinheiro na Entrega (À vista)', installments: 1, desc: 'Pagamento em espécie ao motorista', defaultDays: 1, intervalDays: 0 },
+  { label: 'Boleto 28 dias (1 parcela)', installments: 1, desc: 'Vencimento em 28 dias após a entrega', startDays: 28, intervalDays: 0 },
+  { label: 'Boleto 7/14/21/28 dias (4 parcelas a cada 7 dias)', installments: 4, desc: '4x semanais (7, 14, 21 e 28 dias após entrega)', startDays: 7, intervalDays: 7 },
+  { label: 'Boleto 14/21/28 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (14, 21 e 28 dias após entrega)', startDays: 14, intervalDays: 7 },
+  { label: 'Boleto 7/14/21 dias (3 parcelas a cada 7 dias)', installments: 3, desc: '3x semanais (7, 14 e 21 dias após entrega)', startDays: 7, intervalDays: 7 },
+  { label: 'Boleto 7/14 dias (2 parcelas a cada 7 dias)', installments: 2, desc: '2x semanais (7 e 14 dias após entrega)', startDays: 7, intervalDays: 7 },
+  { label: 'Boleto 14/28 dias (2 parcelas a cada 14 dias)', installments: 2, desc: '2x quinzenais (14 e 28 dias após entrega)', startDays: 14, intervalDays: 14 },
+  { label: 'Boleto 21 dias (1 parcela)', installments: 1, desc: 'Vencimento em 21 dias após a entrega', startDays: 21, intervalDays: 0 },
+  { label: 'Boleto 14 dias (1 parcela)', installments: 1, desc: 'Vencimento em 14 dias após a entrega', startDays: 14, intervalDays: 0 },
+  { label: 'Boleto 7 dias (1 parcela)', installments: 1, desc: 'Vencimento em 7 dias após a entrega', startDays: 7, intervalDays: 0 },
+  { label: 'Pix na Entrega (À vista)', installments: 1, desc: 'Pagamento imediato na entrega', startDays: 0, intervalDays: 0 },
+  { label: 'Dinheiro na Entrega (À vista)', installments: 1, desc: 'Pagamento em espécie ao motorista', startDays: 0, intervalDays: 0 },
 ];
 
-function computeDefaultFirstDueDate(termLabel: string): string {
-  const term = paymentTermsList.find(t => t.label === termLabel);
-  const days = term?.defaultDays ?? 14;
+function getDefaultDeliveryDate(): string {
   const d = new Date();
-  d.setDate(d.getDate() + days);
+  d.setDate(d.getDate() + 1);
   const yyyy = d.getFullYear();
   const mm = String(d.getMonth() + 1).padStart(2, '0');
   const dd = String(d.getDate()).padStart(2, '0');
@@ -119,9 +119,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const [prices, setPrices] = useState([85, 78, 92]);
   const [privateProfit, setPrivateProfit] = useState(true);
   const [payment, setPayment] = useState('Boleto 28 dias (1 parcela)');
-  const [firstDueDate, setFirstDueDate] = useState<string>(() =>
-    computeDefaultFirstDueDate('Boleto 28 dias (1 parcela)')
-  );
+  const [deliveryDate, setDeliveryDate] = useState<string>(() => getDefaultDeliveryDate());
   const [orderNote, setOrderNote] = useState('');
   const [promotional, setPromotional] = useState(false);
 
@@ -237,22 +235,22 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
   const selectedTerm = paymentTermsList.find(t => t.label === payment) ?? {
     label: payment,
     installments: 1,
-    desc: 'Vencimento em 28 dias',
-    defaultDays: 28,
-    intervalDays: 7,
+    desc: 'Vencimento em 28 dias após a entrega',
+    startDays: 28,
+    intervalDays: 0,
   };
   const installmentValue =
     baseTotal > 0 && selectedTerm.installments > 1 ? baseTotal / selectedTerm.installments : baseTotal;
 
-  // Cronograma das parcelas: a cada 7 dias a partir da 1ª parcela
+  // Cronograma dos boletos: calculados a partir da data de entrega
   const computedDueDates: string[] = Array.from(
     { length: Math.max(1, selectedTerm.installments) },
     (_, idx) => {
-      if (!firstDueDate) return '';
-      const [y, m, d] = firstDueDate.split('-').map(Number);
+      if (!deliveryDate) return '';
+      const [y, m, d] = deliveryDate.split('-').map(Number);
       const dateObj = new Date(y, (m || 1) - 1, d || 1);
-      const interval = selectedTerm.intervalDays || 7;
-      dateObj.setDate(dateObj.getDate() + idx * interval);
+      const offset = (selectedTerm.startDays ?? 7) + idx * (selectedTerm.intervalDays ?? 7);
+      dateObj.setDate(dateObj.getDate() + offset);
       const yyyy = dateObj.getFullYear();
       const mm = String(dateObj.getMonth() + 1).padStart(2, '0');
       const dd = String(dateObj.getDate()).padStart(2, '0');
@@ -275,7 +273,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
     setPrivateProfit(true);
     const initialPayment = client.defaultPaymentTerms || 'Boleto 28 dias (1 parcela)';
     setPayment(initialPayment);
-    setFirstDueDate(computeDefaultFirstDueDate(initialPayment));
+    setDeliveryDate(getDefaultDeliveryDate());
   };
 
   const changeQuantity = (i: number, n: number) => {
@@ -839,11 +837,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 <select
                   className="form-input text-xs"
                   value={payment}
-                  onChange={e => {
-                    const nextP = e.target.value;
-                    setPayment(nextP);
-                    setFirstDueDate(computeDefaultFirstDueDate(nextP));
-                  }}
+                  onChange={e => setPayment(e.target.value)}
                 >
                   {paymentTermsList.map(term => (
                     <option key={term.label} value={term.label}>
@@ -853,18 +847,21 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 </select>
               </label>
 
-              {/* Seletor de Data da 1ª Parcela a ser paga */}
+              {/* Seletor de Data de Entrega Programada */}
               <label className="field-label mt-3">
                 <span className="flex items-center gap-1.5 font-medium text-foreground">
-                  <Calendar size={13} className="text-primary" />
-                  {selectedTerm.installments > 1 ? 'Data da 1ª parcela a ser paga' : 'Data de vencimento'}
+                  <Truck size={13} className="text-primary" />
+                  Data de entrega
                 </span>
                 <input
                   type="date"
                   className="form-input text-xs h-9 bg-card font-mono numeric cursor-pointer"
-                  value={firstDueDate}
-                  onChange={e => setFirstDueDate(e.target.value)}
+                  value={deliveryDate}
+                  onChange={e => setDeliveryDate(e.target.value)}
                 />
+                <span className="text-[10px] text-muted-foreground mt-0.5">
+                  Os vencimentos dos boletos são calculados automaticamente a partir desta data.
+                </span>
               </label>
 
               {/* Detalhe do Parcelamento em Tempo Real (Calculado sobre a Base BQ) */}
@@ -880,15 +877,17 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                     </strong>
                   </div>
 
-                  {/* Cronograma detalhado de parcelas (7 em 7 dias a partir da 1ª) */}
+                  {/* Cronograma detalhado de parcelas calculadas a partir da entrega */}
                   {selectedTerm.installments > 1 && (
                     <div className="mt-2.5 pt-2 border-t border-primary/15 space-y-1">
                       <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-                        Cronograma das parcelas (a cada 7 dias):
+                        Cronograma dos boletos (a partir da entrega em{' '}
+                        {deliveryDate ? deliveryDate.split('-').reverse().join('/') : '—'}):
                       </span>
                       {computedDueDates.map((dStr, idx) => {
                         const [yyyy, mm, dd] = dStr.split('-');
                         const formatted = `${dd}/${mm}/${yyyy}`;
+                        const offset = (selectedTerm.startDays ?? 7) + idx * (selectedTerm.intervalDays ?? 7);
                         return (
                           <div
                             key={idx}
@@ -897,7 +896,9 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                             <span className="text-foreground">
                               <strong>{idx + 1}ª parcela:</strong>{' '}
                               <span className="font-mono text-primary font-medium">{formatted}</span>
-                              {idx > 0 && <span className="text-muted-foreground text-[9.5px] ml-1">(+7 dias)</span>}
+                              <span className="text-muted-foreground text-[9.5px] ml-1">
+                                (+{offset} dias da entrega)
+                              </span>
                             </span>
                             <b className="numeric font-semibold text-foreground">{money(installmentValue)}</b>
                           </div>
@@ -906,11 +907,13 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                     </div>
                   )}
 
-                  {selectedTerm.installments === 1 && firstDueDate && (
+                  {selectedTerm.installments === 1 && computedDueDates[0] && (
                     <div className="mt-2 pt-1.5 border-t border-primary/15 flex items-center justify-between text-[11px]">
-                      <span className="text-muted-foreground">Vencimento único:</span>
+                      <span className="text-muted-foreground">
+                        Vencimento ({selectedTerm.startDays === 0 ? 'na entrega' : `+${selectedTerm.startDays} dias da entrega`}):
+                      </span>
                       <strong className="font-mono text-primary">
-                        {firstDueDate.split('-').reverse().join('/')}
+                        {computedDueDates[0].split('-').reverse().join('/')}
                       </strong>
                     </div>
                   )}
@@ -992,6 +995,10 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                 onClick={() => {
                   const newId = String(1049 + data.orders.length);
                   const totalItems = totalDq;
+                  const formattedDelivery = deliveryDate
+                    ? deliveryDate.split('-').reverse().join('/')
+                    : 'Próxima rota';
+
                   const success = submit({
                     id: newId,
                     clientId: client.id,
@@ -999,9 +1006,9 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
                     status: 'AGUARDANDO_REVISAO',
                     rawStatus: 'AGUARDANDO_REVISAO',
                     payment,
-                    firstDueDate,
+                    firstDueDate: computedDueDates[0] || deliveryDate,
                     dueDates: computedDueDates,
-                    delivery: 'Próxima rota',
+                    delivery: formattedDelivery,
                     note: orderNote,
                     promotional,
                     date: new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
@@ -1272,15 +1279,32 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
             </div>
           </div>
 
-          <Button
-            className="w-full h-11 text-xs font-bold"
-            onClick={() => {
-              setSuccessOrder(null);
-              setView('agenda');
-            }}
-          >
-            Voltar para a Agenda
-          </Button>
+          <div className="flex flex-col gap-2 w-full">
+            <Button
+              variant="outline"
+              className="w-full h-10 text-xs font-semibold gap-1.5 border-sky-500/30 text-sky-700 dark:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-950/30"
+              onClick={() => {
+                const orderObj = data.orders.find(o => o.id === successOrder?.id);
+                if (orderObj) {
+                  const clientObj = data.clients.find(c => c.id === orderObj.clientId);
+                  openPrintableOrderSlip(orderObj, clientObj, data.products, 'Sérgio Soares');
+                }
+              }}
+            >
+              <Printer size={13} />
+              Imprimir Talão do Pedido
+            </Button>
+
+            <Button
+              className="w-full h-11 text-xs font-bold"
+              onClick={() => {
+                setSuccessOrder(null);
+                setView('agenda');
+              }}
+            >
+              Voltar para a Agenda
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
 

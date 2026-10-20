@@ -6,6 +6,7 @@ import {
   Clock3,
   FileCheck2,
   FileSpreadsheet,
+  FileText,
   Globe2,
   LayoutDashboard,
   Package,
@@ -118,6 +119,16 @@ export function CommandPalette({
           >
             <FileCheck2 className="mr-2 h-4 w-4 text-blue-500" />
             <span>Mesa de Conferência (Pré-Nota & Faturamento)</span>
+          </CommandItem>
+          <CommandItem
+            value="talao de pedido bloco nota impresso imprimir documento order-slip"
+            onSelect={() => {
+              onOpenChange(false);
+              onSelectModule?.('order-slip');
+            }}
+          >
+            <FileText className="mr-2 h-4 w-4 text-sky-500" />
+            <span>Talão de Pedido (Bloco Comercial & Impressão)</span>
           </CommandItem>
           <CommandItem
             value="boletos contas a receber financeiro bancos cobrança receivables"

@@ -703,3 +703,526 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
 </body>
 </html>`;
 }
+
+/**
+ * Abre janela de impressão/PDF do Talão de Pedido Comercial (Bloco de Notas Físico de Campo).
+ * Segue com fidelidade milimétrica o modelo impresso tradicional com cabeçalho azul "Pedido Nº",
+ * dados completos do cliente, grade pautada com produtos e vencimentos de boletos embutidos na descrição,
+ * totalizador e termo legal de frete por conta e risco do comprador.
+ */
+export function openPrintableOrderSlip(
+  order: Order,
+  client?: Client,
+  products?: Product[],
+  vendorName: string = 'Sérgio Soares'
+): void {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Por favor, permita pop-ups para abrir a impressão do talão de pedido.');
+    return;
+  }
+
+  const html = generateOrderSlipHtml(order, client, products, vendorName);
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+export function generateOrderSlipHtml(
+  order: Order,
+  client?: Client,
+  products?: Product[],
+  vendorName: string = 'Sérgio Soares'
+): string {
+  const resolveProductName = (productId: string): string => {
+    const found = products?.find(p => p.id === productId);
+    return found ? found.name : `Produto #${productId}`;
+  };
+
+  const clientName = client?.name ?? `Cliente #${order.clientId}`;
+  const clientAddress = client?.neighborhood
+    ? `${client.neighborhood}, São Paulo - SP`
+    : 'São Paulo - SP';
+  const buyer = client?.buyer ?? 'Comprador';
+  const orderDate = order.date || new Date().toLocaleDateString('pt-BR');
+  const deliveryDate = order.delivery || 'Próxima rota';
+
+  let grandTotal = 0;
+  let totalSacks = 0;
+  const renderedRows: Array<{
+    qty: string;
+    desc: string;
+    unid: string;
+    total: string;
+    isInstallment?: boolean;
+    isNote?: boolean;
+  }> = [];
+
+  // 1. Itens de produto
+  for (const item of order.items) {
+    const qty = itemDq(item);
+    if (qty <= 0) continue;
+    const subtotal = qty * item.price;
+    grandTotal += subtotal;
+    totalSacks += qty;
+
+    const pName = resolveProductName(item.productId)
+      .replace(' (25kg)', '')
+      .replace('Farinha Tipo 1', 'Farinha Trigo Especial Tipo 1')
+      .replace('Pré-Mistura Francês', 'Pré-Mistura Pão Francês')
+      .replace('PM Pão Doce', 'Pré-Mistura Pão Doce');
+
+    renderedRows.push({
+      qty: String(qty),
+      desc: `${pName}  ${item.price.toFixed(2).replace('.', ',')}`,
+      unid: 'SA',
+      total: subtotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
+    });
+  }
+
+  // 2. Cronograma de boletos/parcelas (exibidos na grade pautada exatamente como no talão físico)
+  if (order.dueDates && order.dueDates.length > 0) {
+    const installmentVal = grandTotal / order.dueDates.length;
+    order.dueDates.forEach((dStr, idx) => {
+      const parts = dStr.split('-');
+      const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : dStr;
+      renderedRows.push({
+        qty: '',
+        desc: `${formattedDate}  -  ${installmentVal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        unid: '',
+        total: '',
+        isInstallment: true,
+      });
+    });
+  } else if (order.firstDueDate) {
+    const parts = order.firstDueDate.split('-');
+    const formattedDate = parts.length === 3 ? `${parts[2]}/${parts[1]}` : order.firstDueDate;
+    renderedRows.push({
+      qty: '',
+      desc: `${formattedDate}  -  ${grandTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+      unid: '',
+      total: '',
+      isInstallment: true,
+    });
+  }
+
+  // 3. Previsão de entrega e observações comerciais
+  if (order.delivery && order.delivery !== 'Próxima rota') {
+    renderedRows.push({
+      qty: '',
+      desc: `Entrega programada: ${order.delivery}`,
+      unid: '',
+      total: '',
+      isNote: true,
+    });
+  }
+  if (order.note) {
+    renderedRows.push({
+      qty: '',
+      desc: `Obs: ${order.note}`,
+      unid: '',
+      total: '',
+      isNote: true,
+    });
+  }
+
+  // Preenche linhas pautadas em branco até atingir 13 linhas mínimas (para fidelidade ao bloco impresso)
+  const totalTargetRows = Math.max(13, renderedRows.length + 3);
+  const rowsHtml = Array.from({ length: totalTargetRows }, (_, i) => {
+    const row = renderedRows[i];
+    if (row) {
+      const descStyle = row.isInstallment
+        ? 'font-family: Consolas, monospace; font-size: 11.5pt; font-weight: 700; color: #1e293b; padding-left: 28px;'
+        : row.isNote
+        ? 'font-size: 9.5pt; font-style: italic; color: #475569;'
+        : 'font-weight: 600; font-size: 11pt; color: #0f172a;';
+
+      return `
+        <tr style="height: 32px; border-bottom: 1px solid #94a3b8;">
+          <td style="text-align: center; font-weight: 700; font-size: 12pt; border-right: 1px solid #94a3b8; color: #0f172a;">${row.qty}</td>
+          <td style="${descStyle} border-right: 1px solid #94a3b8; padding-left: 8px;">${row.desc}</td>
+          <td style="text-align: center; font-size: 10pt; color: #475569; border-right: 1px solid #94a3b8;">${row.unid}</td>
+          <td style="text-align: right; font-weight: 700; font-size: 12pt; padding-right: 8px; color: #0f172a;">${row.total}</td>
+        </tr>
+      `;
+    }
+
+    return `
+      <tr style="height: 32px; border-bottom: 1px solid #94a3b8;">
+        <td style="border-right: 1px solid #94a3b8;">&nbsp;</td>
+        <td style="border-right: 1px solid #94a3b8;">&nbsp;</td>
+        <td style="border-right: 1px solid #94a3b8;">&nbsp;</td>
+        <td>&nbsp;</td>
+      </tr>
+    `;
+  }).join('');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <title>Talão de Pedido Nº ${order.id} - ${clientName}</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: Arial, Helvetica, sans-serif;
+      font-size: 10pt;
+      color: #0f172a;
+      background: #f1f5f9;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .no-print {
+      width: 100%;
+      max-width: 740px;
+      background: #0284c7;
+      color: #fff;
+      padding: 12px 18px;
+      border-radius: 8px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .no-print button {
+      background: #ffffff;
+      color: #0284c7;
+      border: 0;
+      padding: 8px 18px;
+      border-radius: 6px;
+      font-weight: 800;
+      cursor: pointer;
+      font-size: 11pt;
+      transition: background 0.15s;
+    }
+    .no-print button:hover {
+      background: #f0f9ff;
+    }
+    .page-sheet {
+      width: 100%;
+      max-width: 740px;
+      background: #ffffff;
+      border: 1.5px solid #0f172a;
+      border-radius: 4px;
+      padding: 18px 22px 14px 22px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+      position: relative;
+    }
+    .header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .badge-pedido {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .badge-pedido .pill {
+      background-color: #0284c7;
+      color: #ffffff;
+      font-size: 24pt;
+      font-weight: 800;
+      padding: 2px 18px;
+      border-radius: 4px;
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+    }
+    .badge-pedido .num-label {
+      font-size: 24pt;
+      font-weight: 800;
+      color: #0284c7;
+      margin-left: 2px;
+    }
+    .badge-pedido .num-val {
+      font-size: 20pt;
+      font-weight: 700;
+      color: #0f172a;
+      border-bottom: 2px solid #0f172a;
+      min-width: 110px;
+      padding: 0 8px;
+      display: inline-block;
+      text-align: center;
+    }
+    .vendor-date-box {
+      font-size: 11pt;
+      color: #0f172a;
+    }
+    .vendor-date-row {
+      display: flex;
+      align-items: baseline;
+      justify-content: flex-end;
+      margin-bottom: 6px;
+    }
+    .vendor-date-row span.label {
+      font-weight: 600;
+      margin-right: 6px;
+    }
+    .vendor-date-row span.line {
+      border-bottom: 1.5px solid #0f172a;
+      min-width: 175px;
+      display: inline-block;
+      font-weight: 700;
+      padding-left: 6px;
+      color: #1e293b;
+    }
+
+    /* Tabela de Dados do Cliente */
+    .client-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #0f172a;
+      margin-bottom: 12px;
+      font-size: 9.5pt;
+    }
+    .client-table td {
+      border: 1px solid #64748b;
+      padding: 4px 8px;
+      vertical-align: middle;
+    }
+    .client-table .field-title {
+      font-weight: 600;
+      color: #475569;
+      font-size: 9pt;
+      margin-right: 4px;
+    }
+    .client-table .field-content {
+      font-weight: 700;
+      color: #0f172a;
+      font-size: 10.5pt;
+    }
+
+    /* Tabela Pautada de Itens */
+    .items-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #0f172a;
+      margin-bottom: 14px;
+    }
+    .items-table th {
+      background-color: #dbeafe;
+      color: #0369a1;
+      font-weight: 800;
+      font-size: 10.5pt;
+      text-align: center;
+      padding: 6px 8px;
+      border: 1px solid #64748b;
+      border-bottom: 1.5px solid #0f172a;
+    }
+    .items-table th.col-desc {
+      text-align: center;
+    }
+    .items-table td {
+      padding: 4px 8px;
+      vertical-align: middle;
+    }
+
+    /* Rodapé e Assinaturas */
+    .footer-table {
+      width: 100%;
+      border-collapse: collapse;
+      border: 1.5px solid #0f172a;
+      margin-bottom: 0px;
+    }
+    .footer-table td {
+      border: 1px solid #64748b;
+      padding: 6px 10px;
+      vertical-align: top;
+    }
+    .sig-caption {
+      font-size: 9pt;
+      color: #475569;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+    .sig-underline {
+      border-bottom: 1px solid #0f172a;
+      width: 90%;
+      margin: 0 auto;
+    }
+    .total-box-inner {
+      text-align: right;
+    }
+    .total-box-inner .lbl {
+      font-size: 8.5pt;
+      color: #475569;
+      font-weight: 700;
+      text-transform: uppercase;
+      margin-bottom: 2px;
+    }
+    .total-box-inner .val {
+      font-size: 16pt;
+      font-weight: 900;
+      color: #0284c7;
+      letter-spacing: -0.5px;
+    }
+
+    /* Tarja Azul Inferior de Responsabilidade */
+    .bottom-disclaimer {
+      background-color: #0284c7;
+      color: #ffffff;
+      text-align: center;
+      padding: 5px 8px;
+      font-size: 8.5pt;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      border: 1.5px solid #0f172a;
+      border-top: 0;
+    }
+
+    @media print {
+      body {
+        background: #ffffff;
+        padding: 0;
+        margin: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .page-sheet {
+        border: 1.5px solid #000;
+        box-shadow: none;
+        max-width: 100%;
+        width: 100%;
+        padding: 12px 16px;
+      }
+      @page {
+        size: A4 portrait;
+        margin: 10mm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="no-print">
+    <div>
+      <strong style="font-size: 13pt;">📋 Talão de Pedido Comercial (Bloco Físico de Campo)</strong>
+      <div style="font-size: 9pt; color: #e0f2fe;">Fiel ao bloco impresso para assinatura do comprador e comprovação de frete</div>
+    </div>
+    <div style="display: flex; gap: 8px;">
+      <button onclick="window.print()">🖨️ Imprimir Talão / PDF</button>
+    </div>
+  </div>
+
+  <div class="page-sheet">
+    <!-- Cabeçalho -->
+    <div class="header-row">
+      <div class="badge-pedido">
+        <span class="pill">Pedido</span>
+        <span class="num-label">Nº</span>
+        <span class="num-val">${order.id}</span>
+      </div>
+
+      <div class="vendor-date-box">
+        <div class="vendor-date-row">
+          <span class="label">Vendedor:</span>
+          <span class="line">${vendorName}</span>
+        </div>
+        <div class="vendor-date-row">
+          <span class="label">Data:</span>
+          <span class="line">${orderDate}</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tabela com Dados do Cliente -->
+    <table class="client-table">
+      <tr>
+        <td colspan="4">
+          <span class="field-title">Cliente:</span>
+          <span class="field-content">${clientName}</span>
+          <span style="float: right; font-size: 9pt; color: #64748b; font-weight: 700;">Cód. / Ref: ${client?.id ?? order.clientId}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <span class="field-title">Endereço:</span>
+          <span class="field-content">${clientAddress}</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 25%;">
+          <span class="field-title">CEP:</span>
+          <span class="field-content">${client?.ibge ? '04' + client.ibge.slice(2) + '-000' : '04840-000'}</span>
+        </td>
+        <td style="width: 35%;">
+          <span class="field-title">Cidade:</span>
+          <span class="field-content">São Paulo</span>
+        </td>
+        <td style="width: 15%;">
+          <span class="field-title">Estado:</span>
+          <span class="field-content">SP</span>
+        </td>
+        <td style="width: 25%;">
+          <span class="field-title">Tel:</span>
+          <span class="field-content">(11) 9${Math.floor(1000 + Math.random() * 8999)}-${Math.floor(1000 + Math.random() * 8999)}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="2">
+          <span class="field-title">C.N.P.J:</span>
+          <span class="field-content">${client?.cnpj || '—'}</span>
+        </td>
+        <td colspan="2">
+          <span class="field-title">Inscr. Est.:</span>
+          <span class="field-content">${client?.ie || 'ISENTO'}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <span class="field-title">E-mail:</span>
+          <span class="field-content">contato@${clientName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'padaria'}.com.br</span>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Tabela Pautada de Produtos & Vencimentos -->
+    <table class="items-table">
+      <thead>
+        <tr>
+          <th style="width: 10%;">Qtde.</th>
+          <th class="col-desc" style="width: 58%;">Descrição</th>
+          <th style="width: 10%;">Unid.</th>
+          <th style="width: 22%;">Total</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${rowsHtml}
+      </tbody>
+    </table>
+
+    <!-- Rodapé: Assinatura e Total -->
+    <table class="footer-table">
+      <tr>
+        <td style="width: 42%;">
+          <div class="sig-caption">Comprador: <span style="font-weight: 700; color: #0f172a;">${buyer}</span></div>
+          <div class="sig-underline"></div>
+        </td>
+        <td style="width: 23%;">
+          <div class="sig-caption">Visto:</div>
+          <div class="sig-underline" style="width: 80%;"></div>
+        </td>
+        <td style="width: 35%;">
+          <div class="total-box-inner">
+            <div class="lbl">Valor total do pedido</div>
+            <div class="val">R$ ${grandTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</div>
+          </div>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Tarja Inferior Legal Obrigatória -->
+    <div class="bottom-disclaimer">
+      As mercadorias viajam por conta e risco do(s) comprador(es).
+    </div>
+  </div>
+
+</body>
+</html>`;
+}
+

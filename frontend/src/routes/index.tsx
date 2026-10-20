@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
+import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, FileText, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/compone
 import { Backoffice } from '@/components/backoffice';
 import { Management } from '@/components/management';
 import { Seller } from '@/components/seller';
+import { OrderSlipSection } from '@/components/order-slip-section';
 import { FourSIcon, FourSLogo } from '@/components/logo';
 import {
   createOrderApi,
@@ -116,6 +117,7 @@ function applyFontScaleToDom(scale: FontScale) {
 
 const modules = [
   { id: 'orders', label: 'Mesa de conferência', icon: FileCheck2 },
+  { id: 'order-slip', label: 'Talão de Pedido', icon: FileText },
   { id: 'receivables', label: 'Boletos', icon: Barcode },
   { id: 'registrations', label: 'Cadastros & Estoque', icon: Users },
   { id: 'audit', label: 'Trilha de auditoria', icon: ShieldCheck },
@@ -575,7 +577,13 @@ function Index() {
               </div>
             </header>
             <main className="main-content">
-              {['orders', 'receivables', 'registrations', 'audit'].includes(module) ? (
+              {module === 'order-slip' ? (
+                <OrderSlipSection
+                  data={data}
+                  userProfile={activeProfile}
+                  initialOrderId={targetOrderId ?? undefined}
+                />
+              ) : ['orders', 'receivables', 'registrations', 'audit'].includes(module) ? (
                 <Backoffice
                   {...shared}
                   activeModule={module}
