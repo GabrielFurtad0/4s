@@ -55,6 +55,33 @@ interface SlipRow {
   isNote?: boolean;
 }
 
+
+export function formatSlipOrderDate(order?: Order): string {
+  if (!order) return new Date().toLocaleDateString('pt-BR');
+  const raw = order.date;
+  if (!raw) return new Date().toLocaleDateString('pt-BR');
+
+  const trimmed = raw.trim();
+  const lower = trimmed.toLowerCase();
+
+  if (lower === 'ontem') {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('pt-BR');
+  }
+  if (lower === 'hoje' || /^\d{1,2}:\d{2}$/.test(trimmed)) {
+    return new Date().toLocaleDateString('pt-BR');
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    const [y, m, d] = trimmed.slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return new Date().toLocaleDateString('pt-BR');
+}
+
 export function OrderSlipSection({
   data,
   userProfile,
@@ -127,9 +154,7 @@ export function OrderSlipSection({
       };
     }
 
-    const initialVendor =
-      profile?.includes('Sérgio') ? 'Sérgio Soares' :
-      profile?.includes('Gabriel') ? 'Gabriel Furtado' : 'Sérgio Soares';
+    const initialVendor = 'Sérgio Soares';
 
     const clientName = client?.name ?? `Cliente #${order.clientId}`;
     const clientAddress = client?.neighborhood
@@ -143,7 +168,7 @@ export function OrderSlipSection({
     const clientEmail = client?.name
       ? `contato@${client.name.toLowerCase().replace(/[^a-z0-9]/g, '') || 'padaria'}.com.br`
       : 'contato@padaria.com.br';
-    const orderDate = order.date || new Date().toLocaleDateString('pt-BR');
+    const orderDate = formatSlipOrderDate(order);
     const buyer = client?.buyer ?? 'Comprador';
 
     let grandTotal = 0;
@@ -363,7 +388,7 @@ export function OrderSlipSection({
     : 0;
 
   const renderOrderSlipPaper = () => (
-    <div className="w-full max-w-[760px] bg-white text-slate-900 border-2 border-slate-900 rounded-sm p-5 sm:p-7 shadow-2xl transition-all">
+    <div className="w-full max-w-[760px] h-fit self-start bg-white text-slate-900 border-2 border-slate-900 rounded-sm p-5 sm:p-7 shadow-2xl transition-all">
       {/* Cabeçalho do Bloco */}
       <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 mb-4">
         <div className="flex items-center gap-3">
@@ -579,7 +604,7 @@ export function OrderSlipSection({
                     className={`w-full h-8 px-2 text-sm bg-transparent focus:bg-white focus:outline-none ${descStyle}`}
                     value={row.desc}
                     onChange={e => handleUpdateRow(row.id, 'desc', e.target.value)}
-                    placeholder="Clique para digitar a descrição..."
+                    placeholder=""
                   />
                 </td>
                 <td className="p-0 border-r border-slate-400 relative">
@@ -699,7 +724,7 @@ export function OrderSlipSection({
   );
 
   return (
-    <div className="flex-1 min-h-0 flex flex-col space-y-4 pb-6">
+    <div className="h-full flex-1 min-h-0 flex flex-col space-y-4 overflow-y-auto pr-1 pb-24">
       {/* Cabeçalho da Seção com Ações */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border/70 pb-3 shrink-0">
         <div className="flex items-center gap-2.5">
@@ -778,9 +803,36 @@ export function OrderSlipSection({
         </div>
       </div>
 
-      {/* Barra de Seleção e Controles (3 Colunas) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-3 bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs shrink-0">
-        {/* 1. SELECIONE O PEDIDO (Custom Dropdown similar ao Perfil) */}
+      {/* Barra de Seleção e Controles (Filtrar primeiro, depois Selecionar) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 bg-card border border-border/80 rounded-xl p-3.5 shadow-2xs shrink-0">
+        {/* 1. FILTRAR PEDIDOS (Vem antes para filtrar a lista da carteira) */}
+        <div>
+          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
+            Filtrar Pedidos
+          </label>
+          <div className="relative flex items-center">
+            <Search size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
+            <input
+              type="text"
+              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-8 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors shadow-2xs"
+              placeholder="Buscar por cliente, bairro ou número..."
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+            {searchTerm && (
+              <button
+                type="button"
+                onClick={() => setSearchTerm('')}
+                className="absolute right-2.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded cursor-pointer"
+                title="Limpar busca"
+              >
+                ✕
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* 2. SELECIONE O PEDIDO (Custom Dropdown similar ao Perfil) */}
         <div>
           <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
             Selecione o Pedido
@@ -797,7 +849,7 @@ export function OrderSlipSection({
                   <span className="flex items-center justify-center size-5 rounded bg-sky-500/15 text-sky-700 dark:text-sky-300 font-mono text-[10px] font-bold shrink-0">
                     #{currentOrder?.id ?? '—'}
                   </span>
-                  <span className="font-semibold text-xs text-foreground truncate max-w-[130px] sm:max-w-[170px]">
+                  <span className="font-semibold text-xs text-foreground truncate max-w-[150px] sm:max-w-[220px]">
                     {currentClient?.name ?? `Cliente #${currentOrder?.clientId ?? '—'}`}
                   </span>
                   <span className="text-muted-foreground text-[11px] font-medium shrink-0 hidden lg:inline">
@@ -878,7 +930,7 @@ export function OrderSlipSection({
                             <span>·</span>
                             <span className="shrink-0">{totalSacks} sc</span>
                             <span>·</span>
-                            <span className="shrink-0">{o.date || 'Hoje'}</span>
+                            <span className="shrink-0">{formatSlipOrderDate(o)}</span>
                           </div>
                         </div>
                         {isSelected && (
@@ -893,50 +945,6 @@ export function OrderSlipSection({
               </div>
             </DropdownMenuContent>
           </DropdownMenu>
-        </div>
-
-        {/* 2. VENDEDOR RESPONSÁVEL (Com ícone perfeitamente alinhado e padding pl-9) */}
-        <div>
-          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Vendedor Responsável
-          </label>
-          <div className="relative flex items-center">
-            <User size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-3 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors shadow-2xs"
-              value={slipData.vendorName ?? ''}
-              onChange={e => setSlipData(prev => ({ ...prev, vendorName: e.target.value }))}
-              placeholder="Nome do vendedor..."
-            />
-          </div>
-        </div>
-
-        {/* 3. FILTRAR PEDIDOS (Com ícone perfeitamente alinhado e padding pl-9) */}
-        <div>
-          <label className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider block mb-1">
-            Filtrar Pedidos
-          </label>
-          <div className="relative flex items-center">
-            <Search size={14} className="absolute left-3 text-muted-foreground pointer-events-none" />
-            <input
-              type="text"
-              className="h-9 w-full rounded-md border border-input bg-background pl-9 pr-8 py-1 text-xs text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring transition-colors shadow-2xs"
-              placeholder="Buscar por cliente ou ID..."
-              value={searchTerm}
-              onChange={e => setSearchTerm(e.target.value)}
-            />
-            {searchTerm && (
-              <button
-                type="button"
-                onClick={() => setSearchTerm('')}
-                className="absolute right-2.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded cursor-pointer"
-                title="Limpar busca"
-              >
-                ✕
-              </button>
-            )}
-          </div>
         </div>
       </div>
 
@@ -963,7 +971,7 @@ export function OrderSlipSection({
       </div>
 
       {/* ÁREA DO DOCUMENTO: Estende até o fim da página com scroll natural */}
-      <div className="w-full flex-1 min-h-[calc(100vh-250px)] flex justify-center py-6 px-2 sm:px-6 bg-slate-800/5 dark:bg-black/40 rounded-2xl border border-border/80 overflow-x-auto">
+      <div className="w-full flex justify-center items-start py-6 px-2 sm:px-6 bg-slate-800/5 dark:bg-black/40 rounded-2xl border border-border/80 overflow-x-auto min-h-fit">
         {renderOrderSlipPaper()}
       </div>
 

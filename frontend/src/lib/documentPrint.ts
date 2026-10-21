@@ -710,6 +710,29 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
  * dados completos do cliente, grade pautada com produtos e vencimentos de boletos embutidos na descrição,
  * totalizador e termo legal de frete por conta e risco do comprador.
  */
+
+export function formatDocumentSlipDate(rawDate?: string): string {
+  if (!rawDate) return new Date().toLocaleDateString('pt-BR');
+  const trimmed = rawDate.trim();
+  const lower = trimmed.toLowerCase();
+  if (lower === 'ontem') {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    return d.toLocaleDateString('pt-BR');
+  }
+  if (lower === 'hoje' || /^\d{1,2}:\d{2}$/.test(trimmed)) {
+    return new Date().toLocaleDateString('pt-BR');
+  }
+  if (/^\d{4}-\d{2}-\d{2}/.test(trimmed)) {
+    const [y, m, d] = trimmed.slice(0, 10).split('-');
+    return `${d}/${m}/${y}`;
+  }
+  if (/^\d{2}\/\d{2}\/\d{4}$/.test(trimmed)) {
+    return trimmed;
+  }
+  return new Date().toLocaleDateString('pt-BR');
+}
+
 export interface OrderSlipCustomData {
   orderId?: string;
   vendorName?: string;
@@ -790,7 +813,7 @@ export function generateOrderSlipHtml(
   const clientEmail = customData?.clientEmail ?? `contato@${clientName.toLowerCase().replace(/[^a-z0-9]/g, '') || 'padaria'}.com.br`;
   const buyer = customData?.buyer ?? (client?.buyer ?? 'Comprador');
   const visto = customData?.visto ?? '';
-  const orderDate = customData?.orderDate ?? (order.date || new Date().toLocaleDateString('pt-BR'));
+  const orderDate = formatDocumentSlipDate(customData?.orderDate || order.date);
 
   let grandTotal = 0;
   let totalSacks = 0;
