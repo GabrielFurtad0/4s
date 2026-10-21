@@ -26,6 +26,7 @@ import {
   FileText,
   FileUp,
   History,
+  Info,
   Landmark,
   Layers,
   Loader2,
@@ -400,7 +401,7 @@ export function Backoffice({
           >
             <div className="flex items-center gap-2 sm:gap-2.5 flex-wrap min-w-0">
               <span className="inline-flex items-center gap-1.5 font-semibold text-foreground shrink-0">
-                <span className="text-sm">📦</span>
+                <Package size={14} className="text-primary shrink-0" />
                 <span>Estoque Disponível:</span>
               </span>
               {data.products.map((p, idx) => {
@@ -1264,6 +1265,20 @@ function ReceivablesSection({
                           <Eye size={13} />
                           Ver Detalhes ({g.titles.length})
                         </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
+                          onClick={() =>
+                            notify(
+                              `Visualização do boleto ${g.baseDocumentNumber}: a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
+                            )
+                          }
+                          title="Visualizar PDF do boleto bancário"
+                        >
+                          <FileText size={13} />
+                          <span>PDF</span>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -1334,8 +1349,9 @@ function ReceivablesSection({
               </div>
 
               {selectedBoleto.notes && (
-                <p className="text-xs text-muted-foreground bg-sky-500/10 border border-sky-500/20 p-2.5 rounded-md">
-                  ℹ️ {selectedBoleto.notes}
+                <p className="text-xs text-muted-foreground bg-sky-500/10 border border-sky-500/20 p-2.5 rounded-md flex items-start gap-1.5">
+                  <Info size={14} className="text-sky-600 shrink-0 mt-0.5" />
+                  <span>{selectedBoleto.notes}</span>
                 </p>
               )}
 
@@ -1388,26 +1404,42 @@ function ReceivablesSection({
                             )}
                           </td>
                           <td className="p-2.5 text-right">
-                            {!isPaid ? (
+                            <div className="flex items-center justify-end gap-1.5">
                               <Button
                                 size="sm"
                                 variant="outline"
-                                className="h-7 text-xs font-semibold gap-1 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 cursor-pointer"
-                                disabled={isPaying}
-                                onClick={() => handlePay(t)}
+                                className="h-7 text-xs font-semibold gap-1 cursor-pointer hover:bg-muted"
+                                onClick={() =>
+                                  notify(
+                                    `Visualização da parcela ${t.installmentNumber} (${t.documentNumber}): a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
+                                  )
+                                }
+                                title={`Visualizar PDF da parcela ${t.installmentNumber}`}
                               >
-                                {isPaying ? (
-                                  <Loader2 size={12} className="animate-spin" />
-                                ) : (
-                                  <CheckCircle2 size={12} />
-                                )}
-                                Confirmar Pagamento
+                                <FileText size={12} />
+                                <span>PDF</span>
                               </Button>
-                            ) : (
-                              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1 justify-end">
-                                <Check size={12} /> Liquidado
-                              </span>
-                            )}
+                              {!isPaid ? (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 text-xs font-semibold gap-1 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+                                  disabled={isPaying}
+                                  onClick={() => handlePay(t)}
+                                >
+                                  {isPaying ? (
+                                    <Loader2 size={12} className="animate-spin" />
+                                  ) : (
+                                    <CheckCircle2 size={12} />
+                                  )}
+                                  Confirmar Pagamento
+                                </Button>
+                              ) : (
+                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1 justify-end px-1.5 py-1">
+                                  <Check size={12} /> Liquidado
+                                </span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
@@ -1417,17 +1449,33 @@ function ReceivablesSection({
               </div>
 
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
-                {selectedBoleto.paidInstallments < selectedBoleto.totalInstallments && selectedBoleto.totalInstallments > 1 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  {selectedBoleto.paidInstallments < selectedBoleto.totalInstallments && selectedBoleto.totalInstallments > 1 && (
+                    <Button
+                      size="sm"
+                      className="h-8 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                      disabled={loading}
+                      onClick={() => handlePayAllInGroup(selectedBoleto)}
+                    >
+                      <CheckCheck size={13} />
+                      Quitar Todas as Parcelas ({money(selectedBoleto.remainingAmountBq)})
+                    </Button>
+                  )}
                   <Button
+                    variant="outline"
                     size="sm"
-                    className="h-8 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
-                    disabled={loading}
-                    onClick={() => handlePayAllInGroup(selectedBoleto)}
+                    className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
+                    onClick={() =>
+                      notify(
+                        `Visualização do boleto ${selectedBoleto.baseDocumentNumber}: a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
+                      )
+                    }
+                    title="Visualizar PDF do boleto bancário completo"
                   >
-                    <CheckCheck size={13} />
-                    Quitar Todas as Parcelas ({money(selectedBoleto.remainingAmountBq)})
+                    <FileText size={13} />
+                    <span>Visualizar PDF do Boleto</span>
                   </Button>
-                )}
+                </div>
                 <div className="flex justify-end">
                   <Button variant="outline" size="sm" onClick={() => setSelectedBoletoKey(null)}>
                     Fechar
@@ -2317,119 +2365,122 @@ function RegistrationsSection({
               />
             </div>
 
-            {/* 3. QUADRADO ROXO: ÚLTIMOS PREÇOS PRATICADOS COM ESSE CLIENTE */}
-            <section className="orders-section">
-              <div className="section-heading p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-                <div>
-                  <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
-                    <Tag size={16} className="text-primary" />
-                    Últimos Preços Praticados com este Cliente
+            {/* 3. PREÇOS ACORDADOS DO CLIENTE (RESUMO COMPACTO EM CARDS) */}
+            <section className="bg-card border border-border/80 rounded-lg p-2.5 sm:p-3 shadow-xs">
+              <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-border/50">
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <Tag size={14} className="text-primary shrink-0" />
+                  <h3 className="text-xs font-semibold text-foreground tracking-tight">
+                    Preços Acordados do Cliente
                   </h3>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Valores negociados e margens por SKU praticadas para {selectedClient.name}
-                  </p>
+                  <span className="text-[11px] text-muted-foreground hidden sm:inline truncate">
+                    · {selectedClient.name}
+                  </span>
                 </div>
+                <span className="text-[10px] text-muted-foreground font-medium shrink-0 bg-muted/60 px-2 py-0.5 rounded">
+                  {data.products.length} SKUs
+                </span>
               </div>
 
-              <div className="table-scroll">
-                <table className="data-table">
-                  <thead>
-                    <tr>
-                      <th>SKU / Produto</th>
-                      <th>Preço Tabela Base</th>
-                      <th>Preço Acordado do Cliente</th>
-                      <th>Margem Acordada</th>
-                      <th>Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {data.products.map(p => {
-                      const pIdx = data.products.findIndex(pr => pr.id === p.id);
-                      const practicedPrice = selectedClient?.prices[pIdx] ?? p.price;
-                      const isEditingThis = editingSkuPrice?.productId === (p.dbId ?? Number(p.id));
-                      const currentPrice = isEditingThis ? editingSkuPrice.price : practicedPrice;
-                      const margin = currentPrice > 0 ? ((currentPrice - p.cost) / currentPrice) * 100 : 0;
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                {data.products.map(p => {
+                  const pIdx = data.products.findIndex(pr => pr.id === p.id);
+                  const practicedPrice = selectedClient?.prices[pIdx] ?? p.price;
+                  const isEditingThis = editingSkuPrice?.productId === (p.dbId ?? Number(p.id));
+                  const currentPrice = isEditingThis ? editingSkuPrice.price : practicedPrice;
+                  const margin = currentPrice > 0 ? ((currentPrice - p.cost) / currentPrice) * 100 : 0;
 
-                      return (
-                        <tr key={p.id}>
-                          <td>
-                            <div className="flex items-center gap-2.5">
-                              <span className={`sku-symbol sku-${p.id.toLowerCase()}`}>
-                                <Package size={18} />
-                              </span>
-                              <div>
-                                <strong>{p.name}</strong>
-                                <p className="text-[11px] text-muted-foreground">{p.skuCode} · NCM {p.ncm}</p>
+                  return (
+                    <div
+                      key={p.id}
+                      className="p-2.5 rounded-md border border-border/60 bg-muted/20 hover:bg-muted/30 transition-colors flex flex-col justify-between"
+                    >
+                      <div className="flex items-start justify-between gap-1.5">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-foreground truncate" title={p.name}>
+                            {p.name}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground font-mono">
+                            {p.skuCode}
+                          </p>
+                        </div>
+                        <span className={`status-badge ${marginLevel(margin)} text-[10px] px-1.5 py-0.5 leading-none shrink-0 font-semibold`}>
+                          {margin.toFixed(1)}%
+                        </span>
+                      </div>
+
+                      <div className="mt-2 pt-1.5 border-t border-border/40 flex items-center justify-between gap-2">
+                        {isEditingThis ? (
+                          <div className="flex items-center gap-1 w-full">
+                            <input
+                              type="number"
+                              step="0.50"
+                              autoFocus
+                              className="form-input numeric text-xs font-bold h-7 py-0 px-1.5 w-20"
+                              value={editingSkuPrice.price}
+                              onChange={e =>
+                                setEditingSkuPrice({
+                                  productId: p.dbId ?? Number(p.id),
+                                  price: Number(e.target.value),
+                                })
+                              }
+                              onKeyDown={e => {
+                                if (e.key === 'Enter') {
+                                  handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price);
+                                } else if (e.key === 'Escape') {
+                                  setEditingSkuPrice(null);
+                                }
+                              }}
+                            />
+                            <Button
+                              size="sm"
+                              className="h-7 px-2 text-[11px] bg-primary text-primary-foreground font-semibold cursor-pointer"
+                              onClick={() => handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price)}
+                            >
+                              Salvar
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 px-1.5 text-[11px] cursor-pointer"
+                              onClick={() => setEditingSkuPrice(null)}
+                            >
+                              ✕
+                            </Button>
+                          </div>
+                        ) : (
+                          <>
+                            <div className="min-w-0">
+                              <div className="flex items-baseline gap-1.5">
+                                <strong className="text-xs sm:text-sm font-bold text-foreground">
+                                  {money(practicedPrice)}
+                                </strong>
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                                  Base: {money(p.price)}
+                                </span>
                               </div>
                             </div>
-                          </td>
-                          <td>
-                            <span className="numeric text-xs text-muted-foreground">{money(p.price)}</span>
-                          </td>
-                          <td>
-                            {isEditingThis ? (
-                              <input
-                                type="number"
-                                step="0.50"
-                                className="form-input numeric w-28 text-sm font-bold"
-                                value={editingSkuPrice.price}
-                                onChange={e =>
-                                  setEditingSkuPrice({
-                                    productId: p.dbId ?? Number(p.id),
-                                    price: Number(e.target.value),
-                                  })
-                                }
-                              />
-                            ) : (
-                              <strong className="numeric text-sm text-foreground">{money(practicedPrice)}</strong>
-                            )}
-                          </td>
-                          <td>
-                            <span className={`status-badge ${marginLevel(margin)}`}>
-                              {margin.toFixed(1)}%
-                            </span>
-                          </td>
-                          <td>
-                            {isEditingThis ? (
-                              <div className="flex items-center gap-2">
-                                <Button
-                                  size="sm"
-                                  className="h-7 text-xs bg-primary text-primary-foreground font-semibold"
-                                  onClick={() => handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price)}
-                                >
-                                  Salvar
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="sm"
-                                  className="h-7 text-xs"
-                                  onClick={() => setEditingSkuPrice(null)}
-                                >
-                                  Cancelar
-                                </Button>
-                              </div>
-                            ) : (
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-7 text-xs gap-1 font-medium"
-                                onClick={() =>
-                                  setEditingSkuPrice({
-                                    productId: p.dbId ?? Number(p.id),
-                                    price: practicedPrice,
-                                  })
-                                }
-                              >
-                                <Edit size={12} />
-                                Ajustar Preço
-                              </Button>
-                            )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-6 px-2 text-[11px] font-medium gap-1 shrink-0 cursor-pointer hover:bg-muted"
+                              onClick={() =>
+                                setEditingSkuPrice({
+                                  productId: p.dbId ?? Number(p.id),
+                                  price: practicedPrice,
+                                })
+                              }
+                              title="Ajustar preço praticado para este cliente"
+                            >
+                              <Edit size={11} />
+                              Ajustar
+                            </Button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </section>
 
@@ -3044,7 +3095,7 @@ function RegistrationsSection({
                           onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
                           title="Remover arquivo"
                         >
-                          ✕
+                          <X size={14} />
                         </button>
                       </div>
                     ))}

@@ -410,7 +410,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
               {/* Saudação Compacta e Mostrador de Data Dinâmico em Tempo Real */}
               <div className="flex items-baseline justify-between mt-1 mb-2.5">
                 <h1 className="text-base font-bold text-foreground tracking-tight m-0">
-                  {getGreeting(currentDate)}, Sérgio <span className="text-muted-foreground text-xs font-normal">↗</span>
+                  {getGreeting(currentDate)}, Sérgio
                 </h1>
                 <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
                   <PopoverTrigger asChild>
@@ -1259,19 +1259,19 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
             </div>
             <div className="text-[11px] text-muted-foreground space-y-1.5 pt-1">
               <div className="flex items-center gap-2 text-foreground">
-                <span className="text-emerald-500 font-bold">✓</span>
+                <Check size={14} className="text-emerald-500 shrink-0" />
                 <span>
                   <strong>Estoque atualizado</strong> em tempo real
                 </span>
               </div>
               <div className="flex items-center gap-2 text-foreground">
-                <span className="text-indigo-500 font-bold">📋</span>
+                <FileText size={14} className="text-indigo-500 shrink-0" />
                 <span>
                   <strong>Enviado p/ Gabriel</strong> emitir NF-e
                 </span>
               </div>
               <div className="flex items-center gap-2 text-foreground">
-                <span className="text-amber-500 font-bold">🚚</span>
+                <Truck size={14} className="text-amber-500 shrink-0" />
                 <span>
                   <strong>Romaneio pronto</strong> p/ separação
                 </span>

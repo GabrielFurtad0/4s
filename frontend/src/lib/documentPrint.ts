@@ -106,17 +106,17 @@ export function buildWhatsAppOrderShareUrl(
     }
 
     const totalWeight = totalSacks * 25;
-    const notes = order.note ? `\n⚠️ *Obs Motorista:* ${order.note}` : '';
+    const notes = order.note ? `\n*Obs Motorista:* ${order.note}` : '';
 
     const msg =
-      `🚚 *ROMANEIO DE EXPEDIÇÃO & ENTREGA — TOTAL TRIGO*\n` +
-      `📋 *${nfeBadge}* | Previsão: *${order.delivery || 'Imediata'}*\n\n` +
-      `🏢 *Cliente:* ${clientName}\n` +
-      `📍 *Bairro / Rota:* ${clientBairro}\n` +
-      `👤 *Contato:* ${client?.buyer || 'Comprador'}\n\n` +
-      `📦 *CARGA PARA CONFERÊNCIA E ENTREGA (DQ):*\n` +
+      `*ROMANEIO DE EXPEDIÇÃO & ENTREGA — TOTAL TRIGO*\n` +
+      `*${nfeBadge}* | Previsão: *${order.delivery || 'Imediata'}*\n\n` +
+      `*Cliente:* ${clientName}\n` +
+      `*Bairro / Rota:* ${clientBairro}\n` +
+      `*Contato:* ${client?.buyer || 'Comprador'}\n\n` +
+      `*CARGA PARA CONFERÊNCIA E ENTREGA (DQ):*\n` +
       itemsText +
-      `\n⚖️ *Total Volume:* ${totalSacks} sacas (${totalWeight} kg)` +
+      `\n*Total Volume:* ${totalSacks} sacas (${totalWeight} kg)` +
       notes;
 
     return `https://wa.me/?text=${encodeURIComponent(msg)}`;
@@ -134,18 +134,18 @@ export function buildWhatsAppOrderShareUrl(
     }
 
     const keyInfo = order.key
-      ? `\n🔑 *Chave de Acesso NF-e:* \`${order.key}\``
+      ? `\n*Chave de Acesso NF-e:* \`${order.key}\``
       : '';
 
     const msg =
-      `🌾 *TOTAL TRIGO — RESUMO DO SEU PEDIDO*\n` +
-      `📋 *${nfeBadge}* | Data: *${order.date}*\n` +
-      `🏢 *Cliente:* ${clientName}\n` +
-      `💳 *Condições de Pagamento:* ${order.payment}\n` +
-      `🚚 *Previsão de Entrega:* ${order.delivery || 'A combinar'}\n\n` +
-      `📦 *Itens Solicitados:*\n` +
+      `*TOTAL TRIGO — RESUMO DO SEU PEDIDO*\n` +
+      `*${nfeBadge}* | Data: *${order.date}*\n` +
+      `*Cliente:* ${clientName}\n` +
+      `*Condições de Pagamento:* ${order.payment}\n` +
+      `*Previsão de Entrega:* ${order.delivery || 'A combinar'}\n\n` +
+      `*Itens Solicitados:*\n` +
       itemsText +
-      `\n💰 *Valor Total do Pedido:* *${money(commercialTotal)}*` +
+      `\n*Valor Total do Pedido:* *${money(commercialTotal)}*` +
       keyInfo +
       `\n\nAgradecemos a parceria! Qualquer dúvida estamos à disposição.`;
 
@@ -303,7 +303,7 @@ export function generateDanfeHtml(order: Order, client?: Client, products?: Prod
       <span style="margin-left: 12px; color: #94a3b8;">Emissão Total Trigo (Qtd. Base / BQ)</span>
     </div>
     <div>
-      <button onclick="window.print()">🖨️ Imprimir / Salvar PDF</button>
+      <button onclick="window.print()">Imprimir / Salvar PDF</button>
     </div>
   </div>
 
@@ -603,11 +603,11 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
 
   <div class="no-print">
     <div>
-      <strong style="font-size: 13pt;">📦 Romaneio Cego de Expedição (Carga DQ)</strong>
+      <strong style="font-size: 13pt;">Romaneio Cego de Expedição (Carga DQ)</strong>
       <div style="font-size: 9pt; color: #e0f2fe;">Sem preços comerciais — Exclusivo para galpão e canhoto do motorista</div>
     </div>
     <div>
-      <button onclick="window.print()">🖨️ Imprimir Romaneio</button>
+      <button onclick="window.print()">Imprimir Romaneio</button>
     </div>
   </div>
 
@@ -626,19 +626,19 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
     <div class="card">
       <div class="card-title">Destinatário & Local de Descarrego</div>
       <div class="card-val">${clientName}</div>
-      <div style="font-size: 9.5pt; margin-top: 3px;">📍 <b>Endereço:</b> ${clientAddress}</div>
+      <div style="font-size: 9.5pt; margin-top: 3px;"><b>Endereço:</b> ${clientAddress}</div>
     </div>
     <div class="card">
       <div class="card-title">Dados Operacionais</div>
-      <div style="font-size: 9.5pt;">👤 <b>Contato:</b> ${buyer}</div>
-      <div style="font-size: 9.5pt; margin-top: 3px;">🚚 <b>Previsão:</b> <span style="font-weight: 700; color: #0284c7;">${delivery}</span></div>
+      <div style="font-size: 9.5pt;"><b>Contato:</b> ${buyer}</div>
+      <div style="font-size: 9.5pt; margin-top: 3px;"><b>Previsão:</b> <span style="font-weight: 700; color: #0284c7;">${delivery}</span></div>
     </div>
   </div>
 
   ${
     order.note
       ? `<div class="card" style="margin-bottom: 12px; background: #fffbeb; border-color: #fde68a;">
-           <div class="card-title" style="color: #b45309;">⚠️ Instruções para Entrega / Motorista</div>
+           <div class="card-title" style="color: #b45309;">Instruções para Entrega / Motorista</div>
            <div style="font-size: 10pt; font-weight: 600; color: #78350f;">${order.note}</div>
          </div>`
       : ''
@@ -662,8 +662,8 @@ export function generateRomaneioHtml(order: Order, client?: Client, products?: P
   </table>
 
   <div class="totals-banner">
-    <div>📦 Volume Total: <span>${totalDq} sacos</span></div>
-    <div>⚖️ Peso Total da Carga: <span>${totalWeight} kg (${(totalWeight / 1000).toFixed(2)} ton)</span></div>
+    <div>Volume Total: <span>${totalDq} sacos</span></div>
+    <div>Peso Total da Carga: <span>${totalWeight} kg (${(totalWeight / 1000).toFixed(2)} ton)</span></div>
   </div>
 
   <div class="signatures">
@@ -1183,11 +1183,11 @@ export function generateOrderSlipHtml(
 
   <div class="no-print">
     <div>
-      <strong style="font-size: 13pt;">📋 Talão de Pedido Comercial (Bloco Físico de Campo)</strong>
+      <strong style="font-size: 13pt;">Talão de Pedido Comercial (Bloco Físico de Campo)</strong>
       <div style="font-size: 9pt; color: #e0f2fe;">Fiel ao bloco impresso para assinatura do comprador e comprovação de frete</div>
     </div>
     <div style="display: flex; gap: 8px;">
-      <button onclick="window.print()">🖨️ Imprimir Talão / PDF</button>
+      <button onclick="window.print()">Imprimir Talão / PDF</button>
     </div>
   </div>
 

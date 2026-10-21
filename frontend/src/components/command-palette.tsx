@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   ArrowDownToLine,
+  ArrowUpRight,
   Barcode,
   CheckCheck,
   Clock3,
@@ -251,7 +252,7 @@ export function CommandPalette({
               <div className="flex flex-col flex-1 min-w-0">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-semibold text-foreground truncate">{client.name}</span>
-                  <span className="text-[10px] text-primary font-mono ml-2 shrink-0">Abrir em Cadastros ↗</span>
+                  <span className="text-[10px] text-primary font-mono ml-2 shrink-0 inline-flex items-center gap-0.5">Abrir em Cadastros <ArrowUpRight size={11} /></span>
                 </div>
                 <span className="text-[10px] text-muted-foreground truncate">
                   {client.neighborhood}, SP · Comprador: {client.buyer} · CNPJ: {client.cnpj}

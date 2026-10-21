@@ -348,7 +348,7 @@ export function OrderSlipSection({
 
   const handleCopySummary = () => {
     if (!currentOrder) return;
-    let text = `📋 TALÃO DE PEDIDO #${slipData.orderId} - TOTAL TRIGO\n`;
+    let text = `TALÃO DE PEDIDO #${slipData.orderId} - TOTAL TRIGO\n`;
     text += `Vendedor: ${slipData.vendorName} | Data: ${slipData.orderDate}\n`;
     text += `Cliente: ${slipData.clientName} (${slipData.clientAddress})\n`;
     text += `CNPJ: ${slipData.clientCnpj} | Tel: ${slipData.clientPhone}\n\n`;
@@ -826,7 +826,7 @@ export function OrderSlipSection({
                 className="absolute right-2.5 text-muted-foreground hover:text-foreground text-xs p-0.5 rounded cursor-pointer"
                 title="Limpar busca"
               >
-                ✕
+                <X size={12} />
               </button>
             )}
           </div>
@@ -951,7 +951,7 @@ export function OrderSlipSection({
       {/* Dica de Edição Direta */}
       <div className="bg-sky-50 dark:bg-sky-950/30 border border-sky-200 dark:border-sky-800/50 rounded-lg px-3.5 py-2 text-xs flex items-center justify-between gap-3 text-sky-800 dark:text-sky-300 shrink-0">
         <div className="flex items-center gap-2">
-          <span className="text-sm">✍️</span>
+          <PenLine size={14} className="text-sky-600 shrink-0" />
           <span>
             <strong>Dica de uso:</strong> Clique em qualquer texto ou linha da folha abaixo para digitar. Os valores editados serão impressos exatamente como você configurar.
           </span>

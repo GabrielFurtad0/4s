@@ -221,8 +221,8 @@ export function DeliveryRouteModal({
             <td class="center font-bold">#${order.id}</td>
             <td>
               <div style="font-weight: bold; font-size: 10pt;">${client?.name || 'Cliente'}</div>
-              <div style="font-size: 8.5pt; color: #475569;">📍 ${client?.neighborhood || 'São Paulo'} · Contato: ${client?.buyer || '-'}</div>
-              ${order.note ? `<div style="font-size: 8pt; color: #b45309;">⚠️ ${order.note}</div>` : ''}
+              <div style="font-size: 8.5pt; color: #475569;">${client?.neighborhood || 'São Paulo'} · Contato: ${client?.buyer || '-'}</div>
+              ${order.note ? `<div style="font-size: 8pt; color: #b45309; font-weight: 600;">Obs: ${order.note}</div>` : ''}
             </td>
             <td class="center" style="font-size: 9pt;">${order.delivery || 'Manhã'}</td>
             <td style="font-size: 9pt;">${itemsDetail}</td>
@@ -272,11 +272,11 @@ export function DeliveryRouteModal({
 
   <div class="no-print">
     <div>
-      <strong style="font-size: 13pt;">🚚 Manifesto de Carga & Rota de Entrega</strong>
+      <strong style="font-size: 13pt;">Manifesto de Carga & Rota de Entrega</strong>
       <div style="font-size: 9pt; color: #e0f2fe;">Total Trigo Comércio de Alimentos LTDA · Expedição DQ</div>
     </div>
     <div>
-      <button onclick="window.print()">🖨️ Imprimir Manifesto da Rota</button>
+      <button onclick="window.print()">Imprimir Manifesto da Rota</button>
     </div>
   </div>
 
@@ -310,7 +310,7 @@ export function DeliveryRouteModal({
     </div>
   </div>
 
-  <div class="section-title">📦 Consolidação da Carga do Caminhão (Por Produto / SKU)</div>
+  <div class="section-title">Consolidação da Carga do Caminhão (Por Produto / SKU)</div>
   <table class="data-table">
     <thead>
       <tr>
@@ -326,7 +326,7 @@ export function DeliveryRouteModal({
     </tbody>
   </table>
 
-  <div class="section-title">📍 Roteiro de Paradas e Pedidos Programados (${currentTabOrders.length} Entregas)</div>
+  <div class="section-title">Roteiro de Paradas e Pedidos Programados (${currentTabOrders.length} Entregas)</div>
   <table class="data-table">
     <thead>
       <tr>
@@ -368,10 +368,10 @@ export function DeliveryRouteModal({
 
   // Enviar resumo de toda a rota via WhatsApp para o motorista
   const handleShareRouteWhatsApp = () => {
-    let text = `🚚 *TOTAL TRIGO — ROTA DE ENTREGA & EXPEDIÇÃO*\n`;
-    text += `📅 *Janela:* ${activeTab === 'next' ? primaryDeliveryWindow : 'Entregas Programadas'}\n`;
-    text += `📦 *Carga Total:* ${stats.totalSacks} sacas (${(stats.totalWeightKg / 1000).toFixed(2)} t)\n`;
-    text += `📍 *Paradas:* ${stats.stopsCount} clientes (${currentTabOrders.length} pedidos)\n\n`;
+    let text = `*TOTAL TRIGO — ROTA DE ENTREGA & EXPEDIÇÃO*\n`;
+    text += `*Janela:* ${activeTab === 'next' ? primaryDeliveryWindow : 'Entregas Programadas'}\n`;
+    text += `*Carga Total:* ${stats.totalSacks} sacas (${(stats.totalWeightKg / 1000).toFixed(2)} t)\n`;
+    text += `*Paradas:* ${stats.stopsCount} clientes (${currentTabOrders.length} pedidos)\n\n`;
 
     text += `*CARGA GERAL DO CAMINHÃO:*\n`;
     stats.skuBreakdown.forEach(s => {
@@ -385,9 +385,9 @@ export function DeliveryRouteModal({
       const c = data.clients.find(cl => cl.id === o.clientId);
       const totalSacks = orderTotalDq(o.items);
       text += `${i + 1}. *#${o.id} - ${c?.name || 'Cliente'}*\n`;
-      text += `   📍 ${c?.neighborhood || 'São Paulo'} (Prev: ${o.delivery || 'Manhã'})\n`;
-      text += `   📦 ${totalSacks} sacas | Contato: ${c?.buyer || '-'}\n`;
-      if (o.note) text += `   ⚠️ Obs: ${o.note}\n`;
+      text += `   • ${c?.neighborhood || 'São Paulo'} (Prev: ${o.delivery || 'Manhã'})\n`;
+      text += `   • ${totalSacks} sacas | Contato: ${c?.buyer || '-'}\n`;
+      if (o.note) text += `   • Obs: ${o.note}\n`;
     });
 
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`;
@@ -672,8 +672,9 @@ export function DeliveryRouteModal({
                       </div>
 
                       {order.note && (
-                        <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-medium bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/20">
-                          ⚠️ Obs: {order.note}
+                        <div className="text-[11px] text-amber-700 dark:text-amber-400 mt-1 font-medium bg-amber-500/5 px-2 py-0.5 rounded border border-amber-500/20 flex items-center gap-1.5">
+                          <AlertCircle size={12} className="shrink-0 text-amber-600 dark:text-amber-400" />
+                          <span>Obs: {order.note}</span>
                         </div>
                       )}
                     </div>
