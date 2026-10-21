@@ -1,7 +1,8 @@
 import { createFileRoute } from '@tanstack/react-router';
 import { useEffect, useRef, useState } from 'react';
-import { ArrowDownToLine, Barcode, Bell, Check, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, FileText, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
+import { ArrowDownToLine, Barcode, Bell, Check, CheckCircle2, ChevronDown, ChevronsUpDown, CircleHelp, Command, CreditCard, FileCheck2, FileText, Globe2, LayoutDashboard, LogOut, Menu, Monitor, Package, PanelLeftClose, PanelLeftOpen, Plus, Search, Settings, ShieldCheck, Smartphone, Sparkles, Truck, Users, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -136,7 +137,8 @@ function Index() {
   const [collapsed, setCollapsed] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [toast, setToast] = useState('');
-  const [info, setInfo] = useState<'settings' | 'help' | 'notifications' | 'profile' | null>(null);
+  const [info, setInfo] = useState<'settings' | 'help' | 'profile' | null>(null);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [globalSearch, setGlobalSearch] = useState(false);
   const [query, setQuery] = useState('');
   const [clientSearchQuery, setClientSearchQuery] = useState('');
@@ -253,6 +255,16 @@ function Index() {
   };
 
   const shared = { data, update: setData, notify, submit };
+  const pendingOrders = data.orders.filter(o => o.status === 'AGUARDANDO_REVISAO');
+  const overdueClients = data.clients.filter(c => c.overdue);
+  const lowStockProducts = data.products.filter(p => (p.physical - p.reserved) < 100);
+  const restockClients = data.clients.filter(c => c.days > c.cycle && !c.overdue);
+  const totalNotifications =
+    (pendingOrders.length > 0 ? 1 : 0) +
+    (overdueClients.length > 0 ? 1 : 0) +
+    (lowStockProducts.length > 0 ? 1 : 0) +
+    (restockClients.length > 0 ? 1 : 0);
+
   useEffect(() => { const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setGlobalSearch(v => !v); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
 
   return (
@@ -553,17 +565,181 @@ function Index() {
                   <Search size={15} />
                 </Button>
                 <div className="header-separator md:hidden" />
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="notification-button"
-                  aria-label="Notificações"
-                  title="Notificações"
-                  onClick={() => setInfo('notifications')}
-                >
-                  <Bell />
-                  <i />
-                </Button>
+                <Popover open={notificationsOpen} onOpenChange={setNotificationsOpen}>
+                  <PopoverTrigger asChild>
+                    <button
+                      type="button"
+                      className="notification-button flex items-center justify-center size-8 rounded-md text-muted-foreground hover:text-foreground hover:bg-muted/70 transition-colors relative cursor-pointer focus:outline-none"
+                      aria-label={`Notificações (${totalNotifications})`}
+                      title="Notificações operacionais"
+                    >
+                      <Bell size={16} />
+                      {totalNotifications > 0 && (
+                        <span className="absolute top-1.5 right-1.5 flex h-2 w-2">
+                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75" />
+                          <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500" />
+                        </span>
+                      )}
+                    </button>
+                  </PopoverTrigger>
+                  <PopoverContent
+                    align="end"
+                    side="bottom"
+                    sideOffset={8}
+                    className="w-80 sm:w-96 p-0 shadow-2xl rounded-xl border border-border/80 bg-card text-card-foreground overflow-hidden z-50 animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0"
+                  >
+                    {/* Cabeçalho do Card Retangular */}
+                    <div className="flex items-center justify-between px-4 py-3 border-b border-border/70 bg-muted/40">
+                      <div className="flex items-center gap-2">
+                        <Bell size={15} className="text-primary" />
+                        <span className="font-semibold text-xs text-foreground">Notificações</span>
+                        {totalNotifications > 0 && (
+                          <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30">
+                            {totalNotifications} pendência{totalNotifications > 1 ? 's' : ''}
+                          </span>
+                        )}
+                      </div>
+                      <span className="text-[10px] text-muted-foreground font-mono">4S ERP</span>
+                    </div>
+
+                    {/* Lista Retangular de Notificações */}
+                    <div className="max-h-[360px] overflow-y-auto divide-y divide-border/50 text-xs">
+                      {pendingOrders.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            setModule('orders');
+                            setMode('desktop');
+                          }}
+                          className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-start gap-3 cursor-pointer group"
+                        >
+                          <div className="p-2 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 shrink-0 group-hover:scale-105 transition-transform">
+                            <FileCheck2 size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <strong className="text-xs font-semibold text-foreground">
+                                {pendingOrders.length} pedido{pendingOrders.length > 1 ? 's' : ''} em Pré-Nota
+                              </strong>
+                              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold shrink-0">Revisar</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                              Aguardando conferência física (DQ) e fiscal (BQ) antes de emitir NF-e.
+                            </p>
+                          </div>
+                        </button>
+                      )}
+
+                      {overdueClients.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            setModule('receivables');
+                            setMode('desktop');
+                          }}
+                          className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-start gap-3 cursor-pointer group"
+                        >
+                          <div className="p-2 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 shrink-0 group-hover:scale-105 transition-transform">
+                            <CreditCard size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <strong className="text-xs font-semibold text-foreground">
+                                {overdueClients.length} cliente{overdueClients.length > 1 ? 's' : ''} com boleto vencido
+                              </strong>
+                              <span className="text-[10px] text-rose-600 dark:text-rose-400 font-bold shrink-0">Cobrança</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                              {overdueClients.slice(0, 2).map(c => c.name).join(', ')}{overdueClients.length > 2 ? ' e outros' : ''} possuem parcelas em atraso.
+                            </p>
+                          </div>
+                        </button>
+                      )}
+
+                      {lowStockProducts.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            setModule('registrations');
+                            setMode('desktop');
+                          }}
+                          className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-start gap-3 cursor-pointer group"
+                        >
+                          <div className="p-2 rounded-lg bg-sky-500/10 text-sky-600 dark:text-sky-400 shrink-0 group-hover:scale-105 transition-transform">
+                            <Package size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <strong className="text-xs font-semibold text-foreground">
+                                Saldo de estoque em atenção
+                              </strong>
+                              <span className="text-[10px] text-sky-600 dark:text-sky-400 font-bold shrink-0">Estoque</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                              {lowStockProducts.map(p => p.name.replace('Farinha de Trigo ', '')).join(', ')} com menos de 100 sacas disponíveis.
+                            </p>
+                          </div>
+                        </button>
+                      )}
+
+                      {restockClients.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setNotificationsOpen(false);
+                            setModule('registrations');
+                            setMode('desktop');
+                          }}
+                          className="w-full text-left p-3 hover:bg-muted/50 transition-colors flex items-start gap-3 cursor-pointer group"
+                        >
+                          <div className="p-2 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 group-hover:scale-105 transition-transform">
+                            <Users size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1">
+                              <strong className="text-xs font-semibold text-foreground">
+                                {restockClients.length} cliente{restockClients.length > 1 ? 's' : ''} no ciclo de recompra
+                              </strong>
+                              <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-bold shrink-0">Vendas</span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2">
+                              Momento de contato: {restockClients.slice(0, 2).map(c => c.name).join(', ')}.
+                            </p>
+                          </div>
+                        </button>
+                      )}
+
+                      {totalNotifications === 0 && (
+                        <div className="p-6 text-center text-muted-foreground">
+                          <CheckCircle2 size={24} className="mx-auto text-emerald-500 mb-2" />
+                          <p className="font-semibold text-xs text-foreground">Tudo em ordem!</p>
+                          <p className="text-[11px] mt-0.5">Nenhuma pendência operacional requer sua atenção no momento.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Rodapé do Dropdown */}
+                    <div className="px-3.5 py-2.5 border-t border-border/70 bg-muted/20 flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span className="flex items-center gap-1.5">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block" />
+                        {data.backendConnected ? 'Backend Conectado (:8085)' : 'Sessão Local'}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setNotificationsOpen(false);
+                          setGlobalSearch(true);
+                        }}
+                        className="text-primary hover:underline font-medium cursor-pointer"
+                      >
+                        Busca Rápida (Ctrl+K)
+                      </button>
+                    </div>
+                  </PopoverContent>
+                </Popover>
                 <Button
                   variant="ghost"
                   className="avatar-button"
@@ -666,8 +842,6 @@ function Index() {
               ? 'Configurações do workspace'
               : info === 'help'
               ? 'Central de ajuda'
-              : info === 'notifications'
-              ? 'Notificações'
               : 'Perfil Operacional Ativo'}
           </DialogTitle>
           <DialogDescription>
@@ -675,9 +849,7 @@ function Index() {
               ? '4S ERP · Total Trigo Comércio de Alimentos'
               : info === 'profile'
               ? 'O perfil selecionado adapta as visões, permissões e assina todas as movimentações na Trilha de Auditoria.'
-              : info === 'help'
-              ? 'Contato e informações do ambiente'
-              : 'Atualizações da sua operação'}
+              : 'Contato e informações do ambiente'}
           </DialogDescription>
           {info === 'profile' ? (
             <div className="space-y-3 pt-2">
@@ -804,23 +976,6 @@ function Index() {
               >
                 Sincronizar com o servidor
               </Button>
-            </>
-          ) : info === 'notifications' ? (
-            <>
-              <div className="attention-row">
-                <FileCheck2 size={18} />
-                <div>
-                  <strong>{data.orders.filter(o => o.status === 'AGUARDANDO_REVISAO').length} pedidos aguardam conferência</strong>
-                  <p>Confira os dados fiscais antes da emissão.</p>
-                </div>
-              </div>
-              <div className="attention-row">
-                <Package size={18} />
-                <div>
-                  <strong>Estoque e lotes de importação</strong>
-                  <p>Custo Médio Ponderado ativo · Rastreabilidade SEFAZ.</p>
-                </div>
-              </div>
             </>
           ) : (
             <>

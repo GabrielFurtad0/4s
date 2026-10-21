@@ -387,7 +387,7 @@ kbd, .search-hint { border: 1px solid var(--border); border-radius: 4px; padding
   }
 }
 .header-separator { height: 16px; width: 1px; background: var(--border); margin: 0 2px; }
-.notification-button { width: 30px; position: relative; color: var(--muted-foreground); }
+.notification-button { width: 32px; height: 32px; position: relative; color: var(--muted-foreground); display: inline-flex; align-items: center; justify-content: center; border-radius: 6px; }
 .notification-button i { width: 4px; height: 4px; position: absolute; top: 8px; right: 8px; background: var(--warning); border-radius: 50%; }
 .avatar-button { padding: 0; }
 .main-content {
