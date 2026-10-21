@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [65de1bb] — 20/10/2026 às 23:04 (🔴 Estrutural / Crítico)
+
+- Refatoração da interface de alertas: substituição do diálogo central por um *popover* retangular
+
 ### [6e86e21] — 20/10/2026 às 22:50 (🔴 Estrutural / Crítico)
 
 - **Escopo**: fix(boleto): resolve close button collision, vertically align actions and integrate printable boleto preview
