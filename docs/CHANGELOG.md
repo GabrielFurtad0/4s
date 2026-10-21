@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [6e86e21] — 20/10/2026 às 22:50 (🔴 Estrutural / Crítico)
+
+- **Escopo**: fix(boleto): resolve close button collision, vertically align actions and integrate printable boleto preview
+- **Componentes afetados**: `backoffice.tsx`, `documentPrint.ts`.
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [6c430bc] — 20/10/2026 às 22:32 (🔴 Estrutural / Crítico)
 
 - **Escopo**: feat: remove all emojis, add boleto pdf preview buttons, and compact customer price agreed section
