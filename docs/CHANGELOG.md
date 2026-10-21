@@ -4,6 +4,12 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [6c430bc] — 20/10/2026 às 22:32 (🔴 Estrutural / Crítico)
+
+- **Escopo**: feat: remove all emojis, add boleto pdf preview buttons, and compact customer price agreed section
+- **Componentes afetados**: `backoffice.tsx`, `command-palette.tsx`, `delivery-route-modal.tsx` e mais 3 arquivo(s).
+- **Camada**: Interface do Usuário / Frontend TanStack Start.
+
 ### [6629df0] — 20/10/2026 às 22:10 (🔴 Estrutural / Crítico)
 
 - Padronização rigorosa de datas para o formato DD/MM/YYYY, incluindo conversão automática de termos
