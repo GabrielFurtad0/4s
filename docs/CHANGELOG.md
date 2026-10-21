@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [6629df0] — 20/10/2026 às 22:10 (🔴 Estrutural / Crítico)
+
+- Padronização rigorosa de datas para o formato DD/MM/YYYY, incluindo conversão automática de termos
+
 ### [5ba2f39] — 19/10/2026 às 23:11 (🔴 Estrutural / Crítico)
 
 - **Escopo**: feat(order-slip): style order selector like profile dropdown and fix input icon padding
