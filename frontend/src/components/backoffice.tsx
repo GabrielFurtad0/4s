@@ -1,10 +1,11 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   AlertTriangle,
   ArrowDownToLine,
   ArrowRight,
   Ban,
   Barcode,
+  Building2,
   Calendar,
   Check,
   CheckCheck,
@@ -19,6 +20,7 @@ import {
   DollarSign,
   Edit,
   ExternalLink,
+  Eye,
   FileCheck2,
   FileCode2,
   FileText,
@@ -27,6 +29,7 @@ import {
   Landmark,
   Layers,
   Loader2,
+  MapPin,
   NotebookPen,
   Package,
   Plus,
@@ -34,10 +37,14 @@ import {
   RefreshCw,
   Search,
   ShieldCheck,
+  ShoppingBag,
   SlidersHorizontal,
+  Tag,
+  TrendingUp,
   TriangleAlert,
   Truck,
   UploadCloud,
+  User,
   Users,
   X,
   XCircle,
@@ -45,6 +52,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog';
 import { DeliveryRouteModal } from './delivery-route-modal';
+import { OrderDetailsModal, renderOrderStatusBadge } from './order-details-modal';
 import { SpotlightCard } from '@/components/ui/spotlight-card';
 import { NumberTicker } from '@/components/ui/number-ticker';
 import { SlidingTabs } from '@/components/ui/sliding-tabs';
@@ -247,47 +255,7 @@ export function Backoffice({
     URL.revokeObjectURL(url);
   };
 
-  const renderStatusBadge = (o: Order) => {
-    const st = effectiveStatus(o);
-    if (st === 'ENTREGUE') {
-      return (
-        <span className="status-badge success">
-          <CheckCheck size={12} />
-          Entregue
-        </span>
-      );
-    }
-    if (st === 'FATURADO') {
-      return (
-        <span className="status-badge success">
-          <CheckCheck size={12} />
-          Faturado
-        </span>
-      );
-    }
-    if (st === 'CANCELADO') {
-      return (
-        <span className="status-badge danger">
-          <Ban size={12} />
-          Cancelado
-        </span>
-      );
-    }
-    if (st === 'EM_SEPARACAO') {
-      return (
-        <span className="status-badge warning">
-          <Truck size={12} />
-          Em separação
-        </span>
-      );
-    }
-    return (
-      <span className="status-badge warning">
-        <Clock3 size={12} />
-        Em revisão
-      </span>
-    );
-  };
+  const renderStatusBadge = (o: Order) => renderOrderStatusBadge(o);
 
   const activeModalItems = editing ? editItems : selected?.items ?? [];
   const modalFin = financials(activeModalItems);
@@ -886,459 +854,14 @@ export function Backoffice({
       })()}
 
       {/* Modal de Conferência Pré-Nota e Romaneio */}
-      <Dialog
-        open={Boolean(selected)}
-        onOpenChange={open => {
-          if (!open && !busy) setSelectedId(null);
-        }}
-      >
-        <DialogContent className="order-dialog">
-          <DialogTitle>{packing ? 'Romaneio Cego de Separação (DQ)' : `Pedido #${selected?.id}`}</DialogTitle>
-          <DialogDescription>
-            {selectedClient?.name} · {selectedClient?.neighborhood}
-          </DialogDescription>
-          {selected && selectedClient && (
-            <>
-              {packing ? (
-                <>
-                  <pre className="packing-sheet">{packingText}</pre>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => setPacking(false)}>
-                      <ChevronLeft />
-                      Voltar
-                    </Button>
-                    <CopyButton
-                      textToCopy={packingText}
-                      label="Copiar para WhatsApp"
-                      copiedLabel="Romaneio Copiado!"
-                      withConfetti={true}
-                      onCopied={() => notify('Romaneio cego (DQ) copiado para enviar à equipe do galpão.')}
-                    />
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className={`fiscal-notice ${fiscalReady(selectedClient) ? 'complete' : ''}`}>
-                    <div className="flex items-center gap-2">
-                      {fiscalReady(selectedClient) ? <ShieldCheck size={18} /> : <TriangleAlert size={18} />}
-                      <div>
-                        <strong>{fiscalReady(selectedClient) ? 'Pronto para SEFAZ' : 'Dados fiscais pendentes'}</strong>
-                        <p>
-                          {fiscalReady(selectedClient)
-                            ? `${selectedClient.cnpj} · IE ${selectedClient.ie} · IBGE ${selectedClient.ibge}`
-                            : 'CNPJ, Inscrição Estadual ou código IBGE pendentes.'}
-                        </p>
-                      </div>
-                    </div>
-                    {!fiscalReady(selectedClient) && (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={busy}
-                        className="relative overflow-hidden group shadow-xs border-amber-500/30 text-amber-700 dark:text-amber-300"
-                        onClick={async () => {
-                          setBusy(true);
-                          try {
-                            const { nextData, message } = await completeFiscalViaCnpjApi(data, selected.id, selectedClient);
-                            update(nextData);
-                            fireConfetti();
-                            notify(message);
-                          } catch (e) {
-                            notify(
-                              e instanceof Error
-                                ? e.message
-                                : 'Não foi possível consultar o CNPJ: verifique se o servidor está conectado.'
-                            );
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        <BorderBeam size={80} duration={6} colorFrom="#4361EE" colorTo="#F59E0B" />
-                        {busy ? <Loader2 className="animate-spin" /> : <Search />}
-                        Completar via CNPJ
-                      </Button>
-                    )}
-                  </div>
-
-                  {/* Itens do Pedido com Qtd. Expedição (DQ), Qtd. Base (BQ) e Preço Unitário */}
-                  <div className="review-items">
-                    {activeModalItems.map((i, index) => {
-                      const dq = itemDq(i);
-                      const bq = itemBq(i);
-                      return (
-                        <div key={i.productId}>
-                          <span className={`sku-symbol sku-${i.productId.toLowerCase()}`}>
-                            <Package size={19} />
-                          </span>
-                          <div>
-                            <strong>{productLabel(data, i.productId)}</strong>
-                            {!editing && (
-                              <p className="text-[11px] text-muted-foreground numeric">
-                                Expedição (DQ): <b>{dq} un.</b> · Base (BQ): <b>{bq} un.</b>
-                              </p>
-                            )}
-                          </div>
-                          {editing ? (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <label className="text-[10px] text-muted-foreground flex flex-col">
-                                Qtd. Expedição (DQ)
-                                <input
-                                  type="number"
-                                  className="form-input numeric w-20"
-                                  min="0"
-                                  aria-label={`Revisar quantidade ${i.productId}`}
-                                  value={dq}
-                                  onChange={e => {
-                                    const nextDq = Math.max(0, Math.floor(Number(e.target.value) || 0));
-                                    setEditItems(v =>
-                                      v.map((item, j) =>
-                                        j === index
-                                          ? {
-                                              ...item,
-                                              quantity: nextDq,
-                                              dispatchQuantity: nextDq,
-                                              baseQuantity: Math.min(nextDq, itemBq(item)),
-                                            }
-                                          : item
-                                      )
-                                    );
-                                  }}
-                                />
-                              </label>
-                              <label className="text-[10px] text-muted-foreground flex flex-col">
-                                Qtd. Base (BQ)
-                                <input
-                                  type="number"
-                                  className="form-input numeric w-20"
-                                  min="0"
-                                  max={dq}
-                                  aria-label={`Revisar base ${i.productId}`}
-                                  value={bq}
-                                  onChange={e => {
-                                    const nextBq = Math.max(0, Math.min(dq, Math.floor(Number(e.target.value) || 0)));
-                                    setEditItems(v =>
-                                      v.map((item, j) =>
-                                        j === index
-                                          ? {
-                                              ...item,
-                                              baseQuantity: nextBq,
-                                            }
-                                          : item
-                                      )
-                                    );
-                                  }}
-                                />
-                              </label>
-                              <label className="text-[10px] text-muted-foreground flex flex-col">
-                                Preço Unit. (R$)
-                                <input
-                                  type="number"
-                                  className="form-input numeric w-24"
-                                  min="0.01"
-                                  step="0.01"
-                                  aria-label={`Revisar preço ${i.productId}`}
-                                  value={i.price}
-                                  onChange={e =>
-                                    setEditItems(v =>
-                                      v.map((item, j) =>
-                                        j === index ? { ...item, price: Number(e.target.value) } : item
-                                      )
-                                    )
-                                  }
-                                />
-                              </label>
-                            </div>
-                          ) : (
-                            <span className="text-muted-foreground text-xs numeric">
-                              {dq} × {money(i.price)}
-                            </span>
-                          )}
-                          <b className="numeric">{money(dq * i.price)}</b>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  <div className="review-total">
-                    <div>
-                      <span>Total Expedição (DQ: {modalTotalDq} sacas)</span>
-                      <p className="text-xs text-muted-foreground numeric">
-                        Total Base (BQ: {modalTotalBq} sacas): {money(modalBaseValue)} · Imposto 8% (BQ): {money(modalFin.tax)} · Frete (R$ 4/saca): {money(modalFin.logistics)}
-                      </p>
-                    </div>
-                    <h2 className="numeric">{money(modalFin.total)}</h2>
-                  </div>
-
-                  <div className="review-meta">
-                    <div>
-                      <span>Pagamento</span>
-                      <strong>{selected.payment}</strong>
-                      {selected.firstDueDate && (
-                        <span className="block text-[10.5px] text-primary font-mono mt-0.5">
-                          1ª parc: {selected.firstDueDate.split('-').reverse().join('/')}
-                          {selected.dueDates && selected.dueDates.length > 1 && (
-                            <span className="text-muted-foreground font-sans"> ({selected.dueDates.length}x a cada 7d)</span>
-                          )}
-                        </span>
-                      )}
-                    </div>
-                    <div>
-                      <span>Entrega prevista</span>
-                      <strong>{selected.delivery}</strong>
-                    </div>
-                    <div>
-                      <span>Status Atual</span>
-                      {renderStatusBadge(selected)}
-                    </div>
-                  </div>
-
-                  {selected.note && <p className="review-note">{selected.note}</p>}
-
-                  {/* Profit Breakdown com o Anel Radial de Margem (Oculto para Perfil de Expedição) */}
-                  {!isExpedicao && (
-                    <div className="review-profit flex items-center gap-4 bg-muted/30 p-3 rounded-lg border border-border/40">
-                      <ProfitGauge margin={modalFin.margin} size={48} />
-                      <div className="flex flex-col">
-                        <span className="text-[10px] text-muted-foreground">Lucro líquido estimado</span>
-                        <strong className="numeric text-base text-foreground">
-                          {money(modalFin.profit)}
-                        </strong>
-                      </div>
-                      <span className={`status-badge ml-auto ${marginLevel(modalFin.margin)}`}>
-                        Margem: {modalFin.margin.toFixed(1)}%
-                      </span>
-                    </div>
-                  )}
-
-                  {(selectedEffectiveStatus === 'FATURADO' || selectedEffectiveStatus === 'ENTREGUE') && (
-                    <div className="invoice-issued">
-                      <div className="flex items-center gap-2">
-                        <CheckCheck />
-                        <strong>NF-e {selected.invoice} emitida · SEFAZ Autorizada</strong>
-                      </div>
-                      <div className="flex items-center gap-2 my-2 bg-card/60 p-2 rounded border border-emerald-500/20">
-                        <p className="numeric text-[11px] font-mono break-all select-all flex-1 m-0">
-                          {selected.key}
-                        </p>
-                        <CopyButton
-                          textToCopy={selected.key || ''}
-                          iconOnly={true}
-                          withConfetti={true}
-                          title="Copiar Chave da NF-e"
-                          aria-label="Copiar Chave da NF-e"
-                          className="h-7 w-7 shrink-0"
-                          onCopied={() => notify('Chave da NF-e copiada.')}
-                        />
-                      </div>
-                      <div className="flex gap-2 flex-wrap">
-                        {!isExpedicao && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() => openPrintableDanfe(selected, selectedClient, data.products)}
-                          >
-                            <Printer size={14} />
-                            Imprimir DANFE (BQ)
-                          </Button>
-                        )}
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="gap-1.5"
-                          onClick={() => openPrintableRomaneio(selected, selectedClient, data.products)}
-                        >
-                          <Truck size={14} />
-                          Imprimir Romaneio (DQ)
-                        </Button>
-                        {!isExpedicao && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="gap-1.5"
-                            onClick={() => openPrintableOrderSlip(selected, selectedClient, data.products)}
-                          >
-                            <FileText size={14} />
-                            Imprimir Talão
-                          </Button>
-                        )}
-                        {selected.xmlUrl && (
-                          <Button variant="outline" size="sm" onClick={() => window.open(selected.xmlUrl, '_blank')}>
-                            <FileText size={14} />
-                            Ver XML NF-e
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="dialog-actions flex-wrap">
-                    <Button
-                      variant="outline"
-                      onClick={async () => {
-                        const txt = await generatePickingApi(selected.id);
-                        if (txt) setCustomPackingText(txt);
-                        setPacking(true);
-                      }}
-                    >
-                      <Truck />
-                      Gerar romaneio (DQ)
-                    </Button>
-
-                    {!isLockedOrder && (
-                      <>
-                        {editing ? (
-                          <Button
-                            variant="outline"
-                            disabled={busy}
-                            onClick={async () => {
-                              if (modalTotalDq < 1 || modalTotalBq < 1) {
-                                notify('A Qtd. Expedição (DQ) e a Qtd. Base (BQ) devem ser de pelo menos 1 saca.');
-                                return;
-                              }
-                              setBusy(true);
-                              try {
-                                const next = await reviewOrderApi(data, selected.id, editItems);
-                                update(next);
-                                setEditing(false);
-                                notify('Pré-nota revisada (DQ e BQ). Reserva de estoque atualizada.');
-                              } catch (e) {
-                                try {
-                                  update(editOrder(data, selected.id, editItems));
-                                  setEditing(false);
-                                  notify('Pedido revisado. Reserva de estoque atualizada.');
-                                } catch (err) {
-                                  notify(
-                                    e instanceof Error
-                                      ? e.message
-                                      : err instanceof Error
-                                      ? err.message
-                                      : 'Confira o pedido.'
-                                  );
-                                }
-                              } finally {
-                                setBusy(false);
-                              }
-                            }}
-                          >
-                            <Check />
-                            Salvar revisão
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              setEditItems(
-                                selected.items.map(i => ({
-                                  ...i,
-                                  dispatchQuantity: itemDq(i),
-                                  baseQuantity: itemBq(i),
-                                }))
-                              );
-                              setEditing(true);
-                            }}
-                          >
-                            Editar pré-nota (DQ/BQ)
-                          </Button>
-                        )}
-                        <ShimmerButton
-                          disabled={busy || !fiscalReady(selectedClient) || editing || modalTotalBq < 1}
-                          onClick={async () => {
-                            setBusy(true);
-                            try {
-                              const next = await issueNfeApi(data, selected.id);
-                              update(next);
-                              fireConfetti();
-                              notify('NF-e emitida no servidor. Estoque físico (DQ) e Saldo Base (BQ) atualizados.');
-                            } catch (e) {
-                              try {
-                                update(invoiceOrder(data, selected.id));
-                                fireConfetti();
-                                notify('NF-e simulada emitida. Estoque físico (DQ) e Saldo Base (BQ) atualizados.');
-                              } catch (err) {
-                                notify(
-                                  e instanceof Error
-                                    ? e.message
-                                    : err instanceof Error
-                                    ? err.message
-                                    : 'Não foi possível emitir.'
-                                );
-                              }
-                            } finally {
-                              setBusy(false);
-                            }
-                          }}
-                        >
-                          {busy ? <Loader2 className="animate-spin" /> : <FileCheck2 />}
-                          Emitir NF-e
-                        </ShimmerButton>
-                      </>
-                    )}
-
-                    {/* Botão Confirmar Entrega (quando FATURADO) */}
-                    {selectedEffectiveStatus === 'FATURADO' && (
-                      <Button
-                        disabled={busy}
-                        onClick={async () => {
-                          setBusy(true);
-                          try {
-                            const next = await deliverOrderApi(data, selected.id);
-                            update(next);
-                            fireConfetti();
-                            notify(`Entrega do Pedido #${selected.id} confirmada com sucesso!`);
-                          } catch {
-                            update(deliverOrderLocal(data, selected.id));
-                            fireConfetti();
-                            notify(`Pedido #${selected.id} marcado como ENTREGUE.`);
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        <CheckCheck size={15} />
-                        Confirmar Entrega
-                      </Button>
-                    )}
-
-                    {/* Botão Cancelar Pedido */}
-                    {selectedEffectiveStatus !== 'CANCELADO' && selectedEffectiveStatus !== 'ENTREGUE' && (
-                      <Button
-                        variant="outline"
-                        disabled={busy}
-                        className="text-destructive border-destructive/30 hover:bg-destructive/10"
-                        onClick={async () => {
-                          setBusy(true);
-                          try {
-                            const next = await cancelOrderApi(data, selected.id);
-                            update(next);
-                            setEditing(false);
-                            notify(`Pedido #${selected.id} cancelado e saldos estornados.`);
-                          } catch {
-                            update(cancelOrderLocal(data, selected.id));
-                            setEditing(false);
-                            notify(`Pedido #${selected.id} cancelado e saldos estornados.`);
-                          } finally {
-                            setBusy(false);
-                          }
-                        }}
-                      >
-                        <Ban size={14} />
-                        Cancelar Pedido
-                      </Button>
-                    )}
-                  </div>
-                  <span className="text-xs text-muted-foreground">
-                    {data.backendConnected
-                      ? 'Conectado ao servidor · alterações salvas em banco de dados.'
-                      : 'Ambiente de demonstração · emissão sem validade fiscal.'}
-                  </span>
-                </>
-              )}
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <OrderDetailsModal
+        order={selected ?? null}
+        onClose={() => setSelectedId(null)}
+        data={data}
+        update={update}
+        notify={notify}
+        isExpedicao={isExpedicao}
+      />
     </>
   );
 }
@@ -1367,11 +890,12 @@ function ReceivablesSection({
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [payingId, setPayingId] = useState<number | null>(null);
+  const [selectedBoletoKey, setSelectedBoletoKey] = useState<string | null>(null);
 
   const loadTitles = async () => {
     setLoading(true);
     try {
-      const res = await fetchReceivablesApi(filter);
+      const res = await fetchReceivablesApi('ALL');
       setTitles(res);
     } catch {
       notify('Não foi possível carregar os títulos a receber do servidor.');
@@ -1382,18 +906,31 @@ function ReceivablesSection({
 
   useEffect(() => {
     loadTitles();
-  }, [filter]);
+  }, []);
 
   const handlePay = async (title: ReceivableTitle) => {
     setPayingId(title.id);
     try {
       await payReceivableApi(title.id);
       fireConfetti();
-      notify(`Baixa manual confirmada no boleto ${title.documentNumber}! Status do cliente recalculado.`);
-      await loadTitles();
+      notify(`Baixa manual confirmada na parcela ${title.installmentNumber}/${title.totalInstallments} (${title.documentNumber})!`);
+
+      // Atualização otimista imediata no estado local
+      setTitles(prev =>
+        prev.map(t => (t.id === title.id ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() } : t))
+      );
+
+      // Tenta sincronizar com o backend
+      try {
+        const freshTitles = await fetchReceivablesApi('ALL');
+        setTitles(freshTitles);
+      } catch {}
+
       // Atualiza também os dados gerais para sincronizar o status de crédito do cliente
-      const fresh = await fetchWorkspaceData(data.reconciled);
-      update(fresh);
+      try {
+        const fresh = await fetchWorkspaceData(data.reconciled);
+        update(fresh);
+      } catch {}
     } catch (e) {
       notify(e instanceof Error ? e.message : 'Erro ao processar baixa do boleto.');
     } finally {
@@ -1401,19 +938,145 @@ function ReceivablesSection({
     }
   };
 
-  const totalBq = titles.reduce((a, t) => a + Number(t.amountBq || 0), 0);
-  const totalAberto = titles.filter(t => t.status === 'ABERTO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
-  const totalVencido = titles.filter(t => t.status === 'VENCIDO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
-  const totalPago = titles.filter(t => t.status === 'PAGO').reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const handlePayAllInGroup = async (group: GroupedBoleto) => {
+    const unpaid = group.titles.filter(t => t.status !== 'PAGO');
+    if (unpaid.length === 0) return;
+    setLoading(true);
+    try {
+      for (const t of unpaid) {
+        await payReceivableApi(t.id);
+      }
+      fireConfetti();
+      notify(`Todas as ${unpaid.length} parcelas do boleto ${group.baseDocumentNumber} foram quitadas com sucesso!`);
+      setTitles(prev =>
+        prev.map(t =>
+          unpaid.some(u => u.id === t.id)
+            ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() }
+            : t
+        )
+      );
+      try {
+        const freshTitles = await fetchReceivablesApi('ALL');
+        setTitles(freshTitles);
+      } catch {}
+      try {
+        const fresh = await fetchWorkspaceData(data.reconciled);
+        update(fresh);
+      } catch {}
+    } catch (e) {
+      notify(e instanceof Error ? e.message : 'Erro ao processar baixa das parcelas.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const visibleTitles = titles.filter(t => {
+  interface GroupedBoleto {
+    key: string;
+    baseDocumentNumber: string;
+    orderId?: number;
+    clientId: number;
+    clientName: string;
+    titles: ReceivableTitle[];
+    totalAmountBq: number;
+    paidAmountBq: number;
+    remainingAmountBq: number;
+    totalInstallments: number;
+    paidInstallments: number;
+    status: 'ABERTO' | 'VENCIDO' | 'PAGO';
+    nextDueDate?: string;
+    notes?: string;
+  }
+
+  const groupedBoletos = useMemo<GroupedBoleto[]>(() => {
+    const map = new Map<string, GroupedBoleto>();
+    const sorted = [...titles].sort((a, b) => a.installmentNumber - b.installmentNumber);
+
+    for (const t of sorted) {
+      const baseDoc = t.documentNumber.replace(/-\d+$/, '');
+      const key = t.orderId ? `order-${t.orderId}` : `doc-${baseDoc}-${t.clientId}`;
+
+      let group = map.get(key);
+      if (!group) {
+        group = {
+          key,
+          baseDocumentNumber: baseDoc,
+          orderId: t.orderId,
+          clientId: t.clientId,
+          clientName: t.clientName,
+          titles: [],
+          totalAmountBq: 0,
+          paidAmountBq: 0,
+          remainingAmountBq: 0,
+          totalInstallments: t.totalInstallments || 1,
+          paidInstallments: 0,
+          status: 'ABERTO',
+          notes: t.notes,
+        };
+        map.set(key, group);
+      }
+
+      group.titles.push(t);
+      const amt = Number(t.amountBq || 0);
+      group.totalAmountBq += amt;
+      if (t.status === 'PAGO') {
+        group.paidAmountBq += amt;
+        group.paidInstallments += 1;
+      } else {
+        group.remainingAmountBq += amt;
+      }
+      if (t.totalInstallments && t.totalInstallments > group.totalInstallments) {
+        group.totalInstallments = t.totalInstallments;
+      }
+    }
+
+    return Array.from(map.values()).map(g => {
+      const allPaid = g.titles.length > 0 && g.titles.every(t => t.status === 'PAGO');
+      const hasOverdue = g.titles.some(t => t.status === 'VENCIDO');
+      let status: 'ABERTO' | 'VENCIDO' | 'PAGO' = 'ABERTO';
+      if (allPaid) {
+        status = 'PAGO';
+      } else if (hasOverdue) {
+        status = 'VENCIDO';
+      } else {
+        status = 'ABERTO';
+      }
+
+      const unpaid = g.titles.filter(t => t.status !== 'PAGO');
+      const nextDue = unpaid[0]?.dueDate || g.titles[g.titles.length - 1]?.dueDate;
+
+      return {
+        ...g,
+        status,
+        nextDueDate: nextDue,
+      };
+    });
+  }, [titles]);
+
+  const totalBq = groupedBoletos.reduce((a, g) => a + g.totalAmountBq, 0);
+  const totalAberto = groupedBoletos.filter(g => g.status === 'ABERTO').reduce((a, g) => a + g.remainingAmountBq, 0);
+  const totalVencido = groupedBoletos.filter(g => g.status === 'VENCIDO').reduce((a, g) => a + g.remainingAmountBq, 0);
+  const totalPago = groupedBoletos.reduce((a, g) => a + g.paidAmountBq, 0);
+
+  const visibleBoletos = groupedBoletos.filter(g => {
+    if (filter !== 'ALL' && g.status !== filter) return false;
+    if (!search) return true;
     const q = search.toLowerCase();
     return (
-      t.clientName.toLowerCase().includes(q) ||
-      t.documentNumber.toLowerCase().includes(q) ||
-      (t.notes && t.notes.toLowerCase().includes(q))
+      g.clientName.toLowerCase().includes(q) ||
+      g.baseDocumentNumber.toLowerCase().includes(q) ||
+      (g.orderId && String(g.orderId).includes(q)) ||
+      (g.notes && g.notes.toLowerCase().includes(q))
     );
   });
+
+  const selectedBoleto = groupedBoletos.find(g => g.key === selectedBoletoKey);
+
+  const formatDueDate = (dateStr?: string) => {
+    if (!dateStr) return '-';
+    const parts = dateStr.split('-');
+    if (parts.length === 3) return `${parts[2]}/${parts[1]}/${parts[0]}`;
+    return dateStr;
+  };
 
   return (
     <div className="space-y-6">
@@ -1423,7 +1086,7 @@ function ReceivablesSection({
           label="Total em Boletos"
           value={<NumberTicker value={totalBq} prefix="R$ " decimals={2} />}
           icon={<Barcode />}
-          footer={<span className="text-muted-foreground">{titles.length} boletos gerados</span>}
+          footer={<span className="text-muted-foreground">{groupedBoletos.length} {groupedBoletos.length === 1 ? 'boleto gerado' : 'boletos gerados'}</span>}
         />
         <Metric
           label="A Receber (Em Aberto)"
@@ -1432,7 +1095,7 @@ function ReceivablesSection({
           footer={
             <>
               <span className="mini-dot warning-dot" />
-              {titles.filter(t => t.status === 'ABERTO').length} boletos a vencer
+              {groupedBoletos.filter(g => g.status === 'ABERTO').length} boletos a vencer
             </>
           }
         />
@@ -1442,7 +1105,7 @@ function ReceivablesSection({
           icon={<AlertTriangle />}
           footer={
             <span className={totalVencido > 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
-              {titles.filter(t => t.status === 'VENCIDO').length} vencidos sem pagamento
+              {groupedBoletos.filter(g => g.status === 'VENCIDO').length} com parcelas vencidas
             </span>
           }
         />
@@ -1452,7 +1115,7 @@ function ReceivablesSection({
           icon={<CheckCheck />}
           footer={
             <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-              {titles.filter(t => t.status === 'PAGO').length} boletos compensados
+              {groupedBoletos.filter(g => g.status === 'PAGO').length} boletos quitados
             </span>
           }
         />
@@ -1463,10 +1126,10 @@ function ReceivablesSection({
         <div className="orders-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
           <SlidingTabs
             tabs={[
-              { id: 'ALL', label: 'Todos os Boletos', count: titles.length },
-              { id: 'ABERTO', label: 'Em Aberto', count: titles.filter(t => t.status === 'ABERTO').length },
-              { id: 'VENCIDO', label: 'Vencidos', count: titles.filter(t => t.status === 'VENCIDO').length },
-              { id: 'PAGO', label: 'Pagos / Baixados', count: titles.filter(t => t.status === 'PAGO').length },
+              { id: 'ALL', label: 'Todos os Boletos', count: groupedBoletos.length },
+              { id: 'ABERTO', label: 'Em Aberto', count: groupedBoletos.filter(g => g.status === 'ABERTO').length },
+              { id: 'VENCIDO', label: 'Vencidos', count: groupedBoletos.filter(g => g.status === 'VENCIDO').length },
+              { id: 'PAGO', label: 'Quitados', count: groupedBoletos.filter(g => g.status === 'PAGO').length },
             ]}
             activeTab={filter}
             onChange={t => setFilter(t as any)}
@@ -1478,20 +1141,20 @@ function ReceivablesSection({
               <input
                 value={search}
                 onChange={e => setSearch(e.target.value)}
-                placeholder="Buscar por cliente, documento ou NF-e..."
+                placeholder="Buscar por cliente, boleto ou NF-e..."
                 aria-label="Buscar boletos"
               />
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="gap-1.5 shrink-0 text-xs h-9"
+              className="gap-1.5 shrink-0 text-xs h-9 cursor-pointer"
               onClick={loadTitles}
               disabled={loading}
               title="Recarregar títulos do servidor"
             >
               <RefreshCw size={13} className={loading ? 'animate-spin' : ''} />
-              <span>Atualizar Títulos</span>
+              <span>Atualizar Boletos</span>
             </Button>
           </div>
         </div>
@@ -1502,7 +1165,7 @@ function ReceivablesSection({
               <tr>
                 <th>Documento / Boleto</th>
                 <th>Cliente</th>
-                <th>Parcela</th>
+                <th>Parcelas</th>
                 <th>Valor Base (BQ)</th>
                 <th>Vencimento</th>
                 <th>Status</th>
@@ -1510,23 +1173,29 @@ function ReceivablesSection({
               </tr>
             </thead>
             <tbody>
-              {visibleTitles.map(t => {
-                const isPaid = t.status === 'PAGO';
-                const isOverdue = t.status === 'VENCIDO';
-                const clientMatch = data.clients.find(c => c.id === String(t.clientId));
+              {visibleBoletos.map(g => {
+                const isPaid = g.status === 'PAGO';
+                const isOverdue = g.status === 'VENCIDO';
+                const clientMatch = data.clients.find(c => c.id === String(g.clientId));
                 return (
-                  <tr key={t.id}>
+                  <tr
+                    key={g.key}
+                    onClick={() => setSelectedBoletoKey(g.key)}
+                    className="cursor-pointer hover:bg-muted/50 transition-colors group"
+                    title="Clique para ver os detalhes das parcelas"
+                  >
                     <td>
-                      <strong className="numeric font-mono text-xs">{t.documentNumber}</strong>
+                      <strong className="numeric font-mono text-xs text-foreground">{g.baseDocumentNumber}</strong>
                       <p className="text-[11px] text-muted-foreground">
-                        {t.orderId ? `Ref. Pedido #${t.orderId}` : 'Ref. Faturamento anterior'}
+                        {g.orderId ? `Ref. Pedido #${g.orderId}` : 'Ref. Faturamento anterior'}
                       </p>
                     </td>
                     <td>
                       <div>
-                        <strong>{t.clientName}</strong>
+                        <strong className="text-foreground">{g.clientName}</strong>
                         <p className="text-[11px] text-muted-foreground">
-                          Crédito: {clientMatch?.overdue || isOverdue ? (
+                          Crédito:{' '}
+                          {clientMatch?.overdue || isOverdue ? (
                             <span className="text-destructive font-semibold">Boleto Vencido</span>
                           ) : (
                             <span className="text-emerald-600 font-semibold">Em dia</span>
@@ -1535,24 +1204,43 @@ function ReceivablesSection({
                       </div>
                     </td>
                     <td>
-                      <span className="status-badge neutral text-[11px]">
-                        {t.installmentNumber} de {t.totalInstallments}
-                      </span>
+                      <div className="flex flex-col gap-1">
+                        <span className="status-badge neutral text-[11px] inline-flex items-center gap-1">
+                          <CreditCard size={11} />
+                          {g.paidInstallments} de {g.totalInstallments} {g.totalInstallments === 1 ? 'parcela' : 'parcelas'}
+                        </span>
+                        {g.totalInstallments > 1 && (
+                          <div className="w-24 bg-muted h-1.5 rounded-full overflow-hidden">
+                            <div
+                              className={`h-full transition-all ${isPaid ? 'bg-emerald-500' : 'bg-primary'}`}
+                              style={{ width: `${(g.paidInstallments / g.totalInstallments) * 100}%` }}
+                            />
+                          </div>
+                        )}
+                      </div>
                     </td>
                     <td>
                       <strong className="numeric text-sm font-semibold text-foreground">
-                        {money(Number(t.amountBq))}
+                        {money(g.totalAmountBq)}
                       </strong>
+                      {!isPaid && (
+                        <p className="text-[11px] text-muted-foreground">
+                          {money(g.remainingAmountBq)} restante
+                        </p>
+                      )}
                     </td>
                     <td>
                       <span className="numeric text-xs font-medium">
-                        {t.dueDate ? t.dueDate.split('-').reverse().join('/') : '-'}
+                        {formatDueDate(g.nextDueDate)}
                       </span>
+                      <p className="text-[10px] text-muted-foreground">
+                        {isPaid ? 'Quitado' : 'Próx. vencimento'}
+                      </p>
                     </td>
                     <td>
                       {isPaid ? (
                         <span className="status-badge success">
-                          <CheckCheck size={12} /> Pago
+                          <CheckCheck size={12} /> Quitado
                         </span>
                       ) : isOverdue ? (
                         <span className="status-badge danger">
@@ -1565,33 +1253,25 @@ function ReceivablesSection({
                       )}
                     </td>
                     <td>
-                      {!isPaid ? (
+                      <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 text-xs font-semibold gap-1.5 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-                          disabled={payingId === t.id}
-                          onClick={() => handlePay(t)}
+                          className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
+                          onClick={() => setSelectedBoletoKey(g.key)}
+                          title="Ver parcelas deste boleto"
                         >
-                          {payingId === t.id ? (
-                            <Loader2 size={13} className="animate-spin" />
-                          ) : (
-                            <CheckCircle2 size={13} />
-                          )}
-                          Confirmar Pagamento
+                          <Eye size={13} />
+                          Ver Detalhes ({g.titles.length})
                         </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Check size={12} className="text-emerald-500" /> Baixado
-                        </span>
-                      )}
+                      </div>
                     </td>
                   </tr>
                 );
               })}
             </tbody>
           </table>
-          {visibleTitles.length === 0 && (
+          {visibleBoletos.length === 0 && (
             <div className="empty-state">
               <CreditCard size={24} />
               <strong>Nenhum boleto encontrado nesta visualização</strong>
@@ -1600,10 +1280,167 @@ function ReceivablesSection({
           )}
         </div>
       </section>
+
+      {/* Modal de Detalhes do Boleto com Todas as Parcelas */}
+      <Dialog open={!!selectedBoleto} onOpenChange={open => !open && setSelectedBoletoKey(null)}>
+        <DialogContent className="max-w-2xl">
+          <DialogTitle className="flex items-center justify-between gap-2 pr-6">
+            <span className="flex items-center gap-2">
+              <Barcode size={18} className="text-primary" />
+              Boleto {selectedBoleto?.baseDocumentNumber}
+            </span>
+            {selectedBoleto && (
+              selectedBoleto.status === 'PAGO' ? (
+                <span className="status-badge success text-xs">
+                  <CheckCheck size={12} /> Totalmente Quitado
+                </span>
+              ) : selectedBoleto.status === 'VENCIDO' ? (
+                <span className="status-badge danger text-xs">
+                  <AlertTriangle size={12} /> Parcela Vencida
+                </span>
+              ) : (
+                <span className="status-badge warning text-xs">
+                  <Clock3 size={12} /> Em Aberto
+                </span>
+              )
+            )}
+          </DialogTitle>
+          <DialogDescription>
+            {selectedBoleto?.clientName} {selectedBoleto?.orderId ? `· Pedido associado: #${selectedBoleto.orderId}` : ''}
+          </DialogDescription>
+
+          {selectedBoleto && (
+            <div className="space-y-4 pt-2">
+              {/* Mini resumo financeiro do boleto */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 bg-muted/40 p-3 rounded-lg border border-border/60 text-xs">
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Valor Total BQ</span>
+                  <strong className="text-sm font-bold text-foreground">{money(selectedBoleto.totalAmountBq)}</strong>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Total Quitado</span>
+                  <strong className="text-sm font-bold text-emerald-600 dark:text-emerald-400">{money(selectedBoleto.paidAmountBq)}</strong>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Saldo Restante</span>
+                  <strong className="text-sm font-bold text-amber-600 dark:text-amber-400">{money(selectedBoleto.remainingAmountBq)}</strong>
+                </div>
+                <div>
+                  <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Parcelas</span>
+                  <strong className="text-sm font-bold text-foreground">
+                    {selectedBoleto.paidInstallments}/{selectedBoleto.totalInstallments} pagas
+                  </strong>
+                </div>
+              </div>
+
+              {selectedBoleto.notes && (
+                <p className="text-xs text-muted-foreground bg-sky-500/10 border border-sky-500/20 p-2.5 rounded-md">
+                  ℹ️ {selectedBoleto.notes}
+                </p>
+              )}
+
+              {/* Tabela com a discriminação de cada parcela individual */}
+              <div className="border border-border/80 rounded-lg overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-muted/70 text-muted-foreground border-b border-border/80 text-[11px] font-semibold">
+                    <tr>
+                      <th className="p-2.5 text-left">Parcela</th>
+                      <th className="p-2.5 text-left">Documento</th>
+                      <th className="p-2.5 text-left">Vencimento</th>
+                      <th className="p-2.5 text-right">Valor BQ</th>
+                      <th className="p-2.5 text-center">Status</th>
+                      <th className="p-2.5 text-right">Ação</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border/60">
+                    {selectedBoleto.titles.map(t => {
+                      const isPaid = t.status === 'PAGO';
+                      const isOverdue = t.status === 'VENCIDO';
+                      const isPaying = payingId === t.id;
+
+                      return (
+                        <tr key={t.id} className="hover:bg-muted/30 transition-colors">
+                          <td className="p-2.5 font-semibold text-foreground">
+                            Parcela {t.installmentNumber} de {t.totalInstallments}
+                          </td>
+                          <td className="p-2.5 font-mono text-[11px] text-muted-foreground">
+                            {t.documentNumber}
+                          </td>
+                          <td className="p-2.5 font-medium">
+                            {formatDueDate(t.dueDate)}
+                          </td>
+                          <td className="p-2.5 text-right font-bold text-foreground">
+                            {money(Number(t.amountBq))}
+                          </td>
+                          <td className="p-2.5 text-center">
+                            {isPaid ? (
+                              <span className="status-badge success text-[10px]">
+                                <CheckCheck size={11} /> Pago
+                              </span>
+                            ) : isOverdue ? (
+                              <span className="status-badge danger text-[10px]">
+                                <AlertTriangle size={11} /> Vencido
+                              </span>
+                            ) : (
+                              <span className="status-badge warning text-[10px]">
+                                <Clock3 size={11} /> Em aberto
+                              </span>
+                            )}
+                          </td>
+                          <td className="p-2.5 text-right">
+                            {!isPaid ? (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-7 text-xs font-semibold gap-1 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 cursor-pointer"
+                                disabled={isPaying}
+                                onClick={() => handlePay(t)}
+                              >
+                                {isPaying ? (
+                                  <Loader2 size={12} className="animate-spin" />
+                                ) : (
+                                  <CheckCircle2 size={12} />
+                                )}
+                                Confirmar Pagamento
+                              </Button>
+                            ) : (
+                              <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1 justify-end">
+                                <Check size={12} /> Liquidado
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2 pt-2">
+                {selectedBoleto.paidInstallments < selectedBoleto.totalInstallments && selectedBoleto.totalInstallments > 1 && (
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs font-semibold gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer"
+                    disabled={loading}
+                    onClick={() => handlePayAllInGroup(selectedBoleto)}
+                  >
+                    <CheckCheck size={13} />
+                    Quitar Todas as Parcelas ({money(selectedBoleto.remainingAmountBq)})
+                  </Button>
+                )}
+                <div className="flex justify-end">
+                  <Button variant="outline" size="sm" onClick={() => setSelectedBoletoKey(null)}>
+                    Fechar
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
-
 // ============================================================================
 // 2. SEÇÃO: CADASTROS COMPLETOS, ESTOQUE DUAL E PREÇOS ACORDADOS
 // ============================================================================
@@ -1621,7 +1458,7 @@ function RegistrationsSection({
   userProfile?: string | undefined;
   initialClientSearch?: string;
 }) {
-  const [subTab, setSubTab] = useState<'clients' | 'products' | 'prices'>('clients');
+  const [subTab, setSubTab] = useState<'clients' | 'products' | 'client-details'>('clients');
   const [clientSearch, setClientSearch] = useState(initialClientSearch ?? '');
 
   useEffect(() => {
@@ -1670,8 +1507,13 @@ function RegistrationsSection({
   const [productModalOpen, setProductModalOpen] = useState(false);
   const [savingProduct, setSavingProduct] = useState(false);
 
-  // Memória de Preços
-  const [selectedPriceClient, setSelectedPriceClient] = useState<string>(data.clients[0]?.id ?? '1');
+  // Detalhes do Cliente Selecionado & Preços Praticados
+  const [selectedClientId, setSelectedClientId] = useState<string>(data.clients[0]?.id ?? '1');
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [clientOrdersPage, setClientOrdersPage] = useState(1);
+  const [clientOrdersPageSize, setClientOrdersPageSize] = useState(5);
+  const [clientOrdersSearch, setClientOrdersSearch] = useState('');
+  const [clientDetailsExpanded, setClientDetailsExpanded] = useState(true);
   const [clientSkuPrices, setClientSkuPrices] = useState<any[]>([]);
   const [editingSkuPrice, setEditingSkuPrice] = useState<{ productId: number; price: number } | null>(null);
 
@@ -1686,10 +1528,10 @@ function RegistrationsSection({
   };
 
   useEffect(() => {
-    if (subTab === 'prices' && selectedPriceClient) {
-      loadClientSkuPrices(selectedPriceClient);
+    if (subTab === 'client-details' && selectedClientId) {
+      loadClientSkuPrices(selectedClientId);
     }
-  }, [subTab, selectedPriceClient]);
+  }, [subTab, selectedClientId]);
 
   const handleLookupCnpj = async () => {
     if (!editingClient?.cnpj) return;
@@ -1763,12 +1605,12 @@ function RegistrationsSection({
 
   const handleSavePriceAgreed = async (productId: number, price: number) => {
     try {
-      await updateClientPriceApi(Number(selectedPriceClient), productId, price);
-      await loadClientSkuPrices(selectedPriceClient);
+      await updateClientPriceApi(Number(selectedClientId), productId, price);
+      await loadClientSkuPrices(selectedClientId);
       const fresh = await fetchWorkspaceData(data.reconciled);
       update(fresh);
       setEditingSkuPrice(null);
-      notify('Preço acordado atualizado na memória do cliente!');
+      notify('Preço acordado do cliente atualizado com sucesso!');
     } catch (e) {
       notify(e instanceof Error ? e.message : 'Erro ao salvar preço acordado.');
     }
@@ -1809,15 +1651,17 @@ function RegistrationsSection({
             <Package size={14} />
             Produtos & Estoque Dual ({data.products.length})
           </Button>
-          <Button
-            variant={subTab === 'prices' ? 'default' : 'outline'}
-            size="sm"
-            className="text-xs gap-1.5"
-            onClick={() => setSubTab('prices')}
-          >
-            <NotebookPen size={14} />
-            Memória de Preços por Cliente
-          </Button>
+          {subTab === 'client-details' && (
+            <Button
+              variant="default"
+              size="sm"
+              className="text-xs gap-1.5 bg-primary text-primary-foreground font-semibold"
+              onClick={() => setSubTab('client-details')}
+            >
+              <Building2 size={14} />
+              Detalhes do Cliente: {data.clients.find(c => c.id === selectedClientId)?.name ?? 'Cliente'}
+            </Button>
+          )}
         </div>
 
         {subTab === 'clients' && (
@@ -1930,10 +1774,11 @@ function RegistrationsSection({
                       key={c.id}
                       className="cursor-pointer hover:bg-muted/50 transition-colors group"
                       onClick={() => {
-                        setSelectedPriceClient(c.id);
-                        setSubTab('prices');
+                        setSelectedClientId(c.id);
+                        setClientOrdersPage(1);
+                        setSubTab('client-details');
                       }}
-                      title={`Clique para abrir a Memória de Preços de ${c.name}`}
+                      title={`Clique para ver os dados cadastrais e histórico de pedidos de ${c.name}`}
                     >
                       <td>
                         <div className="flex items-center justify-between gap-2">
@@ -1941,19 +1786,19 @@ function RegistrationsSection({
                             <strong className="group-hover:text-primary transition-colors">{c.name}</strong>
                             <p className="text-[11px] text-muted-foreground">{c.buyer}</p>
                           </div>
-                          <NotebookPen
-                            size={13}
+                          <ChevronRight
+                            size={14}
                             className="text-primary opacity-0 group-hover:opacity-100 transition-opacity shrink-0 mr-1"
-                            title="Ver memória de preços"
+                            title="Ver detalhes do cliente"
                           />
                         </div>
                       </td>
                       <td>
-                        <span className="font-mono text-xs">{c.cnpj || 'Sem CNPJ'}</span>
+                        <span className="font-mono text-xs">{formatCnpj(c.cnpj) || 'Sem CNPJ'}</span>
                         <p className="text-[10px] text-muted-foreground">{c.ie ? `IE: ${c.ie}` : 'IE Pendente'}</p>
                       </td>
                       <td>
-                        <span className="text-xs">{c.neighborhood}, SP</span>
+                        <span className="text-xs">{c.neighborhood}, {c.city || 'SP'}</span>
                         <p className="text-[10px] text-muted-foreground">Ciclo: a cada {c.cycle} dias</p>
                       </td>
                       <td>
@@ -1961,7 +1806,7 @@ function RegistrationsSection({
                         <p className="text-[10px] text-muted-foreground">{c.time || '10:00'}</p>
                       </td>
                       <td>
-                        <span className="status-badge neutral text-xs">Boleto 28 dias</span>
+                        <span className="status-badge neutral text-xs">{c.defaultPaymentTerms || 'Boleto 28 dias'}</span>
                       </td>
                       <td>
                         {c.overdue ? (
@@ -1975,35 +1820,54 @@ function RegistrationsSection({
                         )}
                       </td>
                       <td>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-7 text-xs gap-1"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingClient({
-                              id: c.dbId ?? Number(c.id),
-                              corporateName: c.name,
-                              tradeName: c.name,
-                              cnpj: c.cnpj,
-                              stateRegistration: c.ie,
-                              ieIndicator: 'CONTRIBUINTE',
-                              purchaseProfile: 'INDUSTRIALIZACAO',
-                              neighborhood: c.neighborhood,
-                              city: 'São Paulo',
-                              state: 'SP',
-                              ibgeCityCode: c.ibge || '3550308',
-                              contactName: c.buyer,
-                              defaultPaymentTerms: 'Boleto 28 dias',
-                              averagePurchaseCycleDays: c.cycle,
-                              financialStatus: c.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
-                            });
-                            setClientModalOpen(true);
-                          }}
-                        >
-                          <Edit size={12} />
-                          Editar
-                        </Button>
+                        <div className="flex items-center gap-1.5" onClick={e => e.stopPropagation()}>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs gap-1 text-primary hover:text-primary hover:bg-primary/10"
+                            onClick={() => {
+                              setSelectedClientId(c.id);
+                              setClientOrdersPage(1);
+                              setSubTab('client-details');
+                            }}
+                          >
+                            <FileText size={12} />
+                            Detalhes
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="h-7 text-xs gap-1"
+                            onClick={() => {
+                              setEditingClient({
+                                id: c.dbId ?? Number(c.id),
+                                corporateName: c.corporateName || c.name,
+                                tradeName: c.tradeName || c.name,
+                                cnpj: c.cnpj,
+                                stateRegistration: c.ie,
+                                ieIndicator: c.ieIndicator || 'CONTRIBUINTE',
+                                purchaseProfile: c.purchaseProfile || 'INDUSTRIALIZACAO',
+                                street: c.street || '',
+                                number: c.number || '',
+                                complement: c.complement || '',
+                                neighborhood: c.neighborhood,
+                                city: c.city || 'São Paulo',
+                                state: c.state || 'SP',
+                                zipCode: c.zipCode || '',
+                                ibgeCityCode: c.ibge || '3550308',
+                                contactName: c.buyer,
+                                phone: c.phone || '',
+                                defaultPaymentTerms: c.defaultPaymentTerms || 'Boleto 28 dias',
+                                averagePurchaseCycleDays: c.cycle,
+                                financialStatus: c.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
+                              });
+                              setClientModalOpen(true);
+                            }}
+                          >
+                            <Edit size={12} />
+                            Editar
+                          </Button>
+                        </div>
                       </td>
                     </tr>
                   ))
@@ -2137,128 +2001,652 @@ function RegistrationsSection({
         </section>
       )}
 
-      {/* SUB-ABA 3: MEMÓRIA DE PREÇOS POR CLIENTE */}
-      {subTab === 'prices' && (
-        <section className="orders-section">
-          <div className="p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-            <div className="flex items-center gap-3">
-              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
-                <NotebookPen size={14} className="text-primary" />
-                Selecione o Cliente:
-              </label>
-              <select
-                className="form-input text-xs font-semibold max-w-xs"
-                value={selectedPriceClient}
-                onChange={e => setSelectedPriceClient(e.target.value)}
-              >
-                {data.clients.map(c => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.neighborhood})
-                  </option>
-                ))}
-              </select>
+      {/* SUB-ABA 3: DETALHES DO CLIENTE & HISTÓRICO COMPLETO */}
+      {(subTab === 'client-details' || (subTab as string) === 'prices') && (() => {
+        const selectedClient = data.clients.find(c => c.id === selectedClientId) ?? data.clients[0];
+        if (!selectedClient) {
+          return (
+            <div className="empty-state py-12">
+              <Search size={24} />
+              <strong>Nenhum cliente selecionado</strong>
+              <Button onClick={() => setSubTab('clients')} variant="outline" size="sm">
+                Voltar para lista de clientes
+              </Button>
             </div>
-            <p className="text-xs text-muted-foreground">
-              Preços praticados pelo Sr. Sérgio no campo com histórico salvo por cliente.
-            </p>
-          </div>
+          );
+        }
 
-          <div className="table-scroll">
-            <table className="data-table">
-              <thead>
-                <tr>
-                  <th>SKU / Produto</th>
-                  <th>Preço Tabela Base</th>
-                  <th>Preço Acordado do Cliente</th>
-                  <th>Margem Acordada</th>
-                  <th>Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.products.map(p => {
-                  const clientObj = data.clients.find(c => c.id === selectedPriceClient);
-                  const pIdx = data.products.findIndex(pr => pr.id === p.id);
-                  const practicedPrice = clientObj?.prices[pIdx] ?? p.price;
-                  const isEditingThis = editingSkuPrice?.productId === (p.dbId ?? Number(p.id));
-                  const currentPrice = isEditingThis ? editingSkuPrice.price : practicedPrice;
-                  const margin = currentPrice > 0 ? ((currentPrice - p.cost) / currentPrice) * 100 : 0;
+        const clientOrders = data.orders
+          .filter(o => o.clientId === selectedClient.id)
+          .sort((a, b) => Number(b.id) - Number(a.id));
 
-                  return (
-                    <tr key={p.id}>
-                      <td>
-                        <strong>{p.name}</strong>
-                        <p className="text-[11px] text-muted-foreground">{p.skuCode}</p>
-                      </td>
-                      <td>
-                        <span className="numeric text-xs text-muted-foreground">{money(p.price)}</span>
-                      </td>
-                      <td>
-                        {isEditingThis ? (
-                          <input
-                            type="number"
-                            step="0.50"
-                            className="form-input numeric w-28 text-sm font-bold"
-                            value={editingSkuPrice.price}
-                            onChange={e =>
-                              setEditingSkuPrice({
-                                productId: p.dbId ?? Number(p.id),
-                                price: Number(e.target.value),
-                              })
-                            }
-                          />
+        const filteredClientOrders = clientOrders.filter(o => {
+          if (!clientOrdersSearch) return true;
+          const q = clientOrdersSearch.toLowerCase();
+          return o.id.toLowerCase().includes(q) || String(financials(o.items).total).includes(q);
+        });
+
+        const totalClientOrderPages = Math.max(1, Math.ceil(filteredClientOrders.length / clientOrdersPageSize));
+        const safeClientOrderPage = Math.min(clientOrdersPage, totalClientOrderPages);
+        const paginatedClientOrders = filteredClientOrders.slice(
+          (safeClientOrderPage - 1) * clientOrdersPageSize,
+          safeClientOrderPage * clientOrdersPageSize
+        );
+
+        const lastOrder = clientOrders[0];
+        const lastOrderFin = lastOrder ? financials(lastOrder.items) : null;
+        const lastOrderDq = lastOrder
+          ? orderTotalDq(lastOrder.items)
+          : (selectedClient.lastTotal > 0 ? Math.round(selectedClient.lastTotal / 80) : 0);
+        const lastOrderBq = lastOrder ? orderTotalBq(lastOrder.items) : lastOrderDq;
+        const lastOrderTotal = lastOrderFin ? lastOrderFin.total : (selectedClient.lastTotal || 0);
+        const lastOrderMargin = lastOrderFin ? lastOrderFin.margin : 22.5;
+        const lastOrderProfit = lastOrderFin ? lastOrderFin.profit : (lastOrderTotal * 0.225);
+        const lastOrderPayment = lastOrder?.payment || selectedClient.defaultPaymentTerms || 'Boleto 28 dias';
+        const lastOrderDate = lastOrder
+          ? (lastOrder.date === 'Ontem' ? '15 out' : lastOrder.date)
+          : (selectedClient.days === 0 ? 'Hoje' : `${selectedClient.days}d atrás`);
+
+        return (
+          <div className="space-y-6">
+            {/* 1. QUADRADO AZUL: DADOS CADASTRAIS DO CLIENTE */}
+            <div className="bg-card border border-border rounded-xl p-5 shadow-2xs space-y-4">
+              <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pb-4 border-b border-border">
+                <div className="flex items-start sm:items-center gap-3">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1.5 text-xs font-semibold shrink-0 cursor-pointer"
+                    onClick={() => setSubTab('clients')}
+                  >
+                    <ChevronLeft size={14} />
+                    Voltar para Clientes
+                  </Button>
+
+                  <div className="flex items-center gap-2.5">
+                    <span className={`client-initial client-${selectedClient.colorKey ?? selectedClient.id}`}>
+                      {selectedClient.name.split(' ').map(s => s[0]).slice(0, 2).join('')}
+                    </span>
+                    <div>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h2 className="text-base sm:text-lg font-bold text-foreground leading-tight">
+                          {selectedClient.name}
+                        </h2>
+                        {selectedClient.overdue ? (
+                          <span className="status-badge danger">
+                            <AlertTriangle size={12} /> Boleto Vencido
+                          </span>
                         ) : (
-                          <strong className="numeric text-sm text-foreground">{money(practicedPrice)}</strong>
+                          <span className="status-badge success">
+                            <CheckCheck size={12} /> Em dia
+                          </span>
                         )}
-                      </td>
-                      <td>
-                        <span className={`status-badge ${marginLevel(margin)}`}>
-                          {margin.toFixed(1)}%
-                        </span>
-                      </td>
-                      <td>
-                        {isEditingThis ? (
-                          <div className="flex items-center gap-2">
-                            <Button
-                              size="sm"
-                              className="h-7 text-xs bg-primary text-primary-foreground"
-                              onClick={() => handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price)}
-                            >
-                              Salvar
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-7 text-xs"
-                              onClick={() => setEditingSkuPrice(null)}
-                            >
-                              Cancelar
-                            </Button>
-                          </div>
+                        {fiscalReady(selectedClient) ? (
+                          <PulseBadge status="ready" label="SEFAZ OK" sublabel="Dados completos" />
                         ) : (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="h-7 text-xs gap-1"
-                            onClick={() =>
-                              setEditingSkuPrice({
-                                productId: p.dbId ?? Number(p.id),
-                                price: practicedPrice,
-                              })
-                            }
-                          >
-                            <Edit size={12} />
-                            Ajustar Preço
-                          </Button>
+                          <PulseBadge status="pending" label="Dados pendentes" sublabel="SEFAZ Incompleto" />
                         )}
-                      </td>
+                      </div>
+                      {selectedClient.corporateName && selectedClient.corporateName !== selectedClient.name && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Razão Social: <b>{selectedClient.corporateName}</b>
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 font-semibold cursor-pointer"
+                    onClick={() => setClientDetailsExpanded(prev => !prev)}
+                    title={clientDetailsExpanded ? 'Recolher dados cadastrais' : 'Expandir dados cadastrais'}
+                  >
+                    <span>{clientDetailsExpanded ? 'Recolher detalhes' : 'Expandir detalhes'}</span>
+                    {clientDetailsExpanded ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
+                  </Button>
+
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 font-semibold"
+                    onClick={() => {
+                      setEditingClient({
+                        id: selectedClient.dbId ?? Number(selectedClient.id),
+                        corporateName: selectedClient.corporateName || selectedClient.name,
+                        tradeName: selectedClient.tradeName || selectedClient.name,
+                        cnpj: selectedClient.cnpj,
+                        stateRegistration: selectedClient.ie,
+                        ieIndicator: selectedClient.ieIndicator || 'CONTRIBUINTE',
+                        purchaseProfile: selectedClient.purchaseProfile || 'INDUSTRIALIZACAO',
+                        street: selectedClient.street || '',
+                        number: selectedClient.number || '',
+                        complement: selectedClient.complement || '',
+                        neighborhood: selectedClient.neighborhood,
+                        city: selectedClient.city || 'São Paulo',
+                        state: selectedClient.state || 'SP',
+                        zipCode: selectedClient.zipCode || '',
+                        ibgeCityCode: selectedClient.ibge || '3550308',
+                        contactName: selectedClient.buyer,
+                        phone: selectedClient.phone || '',
+                        defaultPaymentTerms: selectedClient.defaultPaymentTerms || 'Boleto 28 dias',
+                        averagePurchaseCycleDays: selectedClient.cycle,
+                        financialStatus: selectedClient.overdue ? 'BOLETO_VENCIDO' : 'EM_DIA',
+                      });
+                      setClientModalOpen(true);
+                    }}
+                  >
+                    <Edit size={13} />
+                    Editar Cadastro
+                  </Button>
+                </div>
+              </div>
+
+              {/* Grid de Dados Cadastrais: 4 colunas (Expandível) */}
+              {clientDetailsExpanded ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs pt-1">
+                  {/* Coluna 1: Documentos & Fiscal */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50 space-y-2">
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <ShieldCheck size={14} className="text-primary" />
+                      Documentos Fiscais
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">CNPJ</span>
+                      <strong className="font-mono text-xs text-foreground">
+                        {formatCnpj(selectedClient.cnpj) || 'Sem CNPJ'}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Inscrição Estadual (IE)</span>
+                      <span className="font-mono text-xs">
+                        {selectedClient.ie ? selectedClient.ie : <span className="text-amber-500 font-medium">Pendente</span>}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Perfil / Indicador</span>
+                        <span>{selectedClient.purchaseProfile || 'Industrialização'}</span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-muted-foreground block text-[10px]">Cód. IBGE</span>
+                        <span className="font-mono">{selectedClient.ibge || '3550308'}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Coluna 2: Endereço & Localização */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50 space-y-2">
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <MapPin size={14} className="text-primary" />
+                      Endereço de Entrega
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Logradouro / Número</span>
+                      <strong className="text-xs text-foreground">
+                        {selectedClient.street
+                          ? `${selectedClient.street}${selectedClient.number ? `, ${selectedClient.number}` : ''}${selectedClient.complement ? ` (${selectedClient.complement})` : ''}`
+                          : `${selectedClient.neighborhood}`}
+                      </strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Bairro / Região</span>
+                      <span>{selectedClient.neighborhood}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-[11px]">
+                      <div>
+                        <span className="text-muted-foreground block text-[10px]">Cidade / UF</span>
+                        <span>{selectedClient.city || 'São Paulo'} - {selectedClient.state || 'SP'}</span>
+                      </div>
+                      {selectedClient.zipCode && (
+                        <div className="text-right">
+                          <span className="text-muted-foreground block text-[10px]">CEP</span>
+                          <span className="font-mono">{selectedClient.zipCode}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Coluna 3: Contato & Comprador */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50 space-y-2">
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <User size={14} className="text-primary" />
+                      Contato & Atendimento
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Comprador / Contato</span>
+                      <strong className="text-xs text-foreground">{selectedClient.buyer}</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Telefone / Contato</span>
+                      <span className="text-xs">{selectedClient.phone || 'Telefone não cadastrado'}</span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Horário Preferencial</span>
+                      <span className="text-xs flex items-center gap-1 text-muted-foreground">
+                        <Clock3 size={11} />
+                        {selectedClient.time || '10:00'} (Manhã)
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Coluna 4: Condições Comerciais */}
+                  <div className="bg-muted/30 p-3 rounded-lg border border-border/50 space-y-2">
+                    <div className="text-[11px] font-semibold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5">
+                      <CreditCard size={14} className="text-primary" />
+                      Condições Comerciais
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Condição Padrão</span>
+                      <span className="status-badge neutral text-[11px]">
+                        {selectedClient.defaultPaymentTerms || 'Boleto 28 dias'}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Ciclo Médio de Compra</span>
+                      <strong className="text-xs text-foreground">A cada {selectedClient.cycle} dias</strong>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground block text-[10px]">Última Compra</span>
+                      <span className="text-xs text-muted-foreground">
+                        {selectedClient.days === 0 ? 'Hoje' : `${selectedClient.days} dias atrás`}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-xs text-muted-foreground pt-1 bg-muted/20 px-3 py-2 rounded-lg border border-border/40">
+                  <span><b>CNPJ:</b> {formatCnpj(selectedClient.cnpj) || 'Sem CNPJ'}</span>
+                  <span><b>Localização:</b> {selectedClient.city || 'São Paulo'} - {selectedClient.neighborhood}</span>
+                  <span><b>Comprador:</b> {selectedClient.buyer}</span>
+                  <span><b>Condição:</b> {selectedClient.defaultPaymentTerms || 'Boleto 28 dias'}</span>
+                </div>
+              )}
+            </div>
+
+            {/* 2. KPI SIMILAR À MESA DE CONFERÊNCIA: VALORES UTILIZADOS NA ÚLTIMA VENDA */}
+            <div className="metric-grid">
+              <Metric
+                label="Valor da última venda"
+                value={<NumberTicker value={lastOrderTotal} prefix="R$ " decimals={2} />}
+                icon={<DollarSign />}
+                footer={
+                  <>
+                    <span className="mini-dot success-dot" />
+                    {lastOrder ? `Pedido #${lastOrder.id}` : 'Última compra'} · {lastOrderDate}
+                  </>
+                }
+              />
+              <Metric
+                label="Volume da última venda (DQ)"
+                value={<NumberTicker value={lastOrderDq} suffix=" sacas" />}
+                icon={<Truck />}
+                footer={
+                  <>
+                    <span className="text-muted-foreground">Peso total ·</span>{' '}
+                    <NumberTicker value={lastOrderDq * 25} suffix=" kg" />
+                    {lastOrderBq !== lastOrderDq && (
+                      <span className="ml-1 text-[11px] text-muted-foreground">· Base: {lastOrderBq} un.</span>
+                    )}
+                  </>
+                }
+              />
+              <Metric
+                label="Margem da última venda"
+                value={<NumberTicker value={lastOrderMargin} decimals={1} suffix="%" />}
+                icon={<TrendingUp />}
+                footer={
+                  <>
+                    <span className="text-muted-foreground">Lucro estimado ·</span>{' '}
+                    <strong className="text-foreground">{money(lastOrderProfit)}</strong>
+                  </>
+                }
+              />
+              <Metric
+                label="Condição de pagamento"
+                value={<span className="text-lg sm:text-xl font-bold truncate block tracking-tight text-foreground">{lastOrderPayment}</span>}
+                icon={<Barcode />}
+                footer={
+                  <>
+                    <span className="text-muted-foreground">Histórico ·</span>{' '}
+                    {clientOrders.length} {clientOrders.length === 1 ? 'pedido emitido' : 'pedidos emitidos'}
+                  </>
+                }
+              />
+            </div>
+
+            {/* 3. QUADRADO ROXO: ÚLTIMOS PREÇOS PRATICADOS COM ESSE CLIENTE */}
+            <section className="orders-section">
+              <div className="section-heading p-4 border-b border-border bg-muted/20 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                <div>
+                  <h3 className="text-sm font-semibold flex items-center gap-2 text-foreground">
+                    <Tag size={16} className="text-primary" />
+                    Últimos Preços Praticados com este Cliente
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Valores negociados e margens por SKU praticadas para {selectedClient.name}
+                  </p>
+                </div>
+              </div>
+
+              <div className="table-scroll">
+                <table className="data-table">
+                  <thead>
+                    <tr>
+                      <th>SKU / Produto</th>
+                      <th>Preço Tabela Base</th>
+                      <th>Preço Acordado do Cliente</th>
+                      <th>Margem Acordada</th>
+                      <th>Ações</th>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                  </thead>
+                  <tbody>
+                    {data.products.map(p => {
+                      const pIdx = data.products.findIndex(pr => pr.id === p.id);
+                      const practicedPrice = selectedClient?.prices[pIdx] ?? p.price;
+                      const isEditingThis = editingSkuPrice?.productId === (p.dbId ?? Number(p.id));
+                      const currentPrice = isEditingThis ? editingSkuPrice.price : practicedPrice;
+                      const margin = currentPrice > 0 ? ((currentPrice - p.cost) / currentPrice) * 100 : 0;
+
+                      return (
+                        <tr key={p.id}>
+                          <td>
+                            <div className="flex items-center gap-2.5">
+                              <span className={`sku-symbol sku-${p.id.toLowerCase()}`}>
+                                <Package size={18} />
+                              </span>
+                              <div>
+                                <strong>{p.name}</strong>
+                                <p className="text-[11px] text-muted-foreground">{p.skuCode} · NCM {p.ncm}</p>
+                              </div>
+                            </div>
+                          </td>
+                          <td>
+                            <span className="numeric text-xs text-muted-foreground">{money(p.price)}</span>
+                          </td>
+                          <td>
+                            {isEditingThis ? (
+                              <input
+                                type="number"
+                                step="0.50"
+                                className="form-input numeric w-28 text-sm font-bold"
+                                value={editingSkuPrice.price}
+                                onChange={e =>
+                                  setEditingSkuPrice({
+                                    productId: p.dbId ?? Number(p.id),
+                                    price: Number(e.target.value),
+                                  })
+                                }
+                              />
+                            ) : (
+                              <strong className="numeric text-sm text-foreground">{money(practicedPrice)}</strong>
+                            )}
+                          </td>
+                          <td>
+                            <span className={`status-badge ${marginLevel(margin)}`}>
+                              {margin.toFixed(1)}%
+                            </span>
+                          </td>
+                          <td>
+                            {isEditingThis ? (
+                              <div className="flex items-center gap-2">
+                                <Button
+                                  size="sm"
+                                  className="h-7 text-xs bg-primary text-primary-foreground font-semibold"
+                                  onClick={() => handleSavePriceAgreed(p.dbId ?? Number(p.id), editingSkuPrice.price)}
+                                >
+                                  Salvar
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-7 text-xs"
+                                  onClick={() => setEditingSkuPrice(null)}
+                                >
+                                  Cancelar
+                                </Button>
+                              </div>
+                            ) : (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-xs gap-1 font-medium"
+                                onClick={() =>
+                                  setEditingSkuPrice({
+                                    productId: p.dbId ?? Number(p.id),
+                                    price: practicedPrice,
+                                  })
+                                }
+                              >
+                                <Edit size={12} />
+                                Ajustar Preço
+                              </Button>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* 4. QUADRADO VERDE: LISTA DE PEDIDOS DO CLIENTE COM PAGINAÇÃO */}
+            <section className="orders-section">
+              <div className="orders-toolbar flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-3">
+                <div className="flex items-center gap-2">
+                  <FileCheck2 size={16} className="text-primary" />
+                  <span className="font-semibold text-xs text-foreground">
+                    Pedidos do Cliente ({clientOrders.length})
+                  </span>
+                </div>
+
+                <div className="table-search max-w-xs w-full">
+                  <Search size={15} />
+                  <input
+                    value={clientOrdersSearch}
+                    onChange={e => {
+                      setClientOrdersSearch(e.target.value);
+                      setClientOrdersPage(1);
+                    }}
+                    placeholder="Buscar por #ID ou valor..."
+                    aria-label="Buscar pedido"
+                  />
+                  {clientOrdersSearch && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setClientOrdersSearch('');
+                        setClientOrdersPage(1);
+                      }}
+                      className="text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="table-scroll">
+                <table className="data-table orders-table">
+                  <thead>
+                    <tr>
+                      <th>Pedido <ChevronDown size={12} /></th>
+                      <th>Carga / Volume (DQ / BQ)</th>
+                      <th>Valor Total (DQ / BQ)</th>
+                      <th>Cadastro Fiscal / NF-e</th>
+                      <th>Status</th>
+                      <th>Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {paginatedClientOrders.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="text-center py-10 text-muted-foreground">
+                          <div className="flex flex-col items-center justify-center gap-2">
+                            <Search size={22} className="text-muted-foreground/60" />
+                            <strong className="text-sm text-foreground">Nenhum pedido encontrado</strong>
+                            <p className="text-xs">
+                              {clientOrdersSearch
+                                ? 'Tente buscar por outro termo.'
+                                : 'Os pedidos cadastrados para este cliente aparecerão aqui.'}
+                            </p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : (
+                      paginatedClientOrders.map(o => {
+                        const f = financials(o.items);
+                        const dq = orderTotalDq(o.items);
+                        const bq = orderTotalBq(o.items);
+                        const isBilled = (o.rawStatus || o.status) === 'FATURADO' || (o.rawStatus || o.status) === 'ENTREGUE';
+
+                        return (
+                          <tr key={o.id} onClick={() => setSelectedOrder(o)} className="cursor-pointer">
+                            <td>
+                              <strong className="numeric">#{o.id}</strong>
+                              <p>{o.date === 'Ontem' ? '15 out' : o.date}</p>
+                            </td>
+                            <td>
+                              <strong className="numeric text-foreground">{dq} sacas ({dq * 25} kg)</strong>
+                              <p className="text-[11px] text-muted-foreground">{o.delivery || 'Rota programada'}</p>
+                            </td>
+                            <td>
+                              <strong className="numeric">{money(f.total)}</strong>
+                              <p>
+                                DQ: {dq} un.
+                                {bq !== dq ? ` · BQ: ${bq} un.` : ''} · {o.payment}
+                              </p>
+                            </td>
+                            <td>
+                              {isBilled && o.invoice ? (
+                                <span className="text-xs font-mono font-medium text-emerald-600 dark:text-emerald-400">
+                                  NF-e {o.invoice} · Autorizada
+                                </span>
+                              ) : fiscalReady(selectedClient) ? (
+                                <PulseBadge status="ready" label="Dados completos" sublabel="SEFAZ OK" />
+                              ) : (
+                                <PulseBadge status="pending" label="Dados pendentes" sublabel="BrasilAPI" />
+                              )}
+                            </td>
+                            <td>{renderOrderStatusBadge(o)}</td>
+                            <td>
+                              <div className="flex items-center justify-end gap-1.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
+                                {isBilled && (
+                                  <>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="order-action-pill shadow-xs"
+                                      title="Imprimir DANFE (BQ)"
+                                      onClick={() => openPrintableDanfe(o, selectedClient, data.products)}
+                                    >
+                                      <Printer size={12} />
+                                      DANFE
+                                    </Button>
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      className="order-action-pill shadow-xs"
+                                      title="Imprimir Romaneio Cego (DQ)"
+                                      onClick={() => openPrintableRomaneio(o, selectedClient, data.products)}
+                                    >
+                                      <Truck size={12} />
+                                      Romaneio
+                                    </Button>
+                                  </>
+                                )}
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="order-action-pill shadow-xs"
+                                  title="Imprimir Talão de Pedido Comercial"
+                                  onClick={() => openPrintableOrderSlip(o, selectedClient, data.products)}
+                                >
+                                  <FileText size={12} />
+                                  Talão
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="order-row-chevron"
+                                  aria-label={`Ver pedido #${o.id}`}
+                                  onClick={() => setSelectedOrder(o)}
+                                >
+                                  <ChevronRight />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Paginação idêntica à Mesa de Conferência */}
+              <div className="table-footer">
+                <div className="flex items-center gap-3">
+                  <span>
+                    Mostrando {filteredClientOrders.length ? (safeClientOrderPage - 1) * clientOrdersPageSize + 1 : 0}–{Math.min(safeClientOrderPage * clientOrdersPageSize, filteredClientOrders.length)} de {filteredClientOrders.length} pedidos
+                  </span>
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <span className="text-[11px]">Por pág:</span>
+                    <select
+                      value={clientOrdersPageSize}
+                      onChange={e => {
+                        setClientOrdersPageSize(Number(e.target.value));
+                        setClientOrdersPage(1);
+                      }}
+                      className="bg-transparent border border-border rounded px-1.5 py-0.5 text-xs text-foreground cursor-pointer"
+                    >
+                      <option value={5}>5</option>
+                      <option value={10}>10</option>
+                      <option value={20}>20</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label="Página anterior"
+                    disabled={safeClientOrderPage <= 1}
+                    onClick={() => setClientOrdersPage(p => Math.max(1, p - 1))}
+                  >
+                    <ChevronLeft />
+                  </Button>
+                  <span className="page-number">
+                    {safeClientOrderPage} / {totalClientOrderPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    aria-label="Próxima página"
+                    disabled={safeClientOrderPage >= totalClientOrderPages}
+                    onClick={() => setClientOrdersPage(p => Math.min(totalClientOrderPages, p + 1))}
+                  >
+                    <ChevronRight />
+                  </Button>
+                </div>
+              </div>
+            </section>
+
+            {/* 5. POP-UP DO PEDIDO AO CLICAR EM QUALQUER PEDIDO */}
+            <OrderDetailsModal
+              order={selectedOrder}
+              onClose={() => setSelectedOrder(null)}
+              data={data}
+              update={update}
+              notify={notify}
+            />
           </div>
-        </section>
-      )}
+        );
+      })()}
 
       {/* MODAL: CRIAR / EDITAR CLIENTE COM BRASILAPI */}
       <Dialog open={clientModalOpen} onOpenChange={setClientModalOpen}>
@@ -2325,12 +2713,16 @@ function RegistrationsSection({
                 />
               </label>
               <label className="flex flex-col gap-1 font-semibold">
-                Bairro / Rota
-                <input
+                Perfil de Compra
+                <select
                   className="form-input"
-                  value={editingClient?.neighborhood || ''}
-                  onChange={e => setEditingClient((prev: any) => ({ ...prev, neighborhood: e.target.value }))}
-                />
+                  value={editingClient?.purchaseProfile || 'INDUSTRIALIZACAO'}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, purchaseProfile: e.target.value }))}
+                >
+                  <option value="INDUSTRIALIZACAO">Industrialização</option>
+                  <option value="REVENDA">Revenda</option>
+                  <option value="CONSUMO_FINAL">Consumo Final</option>
+                </select>
               </label>
               <label className="flex flex-col gap-1 font-semibold">
                 Código IBGE Cidade
@@ -2338,6 +2730,72 @@ function RegistrationsSection({
                   className="form-input font-mono"
                   value={editingClient?.ibgeCityCode || '3550308'}
                   onChange={e => setEditingClient((prev: any) => ({ ...prev, ibgeCityCode: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            {/* Endereço Completo */}
+            <div className="grid grid-cols-4 gap-3">
+              <label className="col-span-2 flex flex-col gap-1 font-semibold">
+                Logradouro / Rua
+                <input
+                  className="form-input"
+                  placeholder="Ex: Av. Dona Belmira Marin"
+                  value={editingClient?.street || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, street: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Número
+                <input
+                  className="form-input"
+                  placeholder="1420"
+                  value={editingClient?.number || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, number: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Complemento
+                <input
+                  className="form-input"
+                  placeholder="Loja 1"
+                  value={editingClient?.complement || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, complement: e.target.value }))}
+                />
+              </label>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <label className="flex flex-col gap-1 font-semibold">
+                Bairro / Região
+                <input
+                  className="form-input"
+                  value={editingClient?.neighborhood || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, neighborhood: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                Cidade / UF
+                <input
+                  className="form-input"
+                  value={`${editingClient?.city || 'São Paulo'} - ${editingClient?.state || 'SP'}`}
+                  onChange={e => {
+                    const parts = e.target.value.split('-');
+                    setEditingClient((prev: any) => ({
+                      ...prev,
+                      city: parts[0]?.trim() || 'São Paulo',
+                      state: parts[1]?.trim() || 'SP',
+                    }));
+                  }}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
+                CEP
+                <input
+                  className="form-input font-mono"
+                  placeholder="00000-000"
+                  value={editingClient?.zipCode || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, zipCode: e.target.value }))}
                 />
               </label>
             </div>
@@ -2352,6 +2810,15 @@ function RegistrationsSection({
                 />
               </label>
               <label className="flex flex-col gap-1 font-semibold">
+                Telefone / WhatsApp
+                <input
+                  className="form-input"
+                  placeholder="(11) 98765-4321"
+                  value={editingClient?.phone || ''}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, phone: e.target.value }))}
+                />
+              </label>
+              <label className="flex flex-col gap-1 font-semibold">
                 Condição Padrão
                 <select
                   className="form-input"
@@ -2363,6 +2830,18 @@ function RegistrationsSection({
                   <option value="Boleto 7/14/21/28 dias">Boleto 7/14/21/28 dias</option>
                   <option value="Pix na Entrega">Pix na Entrega</option>
                 </select>
+              </label>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <label className="flex flex-col gap-1 font-semibold">
+                Ciclo Médio de Compra (dias)
+                <input
+                  type="number"
+                  className="form-input numeric"
+                  value={editingClient?.averagePurchaseCycleDays ?? 20}
+                  onChange={e => setEditingClient((prev: any) => ({ ...prev, averagePurchaseCycleDays: Number(e.target.value) }))}
+                />
               </label>
               <label className="flex flex-col gap-1 font-semibold">
                 Status de Crédito
