@@ -109,7 +109,7 @@ import {
 } from '@/lib/business';
 import { Metric } from './management';
 import type { SharedProps } from './seller';
-import { openPrintableDanfe, openPrintableRomaneio, openPrintableOrderSlip } from '@/lib/documentPrint';
+import { openPrintableDanfe, openPrintableRomaneio, openPrintableOrderSlip, openPrintableBoleto } from '@/lib/documentPrint';
 
 export function Backoffice({
   data,
@@ -1269,11 +1269,10 @@ function ReceivablesSection({
                           size="sm"
                           variant="outline"
                           className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
-                          onClick={() =>
-                            notify(
-                              `Visualização do boleto ${g.baseDocumentNumber}: a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
-                            )
-                          }
+                          onClick={() => {
+                            const clientMatch = data.clients.find(c => c.id === g.clientId || c.name === g.clientName);
+                            openPrintableBoleto(g, undefined, clientMatch);
+                          }}
                           title="Visualizar PDF do boleto bancário"
                         >
                           <FileText size={13} />
@@ -1299,7 +1298,7 @@ function ReceivablesSection({
       {/* Modal de Detalhes do Boleto com Todas as Parcelas */}
       <Dialog open={!!selectedBoleto} onOpenChange={open => !open && setSelectedBoletoKey(null)}>
         <DialogContent className="max-w-2xl">
-          <DialogTitle className="flex items-center justify-between gap-2 pr-6">
+          <DialogTitle className="flex items-center gap-3 pr-10 flex-wrap">
             <span className="flex items-center gap-2">
               <Barcode size={18} className="text-primary" />
               Boleto {selectedBoleto?.baseDocumentNumber}
@@ -1409,36 +1408,37 @@ function ReceivablesSection({
                                 size="sm"
                                 variant="outline"
                                 className="h-7 text-xs font-semibold gap-1 cursor-pointer hover:bg-muted"
-                                onClick={() =>
-                                  notify(
-                                    `Visualização da parcela ${t.installmentNumber} (${t.documentNumber}): a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
-                                  )
-                                }
+                                onClick={() => {
+                                  const clientMatch = data.clients.find(c => c.id === selectedBoleto.clientId || c.name === selectedBoleto.clientName);
+                                  openPrintableBoleto(selectedBoleto, t, clientMatch);
+                                }}
                                 title={`Visualizar PDF da parcela ${t.installmentNumber}`}
                               >
                                 <FileText size={12} />
                                 <span>PDF</span>
                               </Button>
-                              {!isPaid ? (
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs font-semibold gap-1 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 cursor-pointer"
-                                  disabled={isPaying}
-                                  onClick={() => handlePay(t)}
-                                >
-                                  {isPaying ? (
-                                    <Loader2 size={12} className="animate-spin" />
-                                  ) : (
-                                    <CheckCircle2 size={12} />
-                                  )}
-                                  Confirmar Pagamento
-                                </Button>
-                              ) : (
-                                <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1 justify-end px-1.5 py-1">
-                                  <Check size={12} /> Liquidado
-                                </span>
-                              )}
+                              <div className="min-w-[155px] flex justify-end">
+                                {!isPaid ? (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs font-semibold gap-1 border-emerald-500/40 hover:bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 cursor-pointer w-full justify-center"
+                                    disabled={isPaying}
+                                    onClick={() => handlePay(t)}
+                                  >
+                                    {isPaying ? (
+                                      <Loader2 size={12} className="animate-spin" />
+                                    ) : (
+                                      <CheckCircle2 size={12} />
+                                    )}
+                                    Confirmar Pagamento
+                                  </Button>
+                                ) : (
+                                  <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium inline-flex items-center gap-1 justify-center px-1.5 py-1 w-full border border-emerald-500/20 bg-emerald-500/10 rounded">
+                                    <Check size={12} /> Liquidado
+                                  </span>
+                                )}
+                              </div>
                             </div>
                           </td>
                         </tr>
@@ -1465,11 +1465,10 @@ function ReceivablesSection({
                     variant="outline"
                     size="sm"
                     className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
-                    onClick={() =>
-                      notify(
-                        `Visualização do boleto ${selectedBoleto.baseDocumentNumber}: a visualização do PDF estará ativa assim que a integração com a API do banco for concluída.`
-                      )
-                    }
+                    onClick={() => {
+                      const clientMatch = data.clients.find(c => c.id === selectedBoleto.clientId || c.name === selectedBoleto.clientName);
+                      openPrintableBoleto(selectedBoleto, undefined, clientMatch);
+                    }}
                     title="Visualizar PDF do boleto bancário completo"
                   >
                     <FileText size={13} />
@@ -2445,7 +2444,7 @@ function RegistrationsSection({
                               className="h-7 px-1.5 text-[11px] cursor-pointer"
                               onClick={() => setEditingSkuPrice(null)}
                             >
-                              ✕
+                              <X size={12} />
                             </Button>
                           </div>
                         ) : (

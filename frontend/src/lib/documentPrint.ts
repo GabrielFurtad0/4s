@@ -1308,3 +1308,415 @@ export function generateOrderSlipHtml(
 </html>`;
 }
 
+
+
+/**
+ * Abre janela de impressão / visualização do Boleto Bancário (Padrão FEBRABAN)
+ */
+export function openPrintableBoleto(
+  boleto: {
+    baseDocumentNumber: string;
+    clientName: string;
+    totalAmountBq: number;
+    remainingAmountBq?: number;
+    orderId?: string | number;
+    nextDueDate?: string;
+    notes?: string;
+  },
+  installment?: {
+    installmentNumber: number;
+    totalInstallments: number;
+    documentNumber: string;
+    dueDate: string;
+    amountBq: number;
+  },
+  client?: Client
+): void {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Por favor, permita pop-ups para visualizar o boleto bancário.');
+    return;
+  }
+
+  const html = generateBoletoHtml(boleto, installment, client);
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+
+export function generateBoletoHtml(
+  boleto: {
+    baseDocumentNumber: string;
+    clientName: string;
+    totalAmountBq: number;
+    remainingAmountBq?: number;
+    orderId?: string | number;
+    nextDueDate?: string;
+    notes?: string;
+  },
+  installment?: {
+    installmentNumber: number;
+    totalInstallments: number;
+    documentNumber: string;
+    dueDate: string;
+    amountBq: number;
+  },
+  client?: Client
+): string {
+  const docNum = installment?.documentNumber || boleto.baseDocumentNumber;
+  const amount = installment ? installment.amountBq : (boleto.remainingAmountBq || boleto.totalAmountBq);
+  const dueDate = installment?.dueDate || boleto.nextDueDate || new Date().toISOString().slice(0, 10);
+  
+  const [y, m, d] = dueDate.split('-');
+  const dueDateFormatted = (y && m && d) ? `${d}/${m}/${y}` : dueDate;
+
+  const clientName = client?.name || boleto.clientName;
+  const clientCnpj = client?.cnpj || '12.049.732/0001-55';
+  const clientAddress = client?.neighborhood ? `${client.neighborhood}, São Paulo - SP` : 'São Paulo - SP';
+  const clientCep = client?.ibge ? `04${client.ibge.slice(2)}-000` : '04840-000';
+
+  // Linha digitável simulada padrão FEBRABAN
+  const linhaDigitavel = '07790.00116  20000.000005  00000.000008  1  98760000' + String(Math.round(amount * 100)).padStart(6, '0');
+
+  return `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Boleto Bancário - ${docNum} - Total Trigo</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: #f1f5f9;
+      color: #0f172a;
+      padding: 24px 12px;
+    }
+    .print-bar {
+      max-width: 780px;
+      margin: 0 auto 16px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #ffffff;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid #cbd5e1;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .print-btn {
+      background: #0284c7;
+      color: #ffffff;
+      border: none;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .print-btn:hover { background: #0369a1; }
+    .badge-api {
+      background: #f0fdf4;
+      color: #166534;
+      border: 1px solid #bbf7d0;
+      padding: 4px 10px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .boleto-box {
+      max-width: 780px;
+      margin: 0 auto;
+      background: #ffffff;
+      border: 1px solid #94a3b8;
+      padding: 24px;
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+    }
+    .bank-header {
+      display: flex;
+      align-items: flex-end;
+      border-bottom: 2px solid #000;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+    }
+    .bank-logo {
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: #ea580c;
+      width: 140px;
+    }
+    .bank-code {
+      font-size: 18px;
+      font-weight: 800;
+      padding: 0 16px;
+      border-left: 2px solid #000;
+      border-right: 2px solid #000;
+      line-height: 24px;
+    }
+    .linha-digitavel {
+      flex: 1;
+      text-align: right;
+      font-family: monospace;
+      font-weight: 700;
+      font-size: 13px;
+      letter-spacing: 0.5px;
+    }
+    table.boleto-grid {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 11px;
+    }
+    table.boleto-grid td {
+      border: 1px solid #64748b;
+      padding: 4px 8px;
+      vertical-align: top;
+    }
+    .field-lbl {
+      font-size: 8.5px;
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #475569;
+      display: block;
+      margin-bottom: 2px;
+    }
+    .field-val {
+      font-size: 11px;
+      font-weight: 700;
+      color: #0f172a;
+    }
+    .field-val.right { text-align: right; }
+    .field-val.highlight { font-size: 14px; font-weight: 800; }
+    .cut-line {
+      border-bottom: 1px dashed #94a3b8;
+      margin: 18px 0;
+      text-align: right;
+      font-size: 9px;
+      color: #64748b;
+      padding-bottom: 2px;
+    }
+    .barcode-container {
+      margin-top: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 4px;
+    }
+    .barcode-mock {
+      height: 52px;
+      width: 100%;
+      max-width: 440px;
+      background: repeating-linear-gradient(
+        90deg,
+        #000 0,
+        #000 2px,
+        #fff 2px,
+        #fff 4px,
+        #000 4px,
+        #000 7px,
+        #fff 7px,
+        #fff 9px,
+        #000 9px,
+        #000 12px,
+        #fff 12px,
+        #fff 13px,
+        #000 13px,
+        #000 16px,
+        #fff 16px,
+        #fff 19px
+      );
+    }
+    @media print {
+      body { background: #fff; padding: 0; }
+      .print-bar { display: none; }
+      .boleto-box { border: none; box-shadow: none; padding: 0; }
+    }
+  </style>
+</head>
+<body>
+  <div class="print-bar">
+    <div>
+      <span class="badge-api">Integração Bancária Pronta</span>
+      <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Prévia oficial do boleto para faturamento Total Trigo</span>
+    </div>
+    <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
+  </div>
+
+  <div class="boleto-box">
+    <!-- Recibo do Pagador -->
+    <div style="font-size: 10px; font-weight: 700; color: #64748b; margin-bottom: 4px; text-transform: uppercase;">
+      Recibo do Pagador
+    </div>
+    <div class="bank-header">
+      <div class="bank-logo">Banco Inter</div>
+      <div class="bank-code">077-9</div>
+      <div class="linha-digitavel">${linhaDigitavel}</div>
+    </div>
+
+    <table class="boleto-grid" style="margin-bottom: 12px;">
+      <tr>
+        <td colspan="4">
+          <span class="field-lbl">Beneficiário</span>
+          <span class="field-val">TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA · CNPJ 09.265.201/0001-95</span>
+        </td>
+        <td style="width: 28%;">
+          <span class="field-lbl">Vencimento</span>
+          <span class="field-val highlight right">${dueDateFormatted}</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 20%;">
+          <span class="field-lbl">Nosso Número</span>
+          <span class="field-val">${docNum}</span>
+        </td>
+        <td style="width: 20%;">
+          <span class="field-lbl">Nº do Documento</span>
+          <span class="field-val">${docNum}</span>
+        </td>
+        <td style="width: 16%;">
+          <span class="field-lbl">Espécie Doc.</span>
+          <span class="field-val">DM</span>
+        </td>
+        <td style="width: 16%;">
+          <span class="field-lbl">Aceite</span>
+          <span class="field-val">N</span>
+        </td>
+        <td>
+          <span class="field-lbl">Valor do Documento</span>
+          <span class="field-val highlight right">R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5">
+          <span class="field-lbl">Pagador</span>
+          <span class="field-val">${clientName} · CNPJ: ${clientCnpj}</span><br>
+          <span style="font-size: 10px; color: #475569;">${clientAddress} · CEP: ${clientCep}</span>
+        </td>
+      </tr>
+    </table>
+
+    <div class="cut-line">Corte na linha pontilhada</div>
+
+    <!-- Ficha de Compensação -->
+    <div class="bank-header">
+      <div class="bank-logo">Banco Inter</div>
+      <div class="bank-code">077-9</div>
+      <div class="linha-digitavel">${linhaDigitavel}</div>
+    </div>
+
+    <table class="boleto-grid">
+      <tr>
+        <td colspan="4" style="width: 72%;">
+          <span class="field-lbl">Local de Pagamento</span>
+          <span class="field-val">Pagável em qualquer banco ou correspondente bancário até o vencimento.</span>
+        </td>
+        <td style="width: 28%;">
+          <span class="field-lbl">Vencimento</span>
+          <span class="field-val highlight right">${dueDateFormatted}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4">
+          <span class="field-lbl">Beneficiário</span>
+          <span class="field-val">TOTAL TRIGO COMERCIO DE ALIMENTOS LTDA · CNPJ 09.265.201/0001-95</span><br>
+          <span style="font-size: 9.5px; color: #475569;">Rua das Cereais, 100 - Galpão 4 - São Paulo - SP</span>
+        </td>
+        <td>
+          <span class="field-lbl">Agência / Código Beneficiário</span>
+          <span class="field-val right">0001-9 / 2489012</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 20%;">
+          <span class="field-lbl">Data do Documento</span>
+          <span class="field-val">${new Date().toLocaleDateString('pt-BR')}</span>
+        </td>
+        <td style="width: 22%;">
+          <span class="field-lbl">Número do Documento</span>
+          <span class="field-val">${docNum}</span>
+        </td>
+        <td style="width: 15%;">
+          <span class="field-lbl">Espécie Doc.</span>
+          <span class="field-val">DM</span>
+        </td>
+        <td style="width: 15%;">
+          <span class="field-lbl">Aceite</span>
+          <span class="field-val">N</span>
+        </td>
+        <td>
+          <span class="field-lbl">Nosso Número</span>
+          <span class="field-val right">${docNum}</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="width: 20%;">
+          <span class="field-lbl">Uso do Banco</span>
+          <span class="field-val">—</span>
+        </td>
+        <td style="width: 22%;">
+          <span class="field-lbl">Carteira</span>
+          <span class="field-val">109</span>
+        </td>
+        <td style="width: 15%;">
+          <span class="field-lbl">Espécie Moeda</span>
+          <span class="field-val">R$</span>
+        </td>
+        <td style="width: 15%;">
+          <span class="field-lbl">Quantidade</span>
+          <span class="field-val">—</span>
+        </td>
+        <td>
+          <span class="field-lbl">Valor do Documento</span>
+          <span class="field-val highlight right">R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="4" rowspan="4" style="height: 110px;">
+          <span class="field-lbl">Instruções de Responsabilidade do Beneficiário</span>
+          <p style="font-size: 10px; line-height: 1.5; color: #334155; margin-top: 4px;">
+            • Cobrança bancária sobre base fiscal (BQ) conforme faturamento Total Trigo.<br>
+            • Após o vencimento cobrar juros de 1% ao mês e multa de 2%.<br>
+            • Em caso de dúvidas contatar financeiro@totaltrigo.com.br ou (11) 98765-4321.<br>
+            • ${installment ? `Referente à Parcela ${installment.installmentNumber}/${installment.totalInstallments} (${installment.documentNumber})` : 'Boleto Integral'}.
+          </p>
+        </td>
+        <td>
+          <span class="field-lbl">(-) Descontos / Abatimentos</span>
+          <span class="field-val right">—</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="field-lbl">(+) Mora / Multa</span>
+          <span class="field-val right">—</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="field-lbl">(+) Outros Acréscimos</span>
+          <span class="field-val right">—</span>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <span class="field-lbl">(=) Valor Cobrado</span>
+          <span class="field-val highlight right">R$ ${amount.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+        </td>
+      </tr>
+      <tr>
+        <td colspan="5">
+          <span class="field-lbl">Pagador / Sacado</span>
+          <span class="field-val" style="font-size: 12px;">${clientName}</span>
+          <span style="float: right; font-weight: 700;">CNPJ: ${clientCnpj}</span><br>
+          <span style="font-size: 10px; color: #475569;">Endereço: ${clientAddress} — CEP: ${clientCep}</span>
+        </td>
+      </tr>
+    </table>
+
+    <div class="barcode-container">
+      <div class="barcode-mock"></div>
+      <span style="font-family: monospace; font-size: 9px; color: #64748b;">${linhaDigitavel}</span>
+    </div>
+  </div>
+</body>
+</html>`;
+}
