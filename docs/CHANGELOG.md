@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [a88faf9] — 21/10/2026 às 23:55 (🔴 Estrutural / Crítico)
+
+*   **Interface e Visualização:** Padronização das tabelas do backoffice para exibição de métricas base
+
 ### [450ed64] — 21/10/2026 às 23:47 (🟡 Médio / Feature)
 
 - Otimização do CSS global para ajuste automático de preenchimento (*padding*) em cartões de métricas e tabelas de dados.

@@ -111,3 +111,6 @@ A SEFAZ rejeita notas fiscais que contenham divergências no destinatário. A pl
 
 > [!NOTE] Atualização Automática (18/10/2026 · Commit `5e39772`):
 > Modificações estruturais registradas no domínio/banco. Consulte o [CHANGELOG](file:///docs/CHANGELOG.md) para detalhes.
+
+> [!NOTE] Atualização Automática (21/10/2026 · Commit `a88faf9`):
+> Modificações estruturais registradas no domínio/banco. Consulte o [CHANGELOG](file:///docs/CHANGELOG.md) para detalhes.
