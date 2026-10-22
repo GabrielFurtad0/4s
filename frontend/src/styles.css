@@ -529,7 +529,7 @@ kbd, .search-hint { border: 1px solid var(--border); border-radius: 4px; padding
   box-shadow: 0 1px 0 var(--border);
 }
 .data-table th:first-child svg { display: inline; margin-left: 6px; }
-.data-table td { padding: 11px 16px; border-bottom: 1px solid var(--border); vertical-align: middle; }
+.data-table td { padding: 9px 12px; border-bottom: 1px solid var(--border); vertical-align: middle; }
 .data-table strong { font-weight: 600; font-size: 13px; color: var(--foreground); }
 .data-table p { color: var(--muted-foreground); margin-top: 2.5px; font-size: 11px; }
 .orders-table tbody tr { cursor: pointer; transition: background .15s; }
@@ -1209,10 +1209,10 @@ html.font-scale-xlarge {
 }
 .font-scale-large .data-table th {
   font-size: 12px;
-  padding: 11px 16px;
+  padding: 8px 12px;
 }
 .font-scale-large .data-table td {
-  padding: 13px 16px;
+  padding: 9px 12px;
 }
 .font-scale-large .data-table strong {
   font-size: 14.5px;
@@ -1258,8 +1258,16 @@ html.font-scale-xlarge {
 }
 
 /* Metrics & Spotlights */
+.font-scale-large .metric-grid {
+  gap: 8px;
+}
+.font-scale-large .metric-card {
+  padding: 6px 10px;
+  min-height: 56px;
+}
 .font-scale-large .metric-card h2 {
-  font-size: 19px;
+  font-size: 18px;
+  margin: 2px 0 1px;
 }
 .font-scale-large .metric-card > div:first-child > span:first-child {
   font-size: 11px;
@@ -1417,35 +1425,35 @@ html.font-scale-xlarge {
 
 /* Tables & Data Lists */
 .font-scale-xlarge .data-table {
-  font-size: 15px;
-}
-.font-scale-xlarge .data-table th {
-  font-size: 13px;
-  padding: 12px 18px;
-}
-.font-scale-xlarge .data-table td {
-  padding: 14px 18px;
-}
-.font-scale-xlarge .data-table strong {
-  font-size: 16px;
-}
-.font-scale-xlarge .data-table p {
-  font-size: 13px;
-}
-.font-scale-xlarge .orders-table td:first-child strong {
-  font-size: 16px;
-}
-.font-scale-xlarge .client-cell strong {
-  font-size: 16px;
-}
-.font-scale-xlarge .client-cell p {
-  font-size: 13.5px;
-}
-.font-scale-xlarge .table-tabs button {
   font-size: 14px;
 }
-.font-scale-xlarge .table-footer {
+.font-scale-xlarge .data-table th {
+  font-size: 12.5px;
+  padding: 8px 12px;
+}
+.font-scale-xlarge .data-table td {
+  padding: 9px 12px;
+}
+.font-scale-xlarge .data-table strong {
+  font-size: 15px;
+}
+.font-scale-xlarge .data-table p {
+  font-size: 12.5px;
+}
+.font-scale-xlarge .orders-table td:first-child strong {
+  font-size: 15px;
+}
+.font-scale-xlarge .client-cell strong {
+  font-size: 15px;
+}
+.font-scale-xlarge .client-cell p {
+  font-size: 13px;
+}
+.font-scale-xlarge .table-tabs button {
   font-size: 13.5px;
+}
+.font-scale-xlarge .table-footer {
+  font-size: 13px;
 }
 
 /* Navigation & Sidebar */
@@ -1470,14 +1478,22 @@ html.font-scale-xlarge {
 }
 
 /* Metrics & Spotlights */
+.font-scale-xlarge .metric-grid {
+  gap: 8px;
+}
+.font-scale-xlarge .metric-card {
+  padding: 6px 10px;
+  min-height: 58px;
+}
 .font-scale-xlarge .metric-card h2 {
-  font-size: 21px;
+  font-size: 19px;
+  margin: 2px 0 1px;
 }
 .font-scale-xlarge .metric-card > div:first-child > span:first-child {
-  font-size: 12px;
+  font-size: 11.5px;
 }
 .font-scale-xlarge .metric-footer {
-  font-size: 10.5px;
+  font-size: 10px;
 }
 .font-scale-xlarge .stock-card strong {
   font-size: 16.5px;
