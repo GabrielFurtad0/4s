@@ -1370,13 +1370,15 @@ export function generateBoletoHtml(
   const [y, m, d] = dueDate.split('-');
   const dueDateFormatted = (y && m && d) ? `${d}/${m}/${y}` : dueDate;
 
-  const clientName = client?.name || boleto.clientName;
+  const clientName = client?.corporateName || client?.name || boleto.clientName;
   const clientCnpj = client?.cnpj || '12.049.732/0001-55';
-  const clientAddress = client?.neighborhood ? `${client.neighborhood}, São Paulo - SP` : 'São Paulo - SP';
-  const clientCep = client?.ibge ? `04${client.ibge.slice(2)}-000` : '04840-000';
+  const clientAddress = client?.street && client?.number
+    ? `${client.street}, ${client.number}${client.neighborhood ? ' - ' + client.neighborhood : ''}, ${client.city || 'São Paulo'} - ${client.state || 'SP'}`
+    : (client?.neighborhood ? `${client.neighborhood}, São Paulo - SP` : 'São Paulo - SP');
+  const clientCep = client?.zipCode || (client?.ibge ? `04${client.ibge.slice(2)}-000` : '04840-000');
 
-  // Linha digitável simulada padrão FEBRABAN
-  const linhaDigitavel = '07790.00116  20000.000005  00000.000008  1  98760000' + String(Math.round(amount * 100)).padStart(6, '0');
+  // Linha digitável simulada padrão FEBRABAN Sicredi (748)
+  const linhaDigitavel = '74891.11116  20000.000005  00000.000008  1  98760000' + String(Math.round(amount * 100)).padStart(6, '0');
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -1442,7 +1444,7 @@ export function generateBoletoHtml(
       font-weight: 900;
       font-size: 20px;
       letter-spacing: -0.5px;
-      color: #ea580c;
+      color: #006633;
       width: 140px;
     }
     .bank-code {
@@ -1535,8 +1537,8 @@ export function generateBoletoHtml(
 <body>
   <div class="print-bar">
     <div>
-      <span class="badge-api">Integração Bancária Pronta</span>
-      <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Prévia oficial do boleto para faturamento Total Trigo</span>
+      <span class="badge-api">Integração Sicredi Cobrança BQ</span>
+      <span style="font-size: 12px; color: #64748b; margin-left: 8px;">Boleto emitido estritamente sobre a Base BQ conforme regras fiscais da Total Trigo</span>
     </div>
     <button class="print-btn" onclick="window.print()">Imprimir / Salvar PDF</button>
   </div>
@@ -1547,8 +1549,8 @@ export function generateBoletoHtml(
       Recibo do Pagador
     </div>
     <div class="bank-header">
-      <div class="bank-logo">Banco Inter</div>
-      <div class="bank-code">077-9</div>
+      <div class="bank-logo">Sicredi</div>
+      <div class="bank-code">748-X</div>
       <div class="linha-digitavel">${linhaDigitavel}</div>
     </div>
 
@@ -1598,8 +1600,8 @@ export function generateBoletoHtml(
 
     <!-- Ficha de Compensação -->
     <div class="bank-header">
-      <div class="bank-logo">Banco Inter</div>
-      <div class="bank-code">077-9</div>
+      <div class="bank-logo">Sicredi</div>
+      <div class="bank-code">748-X</div>
       <div class="linha-digitavel">${linhaDigitavel}</div>
     </div>
 
@@ -1607,7 +1609,7 @@ export function generateBoletoHtml(
       <tr>
         <td colspan="4" style="width: 72%;">
           <span class="field-lbl">Local de Pagamento</span>
-          <span class="field-val">Pagável em qualquer banco ou correspondente bancário até o vencimento.</span>
+          <span class="field-val">Pagável preferencialmente nas cooperativas de crédito Sicredi ou em qualquer rede bancária até o vencimento.</span>
         </td>
         <td style="width: 28%;">
           <span class="field-lbl">Vencimento</span>
@@ -1622,7 +1624,7 @@ export function generateBoletoHtml(
         </td>
         <td>
           <span class="field-lbl">Agência / Código Beneficiário</span>
-          <span class="field-val right">0001-9 / 2489012</span>
+          <span class="field-val right">0718 / 24890-1</span>
         </td>
       </tr>
       <tr>

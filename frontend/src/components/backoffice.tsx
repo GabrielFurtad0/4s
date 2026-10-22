@@ -602,7 +602,7 @@ export function Backoffice({
                 <th>{isExpedicao ? 'Carga / Volume (DQ)' : 'Valor total (DQ / BQ)'}</th>
                 <th>{isExpedicao ? 'Destino / Rota' : 'Cadastro fiscal'}</th>
                 <th>Status</th>
-                <th>Ações</th>
+                <th className="text-right pr-4">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -909,6 +909,15 @@ function ReceivablesSection({
     loadTitles();
   }, []);
 
+  const todayIso = new Date().toISOString().slice(0, 10);
+
+  const findClientForBoleto = (clientId?: number, clientName?: string) => {
+    return data.clients.find(c =>
+      (clientId != null && (c.id === String(clientId) || c.dbId === clientId)) ||
+      (clientName && c.name.toLowerCase() === clientName.toLowerCase())
+    );
+  };
+
   const handlePay = async (title: ReceivableTitle) => {
     setPayingId(title.id);
     try {
@@ -917,9 +926,25 @@ function ReceivablesSection({
       notify(`Baixa manual confirmada na parcela ${title.installmentNumber}/${title.totalInstallments} (${title.documentNumber})!`);
 
       // Atualização otimista imediata no estado local
-      setTitles(prev =>
-        prev.map(t => (t.id === title.id ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() } : t))
+      const nextTitles = titles.map(t =>
+        t.id === title.id ? { ...t, status: 'PAGO' as const, paidAt: new Date().toISOString() } : t
       );
+      setTitles(nextTitles);
+
+      // Se não houver mais nenhum boleto vencido para este cliente, sincroniza crédito local para 'Em dia'
+      const remainingOverdueForClient = nextTitles.some(t =>
+        t.id !== title.id &&
+        t.clientId === title.clientId &&
+        (t.status === 'VENCIDO' || (t.status === 'ABERTO' && t.dueDate && t.dueDate < todayIso))
+      );
+      if (!remainingOverdueForClient) {
+        const nextClients = data.clients.map(c =>
+          (c.id === String(title.clientId) || c.dbId === title.clientId || c.name === title.clientName)
+            ? { ...c, overdue: false }
+            : c
+        );
+        update({ ...data, clients: nextClients });
+      }
 
       // Tenta sincronizar com o backend
       try {
@@ -949,13 +974,27 @@ function ReceivablesSection({
       }
       fireConfetti();
       notify(`Todas as ${unpaid.length} parcelas do boleto ${group.baseDocumentNumber} foram quitadas com sucesso!`);
-      setTitles(prev =>
-        prev.map(t =>
-          unpaid.some(u => u.id === t.id)
-            ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() }
-            : t
-        )
+      const nextTitles = titles.map(t =>
+        unpaid.some(u => u.id === t.id)
+          ? { ...t, status: 'PAGO' as const, paidAt: new Date().toISOString() }
+          : t
       );
+      setTitles(nextTitles);
+
+      // Sincroniza crédito se o cliente não tiver mais boletos vencidos
+      const remainingOverdueForClient = nextTitles.some(t =>
+        t.clientId === group.clientId &&
+        (t.status === 'VENCIDO' || (t.status === 'ABERTO' && t.dueDate && t.dueDate < todayIso))
+      );
+      if (!remainingOverdueForClient) {
+        const nextClients = data.clients.map(c =>
+          (c.id === String(group.clientId) || c.dbId === group.clientId || c.name === group.clientName)
+            ? { ...c, overdue: false }
+            : c
+        );
+        update({ ...data, clients: nextClients });
+      }
+
       try {
         const freshTitles = await fetchReceivablesApi('ALL');
         setTitles(freshTitles);
@@ -1053,10 +1092,17 @@ function ReceivablesSection({
     });
   }, [titles]);
 
-  const totalBq = groupedBoletos.reduce((a, g) => a + g.totalAmountBq, 0);
-  const totalAberto = groupedBoletos.filter(g => g.status === 'ABERTO').reduce((a, g) => a + g.remainingAmountBq, 0);
-  const totalVencido = groupedBoletos.filter(g => g.status === 'VENCIDO').reduce((a, g) => a + g.remainingAmountBq, 0);
-  const totalPago = groupedBoletos.reduce((a, g) => a + g.paidAmountBq, 0);
+  // Métricas calculadas sobre os títulos/parcelas individuais para precisão matemática total:
+  const totalBq = titles.reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalVencido = titles
+    .filter(t => t.status === 'VENCIDO' || (t.status === 'ABERTO' && t.dueDate && t.dueDate < todayIso))
+    .reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalAberto = titles
+    .filter(t => t.status === 'ABERTO' && (!t.dueDate || t.dueDate >= todayIso))
+    .reduce((a, t) => a + Number(t.amountBq || 0), 0);
+  const totalPago = titles
+    .filter(t => t.status === 'PAGO')
+    .reduce((a, t) => a + Number(t.amountBq || 0), 0);
 
   const visibleBoletos = groupedBoletos.filter(g => {
     if (filter !== 'ALL' && g.status !== filter) return false;
@@ -1087,7 +1133,11 @@ function ReceivablesSection({
           label="Total em Boletos"
           value={<NumberTicker value={totalBq} prefix="R$ " decimals={2} />}
           icon={<Barcode />}
-          footer={<span className="text-muted-foreground">{groupedBoletos.length} {groupedBoletos.length === 1 ? 'boleto gerado' : 'boletos gerados'}</span>}
+          footer={
+            <span className="text-muted-foreground">
+              {groupedBoletos.length} {groupedBoletos.length === 1 ? 'boleto gerado' : 'boletos gerados'} ({titles.length} parcelas)
+            </span>
+          }
         />
         <Metric
           label="A Receber (Em Aberto)"
@@ -1096,7 +1146,7 @@ function ReceivablesSection({
           footer={
             <>
               <span className="mini-dot warning-dot" />
-              {groupedBoletos.filter(g => g.status === 'ABERTO').length} boletos a vencer
+              {titles.filter(t => t.status === 'ABERTO' && (!t.dueDate || t.dueDate >= todayIso)).length} parcelas a vencer
             </>
           }
         />
@@ -1106,7 +1156,7 @@ function ReceivablesSection({
           icon={<AlertTriangle />}
           footer={
             <span className={totalVencido > 0 ? 'text-destructive font-semibold' : 'text-muted-foreground'}>
-              {groupedBoletos.filter(g => g.status === 'VENCIDO').length} com parcelas vencidas
+              {titles.filter(t => t.status === 'VENCIDO' || (t.status === 'ABERTO' && t.dueDate && t.dueDate < todayIso)).length} parcelas vencidas
             </span>
           }
         />
@@ -1116,7 +1166,7 @@ function ReceivablesSection({
           icon={<CheckCheck />}
           footer={
             <span className="text-emerald-600 dark:text-emerald-400 font-semibold">
-              {groupedBoletos.filter(g => g.status === 'PAGO').length} boletos quitados
+              {titles.filter(t => t.status === 'PAGO').length} parcelas quitadas ({groupedBoletos.filter(g => g.status === 'PAGO').length} boletos)
             </span>
           }
         />
@@ -1177,7 +1227,7 @@ function ReceivablesSection({
               {visibleBoletos.map(g => {
                 const isPaid = g.status === 'PAGO';
                 const isOverdue = g.status === 'VENCIDO';
-                const clientMatch = data.clients.find(c => c.id === String(g.clientId));
+                const clientMatch = findClientForBoleto(g.clientId, g.clientName);
                 return (
                   <tr
                     key={g.key}
@@ -1253,8 +1303,8 @@ function ReceivablesSection({
                         </span>
                       )}
                     </td>
-                    <td>
-                      <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                    <td className="text-right pr-4">
+                      <div className="flex items-center justify-end gap-1.5 whitespace-nowrap" onClick={e => e.stopPropagation()}>
                         <Button
                           size="sm"
                           variant="outline"
@@ -1270,10 +1320,10 @@ function ReceivablesSection({
                           variant="outline"
                           className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
                           onClick={() => {
-                            const clientMatch = data.clients.find(c => c.id === g.clientId || c.name === g.clientName);
+                            const clientMatch = findClientForBoleto(g.clientId, g.clientName);
                             openPrintableBoleto(g, undefined, clientMatch);
                           }}
-                          title="Visualizar PDF do boleto bancário"
+                          title="Visualizar PDF do boleto bancário Sicredi"
                         >
                           <FileText size={13} />
                           <span>PDF</span>
@@ -1409,7 +1459,7 @@ function ReceivablesSection({
                                 variant="outline"
                                 className="h-7 text-xs font-semibold gap-1 cursor-pointer hover:bg-muted"
                                 onClick={() => {
-                                  const clientMatch = data.clients.find(c => c.id === selectedBoleto.clientId || c.name === selectedBoleto.clientName);
+                                  const clientMatch = findClientForBoleto(selectedBoleto.clientId, selectedBoleto.clientName);
                                   openPrintableBoleto(selectedBoleto, t, clientMatch);
                                 }}
                                 title={`Visualizar PDF da parcela ${t.installmentNumber}`}
@@ -1466,7 +1516,7 @@ function ReceivablesSection({
                     size="sm"
                     className="h-8 text-xs font-semibold gap-1.5 cursor-pointer hover:bg-muted"
                     onClick={() => {
-                      const clientMatch = data.clients.find(c => c.id === selectedBoleto.clientId || c.name === selectedBoleto.clientName);
+                      const clientMatch = findClientForBoleto(selectedBoleto.clientId, selectedBoleto.clientName);
                       openPrintableBoleto(selectedBoleto, undefined, clientMatch);
                     }}
                     title="Visualizar PDF do boleto bancário completo"

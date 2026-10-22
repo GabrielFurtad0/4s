@@ -1264,91 +1264,108 @@ export type ReceivableTitle = {
   createdAt: string;
 };
 
+const INITIAL_FALLBACK_TITLES: ReceivableTitle[] = [
+  {
+    id: 1,
+    clientId: 3,
+    clientName: 'NOVA BELFORT PAES E DOCES LTDA EPP',
+    documentNumber: 'BOL-NF012890-01',
+    installmentNumber: 1,
+    totalInstallments: 1,
+    amountBq: 12300,
+    dueDate: '2026-10-11',
+    status: 'VENCIDO',
+    notes: 'Boleto 28 dias ref. NF-e #12890 (Base BQ: R$ 12.300,00). Vencido há 7 dias.',
+    createdAt: '2026-09-13T10:00:00',
+  },
+  {
+    id: 2,
+    orderId: 1,
+    clientId: 1,
+    clientName: 'PANIFICADORA JARDIM ELIANA LTDA',
+    documentNumber: 'BOL-NF012926-01',
+    installmentNumber: 1,
+    totalInstallments: 1,
+    amountBq: 3080,
+    dueDate: '2026-10-24',
+    status: 'ABERTO',
+    notes: 'Boleto 28 dias ref. NF-e #12926. Parcela única calculada estritamente sobre BQ.',
+    createdAt: '2026-09-26T10:00:00',
+  },
+  {
+    id: 3,
+    orderId: 2,
+    clientId: 2,
+    clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
+    documentNumber: 'BOL-NF012928-01',
+    installmentNumber: 1,
+    totalInstallments: 2,
+    amountBq: 2050,
+    dueDate: '2026-10-21',
+    status: 'ABERTO',
+    notes: 'Boleto 14/28 dias (1/2) ref. NF-e #12928. Parcela 1 calculada sobre BQ.',
+    createdAt: '2026-10-07T10:00:00',
+  },
+  {
+    id: 4,
+    orderId: 2,
+    clientId: 2,
+    clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
+    documentNumber: 'BOL-NF012928-02',
+    installmentNumber: 2,
+    totalInstallments: 2,
+    amountBq: 2050,
+    dueDate: '2026-11-04',
+    status: 'ABERTO',
+    notes: 'Boleto 14/28 dias (2/2) ref. NF-e #12928. Parcela 2 calculada sobre BQ.',
+    createdAt: '2026-10-07T10:00:00',
+  },
+];
+
+let fallbackTitlesCache: ReceivableTitle[] = [...INITIAL_FALLBACK_TITLES];
+
 export async function fetchReceivablesApi(status = 'ALL'): Promise<ReceivableTitle[]> {
   try {
-    return await apiFetch<ReceivableTitle[]>(`/backoffice/management/receivables?status=${status}`);
+    const titles = await apiFetch<ReceivableTitle[]>(`/backoffice/management/receivables?status=${status}`);
+    fallbackTitlesCache = titles;
+    return titles;
   } catch {
-    return [
-      {
-        id: 1,
-        clientId: 3,
-        clientName: 'NOVA BELFORT PAES E DOCES LTDA EPP',
-        documentNumber: 'BOL-NF012890-01',
-        installmentNumber: 1,
-        totalInstallments: 1,
-        amountBq: 12300,
-        dueDate: '2026-10-11',
-        status: 'VENCIDO',
-        notes: 'Boleto 28 dias ref. NF-e #12890 (Base BQ: R$ 12.300,00). Vencido há 7 dias.',
-        createdAt: '2026-09-13T10:00:00',
-      },
-      {
-        id: 2,
-        orderId: 1,
-        clientId: 1,
-        clientName: 'PANIFICADORA JARDIM ELIANA LTDA',
-        documentNumber: 'BOL-NF012926-01',
-        installmentNumber: 1,
-        totalInstallments: 1,
-        amountBq: 3080,
-        dueDate: '2026-10-24',
-        status: 'ABERTO',
-        notes: 'Boleto 28 dias ref. NF-e #12926. Parcela única calculada estritamente sobre BQ.',
-        createdAt: '2026-09-26T10:00:00',
-      },
-      {
-        id: 3,
-        orderId: 2,
-        clientId: 2,
-        clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
-        documentNumber: 'BOL-NF012928-01',
-        installmentNumber: 1,
-        totalInstallments: 2,
-        amountBq: 2050,
-        dueDate: '2026-10-21',
-        status: 'ABERTO',
-        notes: 'Boleto 14/28 dias (1/2) ref. NF-e #12928. Parcela 1 calculada sobre BQ.',
-        createdAt: '2026-10-07T10:00:00',
-      },
-      {
-        id: 4,
-        orderId: 2,
-        clientId: 2,
-        clientName: 'IND COM PANIFICACAO JARDIM MIRIAN LTDA',
-        documentNumber: 'BOL-NF012928-02',
-        installmentNumber: 2,
-        totalInstallments: 2,
-        amountBq: 2050,
-        dueDate: '2026-11-04',
-        status: 'ABERTO',
-        notes: 'Boleto 14/28 dias (2/2) ref. NF-e #12928. Parcela 2 calculada sobre BQ.',
-        createdAt: '2026-10-07T10:00:00',
-      },
-    ];
+    if (status === 'ALL') return fallbackTitlesCache;
+    return fallbackTitlesCache.filter(t => t.status === status);
   }
 }
 
 export async function payReceivableApi(titleId: number): Promise<ReceivableTitle> {
   try {
-    return await apiFetch<ReceivableTitle>(`/backoffice/management/receivables/${titleId}/pay`, {
+    const res = await apiFetch<ReceivableTitle>(`/backoffice/management/receivables/${titleId}/pay`, {
       method: 'POST',
     });
+    fallbackTitlesCache = fallbackTitlesCache.map(t =>
+      t.id === titleId ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() } : t
+    );
+    return res;
   } catch (err) {
     console.warn('Falha na chamada de baixa de boleto no servidor, aplicando baixa local:', err);
-    return {
-      id: titleId,
-      clientId: 1,
-      clientName: 'CLIENTE',
-      documentNumber: `BOL-${titleId}`,
-      installmentNumber: 1,
-      totalInstallments: 1,
-      amountBq: 0,
-      dueDate: new Date().toISOString().slice(0, 10),
-      status: 'PAGO',
-      notes: 'Baixa confirmada manualmente.',
-      paidAt: new Date().toISOString(),
-      createdAt: new Date().toISOString(),
-    };
+    fallbackTitlesCache = fallbackTitlesCache.map(t =>
+      t.id === titleId ? { ...t, status: 'PAGO', paidAt: new Date().toISOString() } : t
+    );
+    const found = fallbackTitlesCache.find(t => t.id === titleId);
+    return (
+      found || {
+        id: titleId,
+        clientId: 1,
+        clientName: 'CLIENTE',
+        documentNumber: `BOL-${titleId}`,
+        installmentNumber: 1,
+        totalInstallments: 1,
+        amountBq: 0,
+        dueDate: new Date().toISOString().slice(0, 10),
+        status: 'PAGO',
+        notes: 'Baixa confirmada manualmente.',
+        paidAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      }
+    );
   }
 }
 
