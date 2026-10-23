@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [8217e14] — 23/10/2026 às 20:26 (🔴 Estrutural / Crítico)
+
+* **Infraestrutura e Segurança:** Implementação de sistema de autenticação centralizado com suporte a Google
+
 ### [fa4f164] — 22/10/2026 às 22:39 (🔴 Estrutural / Crítico)
 
 - Implementação de filtros por categoria (Vendas, Financeiro, Fiscal e Cadastros)
