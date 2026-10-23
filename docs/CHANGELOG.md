@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [5e9fcb5] — 22/10/2026 às 22:35 (🔴 Estrutural / Crítico)
+
+- Implementação de mecanismo de resiliência offline para o cadastro de clientes, garantindo a continuidade operacional via
+
 ### [a88faf9] — 21/10/2026 às 23:55 (🔴 Estrutural / Crítico)
 
 *   **Interface e Visualização:** Padronização das tabelas do backoffice para exibição de métricas base
