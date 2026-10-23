@@ -1110,7 +1110,7 @@ export function Seller({ data, update, notify, submit }: SharedProps) {
             </div>
             <div className="seller-side-stat">
               <Calendar size={14} className="text-muted-foreground shrink-0" />
-              <span>Sexta-feira, 16 de outubro</span>
+              <span>{formatHeaderDate(currentDate)}</span>
             </div>
           </div>
         </div>

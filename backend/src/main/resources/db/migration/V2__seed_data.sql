@@ -47,74 +47,74 @@ INSERT INTO clients (
 (1, 'PANIFICADORA JARDIM ELIANA LTDA', 'Padaria Jardim Eliana', '68.457.477/0001-34', '161327701113', 'CONTRIBUINTE', 'INDUSTRIALIZACAO',
  '04846-010', 'Avenida Dona Belmira Marin', '4985', '', 'Parque Brasil / Grajaú', 'São Paulo', 'SP', '3550308',
  'Sr. Carlos', '(11) 98812-4410', 'Boleto 28 dias', 20,
- DATEADD('DAY', -22, CURRENT_DATE), 4700.00, 'EM_DIA', TRUE),
+ (CURRENT_DATE - 22), 4700.00, 'EM_DIA', TRUE),
 
 -- Cliente 2: Visita de Hoje (Em dia, ciclo 15d)
 (2, 'IND COM PANIFICACAO JARDIM MIRIAN LTDA', 'Panificadora Jardim Mirian', '62.136.817/0001-49', '105973105110', 'CONTRIBUINTE', 'INDUSTRIALIZACAO',
  '04424-000', 'Avenida Cupecê', '5500', '', 'Cidade Ademar', 'São Paulo', 'SP', '3550308',
  'Marcos', '(11) 97123-8890', 'Boleto 14/28 dias', 15,
- DATEADD('DAY', -11, CURRENT_DATE), 4100.00, 'EM_DIA', TRUE),
+ (CURRENT_DATE - 11), 4100.00, 'EM_DIA', TRUE),
 
 -- Cliente 3: Visita de Hoje + Alerta de Recompra + Boleto Vencido
 (3, 'NOVA BELFORT PAES E DOCES LTDA EPP', 'Atacado & Padaria Nova Belfort', '12.049.732/0001-55', '147247208119', 'CONTRIBUINTE', 'REVENDA',
  '04676-110', 'Rua Santana', '668', 'Galpão B', 'Vila São Pedro / Sabará', 'São Paulo', 'SP', '3550308',
  'Fernanda', '(11) 99450-1122', 'Boleto 28 dias', 20,
- DATEADD('DAY', -35, CURRENT_DATE), 12300.00, 'BOLETO_VENCIDO', TRUE),
+ (CURRENT_DATE - 35), 12300.00, 'BOLETO_VENCIDO', TRUE),
 
 -- Cliente 4: Radar de Recompra (42 dias sem comprar, ciclo 25d)
 (4, 'ANTONIO ALVES DA CRUZ PAES E DOCES ME', 'Panificadora Alves da Cruz', '08.714.521/0001-12', '149621700115', 'CONTRIBUINTE', 'INDUSTRIALIZACAO',
  '04883-255', 'Rua Henrique Roschel Criste', '53', '', 'Jardim dos Álamos / Parelheiros', 'São Paulo', 'SP', '3550308',
  'Roberto', '(11) 98234-5566', 'Pix na Entrega', 25,
- DATEADD('DAY', -42, CURRENT_DATE), 3850.00, 'EM_DIA', TRUE),
+ (CURRENT_DATE - 42), 3850.00, 'EM_DIA', TRUE),
 
 -- Cliente 5: Cadastro Rápido na Rua pelo Pai (INCOMPLETO FISCALMENTE - para testar semáforo e BrasilAPI no Backoffice!)
 (5, 'PADARIA E CONFEITARIA SOL MAIOR (CADASTRO RUA)', 'Padaria Sol Maior Jabaquara', '48.936.777/0001-99', NULL, 'CONTRIBUINTE', 'INDUSTRIALIZACAO',
  NULL, 'Av. Rodrigues Montemor (Anotado na rua)', '919', NULL, 'Jabaquara', 'São Paulo', 'SP', NULL,
  'Sr. Joaquim', '(11) 96543-2109', 'Boleto 21 dias', 15,
- DATEADD('DAY', -5, CURRENT_DATE), 1680.00, 'EM_DIA', FALSE),
+ (CURRENT_DATE - 5), 1680.00, 'EM_DIA', FALSE),
 
 -- Cliente 6: Radar de Recompra no Campo Belo
 (6, 'PANIFICADORA E CONFEITARIA NOVA PRESIDENTE LTDA', 'Nova Presidente', '61.191.532/0001-48', '105312697117', 'CONTRIBUINTE', 'INDUSTRIALIZACAO',
  '04624-002', 'Rua Estêvão Baião', '798', '', 'Campo Belo', 'São Paulo', 'SP', '3550308',
  'Dona Helena', '(11) 99111-3344', 'Boleto 28 dias', 18,
- DATEADD('DAY', -26, CURRENT_DATE), 2610.00, 'EM_DIA', TRUE);
+ (CURRENT_DATE - 26), 2610.00, 'EM_DIA', TRUE);
 
 -- 4. MEMÓRIA DE PREÇO POR CLIENTE (ClientSkuPrice)
 -- Cliente 1 (Jardim Eliana)
 INSERT INTO client_sku_prices (client_id, product_id, last_practiced_price, agreed_standard_price, last_order_date) VALUES
-(1, 1, 79.00, 79.00, DATEADD('DAY', -22, CURRENT_DATE)),
-(1, 2, 75.00, 75.00, DATEADD('DAY', -22, CURRENT_DATE)),
-(1, 3, 88.00, 88.00, DATEADD('DAY', -45, CURRENT_DATE)),
+(1, 1, 79.00, 79.00, (CURRENT_DATE - 22)),
+(1, 2, 75.00, 75.00, (CURRENT_DATE - 22)),
+(1, 3, 88.00, 88.00, (CURRENT_DATE - 45)),
 -- Cliente 2 (Jardim Mirian)
-(2, 1, 82.00, 82.00, DATEADD('DAY', -11, CURRENT_DATE)),
-(2, 2, 76.00, 76.00, DATEADD('DAY', -11, CURRENT_DATE)),
-(2, 3, 90.00, 90.00, DATEADD('DAY', -30, CURRENT_DATE)),
+(2, 1, 82.00, 82.00, (CURRENT_DATE - 11)),
+(2, 2, 76.00, 76.00, (CURRENT_DATE - 11)),
+(2, 3, 90.00, 90.00, (CURRENT_DATE - 30)),
 -- Cliente 3 (Nova Belfort - compra volume alto, preço menor)
-(3, 1, 80.00, 82.00, DATEADD('DAY', -35, CURRENT_DATE)),
-(3, 2, 74.00, 75.00, DATEADD('DAY', -35, CURRENT_DATE)),
-(3, 3, 86.00, 88.00, DATEADD('DAY', -35, CURRENT_DATE)),
+(3, 1, 80.00, 82.00, (CURRENT_DATE - 35)),
+(3, 2, 74.00, 75.00, (CURRENT_DATE - 35)),
+(3, 3, 86.00, 88.00, (CURRENT_DATE - 35)),
 -- Cliente 4 (Alves da Cruz)
-(4, 1, 83.00, 83.00, DATEADD('DAY', -42, CURRENT_DATE)),
-(4, 2, 78.00, 78.00, DATEADD('DAY', -42, CURRENT_DATE)),
-(4, 3, 90.00, 90.00, DATEADD('DAY', -42, CURRENT_DATE)),
+(4, 1, 83.00, 83.00, (CURRENT_DATE - 42)),
+(4, 2, 78.00, 78.00, (CURRENT_DATE - 42)),
+(4, 3, 90.00, 90.00, (CURRENT_DATE - 42)),
 -- Cliente 5 (Sol Maior - Cadastro rápido na rua)
-(5, 1, 84.00, 84.00, DATEADD('DAY', -5, CURRENT_DATE)),
-(5, 2, 77.00, 77.00, DATEADD('DAY', -5, CURRENT_DATE)),
-(5, 3, 90.00, 90.00, DATEADD('DAY', -5, CURRENT_DATE)),
+(5, 1, 84.00, 84.00, (CURRENT_DATE - 5)),
+(5, 2, 77.00, 77.00, (CURRENT_DATE - 5)),
+(5, 3, 90.00, 90.00, (CURRENT_DATE - 5)),
 -- Cliente 6 (Nova Presidente)
-(6, 1, 87.00, 87.00, DATEADD('DAY', -26, CURRENT_DATE)),
-(6, 2, 79.00, 79.00, DATEADD('DAY', -26, CURRENT_DATE)),
-(6, 3, 92.00, 92.00, DATEADD('DAY', -26, CURRENT_DATE));
+(6, 1, 87.00, 87.00, (CURRENT_DATE - 26)),
+(6, 2, 79.00, 79.00, (CURRENT_DATE - 26)),
+(6, 3, 92.00, 92.00, (CURRENT_DATE - 26));
 
 -- 5. CADERNO DE ANOTAÇÕES DO CLIENTE (ClientNote)
 INSERT INTO client_notes (client_id, created_at, content) VALUES
-(1, DATEADD('HOUR', -3, CURRENT_TIMESTAMP), 'Pediu para levar amostra da Pré-Mistura Pão Doce 25Kg na visita de hoje.'),
-(1, DATEADD('DAY', -22, CURRENT_TIMESTAMP), 'Prefere entrega no período da manhã pelos nossos funcionários antes das 10h.'),
-(2, DATEADD('DAY', -11, CURRENT_TIMESTAMP), 'Comprador Marcos só atende fornecedores na padaria até às 11h30.'),
-(3, DATEADD('DAY', -35, CURRENT_TIMESTAMP), 'Compra em volume alto (150 sacos de Tipo 1). Verificar baixa do boleto antes de liberar novo pedido.'),
-(4, DATEADD('DAY', -42, CURRENT_TIMESTAMP), 'Cliente estratégico em Parelheiros, ligar ou passar lá pois passou do ciclo de 25 dias.'),
-(5, DATEADD('DAY', -1, CURRENT_TIMESTAMP), 'Cliente novo prospectado pelo pai no Jabaquara. Gabriel: puxar CNPJ 48.936.777/0001-99 na BrasilAPI antes de emitir a NF-e!'),
-(6, DATEADD('DAY', -26, CURRENT_TIMESTAMP), 'Dona Helena pediu para avisar no WhatsApp 1h antes do caminhão encostar.');
+(1, (CURRENT_TIMESTAMP - INTERVAL '3' HOUR), 'Pediu para levar amostra da Pré-Mistura Pão Doce 25Kg na visita de hoje.'),
+(1, (CURRENT_TIMESTAMP - INTERVAL '22' DAY), 'Prefere entrega no período da manhã pelos nossos funcionários antes das 10h.'),
+(2, (CURRENT_TIMESTAMP - INTERVAL '11' DAY), 'Comprador Marcos só atende fornecedores na padaria até às 11h30.'),
+(3, (CURRENT_TIMESTAMP - INTERVAL '35' DAY), 'Compra em volume alto (150 sacos de Tipo 1). Verificar baixa do boleto antes de liberar novo pedido.'),
+(4, (CURRENT_TIMESTAMP - INTERVAL '42' DAY), 'Cliente estratégico em Parelheiros, ligar ou passar lá pois passou do ciclo de 25 dias.'),
+(5, (CURRENT_TIMESTAMP - INTERVAL '1' DAY), 'Cliente novo prospectado pelo pai no Jabaquara. Gabriel: puxar CNPJ 48.936.777/0001-99 na BrasilAPI antes de emitir a NF-e!'),
+(6, (CURRENT_TIMESTAMP - INTERVAL '26' DAY), 'Dona Helena pediu para avisar no WhatsApp 1h antes do caminhão encostar.');
 
 -- 6. AGENDA DE VISITAS DO DIA (VisitSchedule)
 INSERT INTO visit_schedules (client_id, scheduled_date, scheduled_time, reminder_note, status) VALUES
@@ -132,7 +132,7 @@ INSERT INTO orders (
     net_profit_snapshot, net_margin_percentage,
     nfe_status, nfe_number, nfe_access_key, danfe_pdf_url, xml_url
 ) VALUES (
-    1, 1, DATEADD('DAY', -22, CURRENT_TIMESTAMP), 'FATURADO', 'Boleto 28 dias', 'Manhã',
+    1, 1, (CURRENT_TIMESTAMP - INTERVAL '22' DAY), 'FATURADO', 'Boleto 28 dias', 'Manhã',
     'REDUCAO DE 7% ANEXO III ARTIGO 3 DO RICMS', NULL, 45.00,
     3080.00, 3080.00, 2070.00, 246.40, 718.60, 23.33,
     'AUTORIZADA', '12926', '35261009265201000195550010000129261300056781',
@@ -151,7 +151,7 @@ INSERT INTO orders (
     net_profit_snapshot, net_margin_percentage,
     nfe_status, nfe_number, nfe_access_key, danfe_pdf_url, xml_url
 ) VALUES (
-    2, 2, DATEADD('DAY', -11, CURRENT_TIMESTAMP), 'FATURADO', 'Boleto 14/28 dias', 'Manhã',
+    2, 2, (CURRENT_TIMESTAMP - INTERVAL '11' DAY), 'FATURADO', 'Boleto 14/28 dias', 'Manhã',
     'REDUCAO DE 7% ANEXO III ARTIGO 3 DO RICMS', NULL, 45.00,
     4100.00, 4100.00, 2700.00, 328.00, 1027.00, 25.05,
     'AUTORIZADA', '12928', '35261009265201000195550010000129281300056808',
@@ -169,7 +169,7 @@ INSERT INTO orders (
     original_commercial_total, gross_total, total_cmv_snapshot, estimated_tax_snapshot,
     net_profit_snapshot, net_margin_percentage, nfe_status
 ) VALUES (
-    3, 2, DATEADD('MINUTE', -45, CURRENT_TIMESTAMP), 'AGUARDANDO_REVISAO', 'Boleto 14/28 dias', 'Amanhã (Manhã)',
+    3, 2, (CURRENT_TIMESTAMP - INTERVAL '45' MINUTE), 'AGUARDANDO_REVISAO', 'Boleto 14/28 dias', 'Amanhã (Manhã)',
     'Entregar antes das 10h30. Cliente pediu para conferir se vai faturar tudo na mesma nota.', NULL, 45.00,
     4420.00, 4420.00, 2902.50, 353.60, 1118.90, 25.31, 'PENDENTE'
 );
@@ -186,7 +186,7 @@ INSERT INTO orders (
     original_commercial_total, gross_total, total_cmv_snapshot, estimated_tax_snapshot,
     net_profit_snapshot, net_margin_percentage, nfe_status
 ) VALUES (
-    4, 5, DATEADD('MINUTE', -15, CURRENT_TIMESTAMP), 'AGUARDANDO_REVISAO', 'Boleto 21 dias', 'Amanhã (Tarde)',
+    4, 5, (CURRENT_TIMESTAMP - INTERVAL '15' MINUTE), 'AGUARDANDO_REVISAO', 'Boleto 21 dias', 'Amanhã (Tarde)',
     'Cliente novo no Jabaquara! Favor puxar dados completos do CNPJ 48.936.777/0001-99 antes de emitir NF-e.', NULL, 45.00,
     3350.00, 3350.00, 2185.00, 268.00, 852.00, 25.43, 'PENDENTE'
 );

@@ -44,9 +44,9 @@ INSERT INTO receivable_titles (
     installment_number, total_installments, amount_bq, due_date, status, paid_at, notes, created_at
 ) VALUES (
     1, NULL, 3, 'NOVA BELFORT PAES E DOCES LTDA EPP', 'BOL-NF012890-01',
-    1, 1, 12300.00, DATEADD('DAY', -7, CURRENT_DATE), 'VENCIDO', NULL,
+    1, 1, 12300.00, (CURRENT_DATE - 7), 'VENCIDO', NULL,
     'Boleto Bancário 28 dias ref. NF-e #12890 (Base BQ: R$ 12.300,00). Vencido há 7 dias.',
-    DATEADD('DAY', -35, CURRENT_TIMESTAMP)
+    (CURRENT_TIMESTAMP - INTERVAL '35' DAY)
 );
 
 -- 2. Boleto do Pedido #1 (NF-e #12926 - Jardim Eliana - Base BQ: 3.080,00)
@@ -55,9 +55,9 @@ INSERT INTO receivable_titles (
     installment_number, total_installments, amount_bq, due_date, status, paid_at, notes, created_at
 ) VALUES (
     2, 1, 1, 'PANIFICADORA JARDIM ELIANA LTDA', 'BOL-NF012926-01',
-    1, 1, 3080.00, DATEADD('DAY', 6, CURRENT_DATE), 'ABERTO', NULL,
+    1, 1, 3080.00, (CURRENT_DATE + 6), 'ABERTO', NULL,
     'Boleto Bancário 28 dias ref. NF-e #12926. Parcela única calculada estritamente sobre BQ.',
-    DATEADD('DAY', -22, CURRENT_TIMESTAMP)
+    (CURRENT_TIMESTAMP - INTERVAL '22' DAY)
 );
 
 -- 3. Boletos do Pedido #2 (NF-e #12928 - Jardim Mirian - Base BQ: 4.100,00 em 2 parcelas 14/28 dias)
@@ -66,25 +66,25 @@ INSERT INTO receivable_titles (
     installment_number, total_installments, amount_bq, due_date, status, paid_at, notes, created_at
 ) VALUES (
     3, 2, 2, 'IND COM PANIFICACAO JARDIM MIRIAN LTDA', 'BOL-NF012928-01',
-    1, 2, 2050.00, DATEADD('DAY', 3, CURRENT_DATE), 'ABERTO', NULL,
+    1, 2, 2050.00, (CURRENT_DATE + 3), 'ABERTO', NULL,
     'Boleto Bancário 14/28 dias (1/2) ref. NF-e #12928. Parcela 1 calculada sobre BQ.',
-    DATEADD('DAY', -11, CURRENT_TIMESTAMP)
+    (CURRENT_TIMESTAMP - INTERVAL '11' DAY)
 ),
 (
     4, 2, 2, 'IND COM PANIFICACAO JARDIM MIRIAN LTDA', 'BOL-NF012928-02',
-    2, 2, 2050.00, DATEADD('DAY', 17, CURRENT_DATE), 'ABERTO', NULL,
+    2, 2, 2050.00, (CURRENT_DATE + 17), 'ABERTO', NULL,
     'Boleto Bancário 14/28 dias (2/2) ref. NF-e #12928. Parcela 2 calculada sobre BQ.',
-    DATEADD('DAY', -11, CURRENT_TIMESTAMP)
+    (CURRENT_TIMESTAMP - INTERVAL '11' DAY)
 );
 
 ALTER TABLE receivable_titles ALTER COLUMN id RESTART WITH 5;
 
 -- Trilha de Auditoria Inicial
 INSERT INTO audit_logs (id, actor_name, actor_role, action_type, target_entity, target_id, summary, created_at) VALUES
-(1, 'Gabriel Furtado', 'Backoffice & Fiscal', 'ENTRADA_LOTE_IMPORTACAO', 'ImportBatch', '1', 'Nacionalização do Lote IMP-2026-09-ARG (3.000 sacas com Custo Médio Ponderado)', DATEADD('DAY', -25, CURRENT_TIMESTAMP)),
-(2, 'Gabriel Furtado', 'Backoffice & Fiscal', 'EMISSAO_NFE', 'Order', '1', 'NF-e #12926 emitida para Jardim Eliana (Base BQ: R$ 3.080,00) e gerado boleto BOL-NF012926-01', DATEADD('DAY', -22, CURRENT_TIMESTAMP)),
-(3, 'Gabriel Furtado', 'Backoffice & Fiscal', 'EMISSAO_NFE', 'Order', '2', 'NF-e #12928 emitida para Jardim Mirian (Base BQ: R$ 4.100,00) e gerados 2 boletos 14/28d', DATEADD('DAY', -11, CURRENT_TIMESTAMP)),
-(4, 'Sérgio Soares', 'Sócio & Rua', 'PEDIDO_NOVO', 'Order', '3', 'Pedido #3 lançado em campo para Jardim Mirian (55 sacas DQ / 55 sacas BQ)', DATEADD('MINUTE', -45, CURRENT_TIMESTAMP)),
-(5, 'Sérgio Soares', 'Sócio & Rua', 'PEDIDO_NOVO', 'Order', '4', 'Pedido #4 lançado em campo com cadastro rápido no Jabaquara (Sol Maior)', DATEADD('MINUTE', -15, CURRENT_TIMESTAMP));
+(1, 'Gabriel Furtado', 'Backoffice & Fiscal', 'ENTRADA_LOTE_IMPORTACAO', 'ImportBatch', '1', 'Nacionalização do Lote IMP-2026-09-ARG (3.000 sacas com Custo Médio Ponderado)', (CURRENT_TIMESTAMP - INTERVAL '25' DAY)),
+(2, 'Gabriel Furtado', 'Backoffice & Fiscal', 'EMISSAO_NFE', 'Order', '1', 'NF-e #12926 emitida para Jardim Eliana (Base BQ: R$ 3.080,00) e gerado boleto BOL-NF012926-01', (CURRENT_TIMESTAMP - INTERVAL '22' DAY)),
+(3, 'Gabriel Furtado', 'Backoffice & Fiscal', 'EMISSAO_NFE', 'Order', '2', 'NF-e #12928 emitida para Jardim Mirian (Base BQ: R$ 4.100,00) e gerados 2 boletos 14/28d', (CURRENT_TIMESTAMP - INTERVAL '11' DAY)),
+(4, 'Sérgio Soares', 'Sócio & Rua', 'PEDIDO_NOVO', 'Order', '3', 'Pedido #3 lançado em campo para Jardim Mirian (55 sacas DQ / 55 sacas BQ)', (CURRENT_TIMESTAMP - INTERVAL '45' MINUTE)),
+(5, 'Sérgio Soares', 'Sócio & Rua', 'PEDIDO_NOVO', 'Order', '4', 'Pedido #4 lançado em campo com cadastro rápido no Jabaquara (Sol Maior)', (CURRENT_TIMESTAMP - INTERVAL '15' MINUTE));
 
 ALTER TABLE audit_logs ALTER COLUMN id RESTART WITH 6;

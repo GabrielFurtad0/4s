@@ -8,8 +8,11 @@ import {
   fiscalReady,
   initialData,
   invoiceOrder,
+  loginWithGoogleApi,
+  loginWithPasswordApi,
   marginLevel,
   reserveOrder,
+  saveUserApi,
   type Order,
 } from '../lib/business';
 
@@ -142,5 +145,26 @@ describe('Commercial & Fiscal Domain Rules (DQ vs BQ, Dual Stock, R$ 4/saca, Mar
     expect(d.products[0]?.physical).toBe(3000);
     expect(d.products[0] ? baseBalance(d.products[0]) : 0).toBe(3000);
     expect(d.products[0]?.cost).toBe(55.48);
+  });
+
+  it('authenticates via password and Google SSO with allowedMode enforcement', async () => {
+    const sergio = await loginWithPasswordApi('sergio@totaltrigo.com.br', 'sergio2026');
+    expect(sergio.roleProfile).toBe('Sérgio Soares · Sócio & Rua');
+    expect(sergio.allowedMode).toBe('MOBILE_ONLY');
+
+    // Cadastra conta Gmail para SSO e autentica
+    await saveUserApi({
+      name: 'Sérgio Gmail',
+      email: 'sergio.soares@gmail.com',
+      password: '123',
+      roleProfile: 'Sérgio Soares · Sócio & Rua',
+      allowedMode: 'MOBILE_ONLY',
+      active: true,
+    });
+    const googleUser = await loginWithGoogleApi({ email: 'sergio.soares@gmail.com' });
+    expect(googleUser.email).toBe('sergio.soares@gmail.com');
+    expect(googleUser.allowedMode).toBe('MOBILE_ONLY');
+
+    await expect(loginWithGoogleApi({ email: 'nao.autorizado@gmail.com' })).rejects.toThrow();
   });
 });

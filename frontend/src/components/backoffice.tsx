@@ -121,6 +121,7 @@ export function Backoffice({
   initialClientSearch,
   targetOrderId,
   onClearTargetOrderId,
+  onOpenUserManagement,
 }: SharedProps & {
   newOrder: () => void;
   activeModule?: string;
@@ -128,6 +129,7 @@ export function Backoffice({
   initialClientSearch?: string;
   targetOrderId?: string | null;
   onClearTargetOrderId?: () => void;
+  onOpenUserManagement?: () => void;
 }) {
   if (activeModule === 'receivables') {
     return <ReceivablesSection data={data} update={update} notify={notify} userProfile={userProfile} />;
@@ -140,6 +142,7 @@ export function Backoffice({
         notify={notify}
         userProfile={userProfile}
         initialClientSearch={initialClientSearch}
+        onOpenUserManagement={onOpenUserManagement}
       />
     );
   }
@@ -1347,7 +1350,7 @@ function ReceivablesSection({
 
       {/* Modal de Detalhes do Boleto com Todas as Parcelas */}
       <Dialog open={!!selectedBoleto} onOpenChange={open => !open && setSelectedBoletoKey(null)}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-3xl sm:max-w-3xl w-[calc(100vw-32px)] overflow-hidden">
           <DialogTitle className="flex items-center gap-3 pr-10 flex-wrap">
             <span className="flex items-center gap-2">
               <Barcode size={18} className="text-primary" />
@@ -1405,16 +1408,16 @@ function ReceivablesSection({
               )}
 
               {/* Tabela com a discriminação de cada parcela individual */}
-              <div className="border border-border/80 rounded-lg overflow-hidden">
-                <table className="w-full text-xs">
+              <div className="border border-border/80 rounded-lg overflow-x-auto max-w-full">
+                <table className="w-full text-xs min-w-[560px]">
                   <thead className="bg-muted/70 text-muted-foreground border-b border-border/80 text-[11px] font-semibold">
                     <tr>
-                      <th className="p-2.5 text-left">Parcela</th>
-                      <th className="p-2.5 text-left">Documento</th>
-                      <th className="p-2.5 text-left">Vencimento</th>
-                      <th className="p-2.5 text-right">Valor BQ</th>
-                      <th className="p-2.5 text-center">Status</th>
-                      <th className="p-2.5 text-right">Ação</th>
+                      <th className="p-2.5 text-left whitespace-nowrap">Parcela</th>
+                      <th className="p-2.5 text-left whitespace-nowrap">Documento</th>
+                      <th className="p-2.5 text-left whitespace-nowrap">Vencimento</th>
+                      <th className="p-2.5 text-right whitespace-nowrap">Valor BQ</th>
+                      <th className="p-2.5 text-center whitespace-nowrap">Status</th>
+                      <th className="p-2.5 text-right whitespace-nowrap">Ação</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/60">
@@ -1467,7 +1470,7 @@ function ReceivablesSection({
                                 <FileText size={12} />
                                 <span>PDF</span>
                               </Button>
-                              <div className="min-w-[155px] flex justify-end">
+                              <div className="min-w-[130px] flex justify-end">
                                 {!isPaid ? (
                                   <Button
                                     size="sm"
@@ -1548,12 +1551,14 @@ function RegistrationsSection({
   notify,
   userProfile,
   initialClientSearch,
+  onOpenUserManagement,
 }: {
   data: AppData;
   update: (next: AppData) => void;
   notify: (message: string) => void;
   userProfile?: string | undefined;
   initialClientSearch?: string;
+  onOpenUserManagement?: () => void;
 }) {
   const [subTab, setSubTab] = useState<'clients' | 'products' | 'client-details'>('clients');
   const [clientSearch, setClientSearch] = useState(initialClientSearch ?? '');
@@ -1843,6 +1848,17 @@ function RegistrationsSection({
             <Package size={14} />
             Produtos & Estoque Dual ({data.products.length})
           </Button>
+          {onOpenUserManagement && (
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs gap-1.5"
+              onClick={onOpenUserManagement}
+            >
+              <ShieldCheck size={14} className="text-primary" />
+              Usuários & Acessos (SSO)
+            </Button>
+          )}
           {subTab === 'client-details' && (
             <Button
               variant="default"

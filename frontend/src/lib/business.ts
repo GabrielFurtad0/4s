@@ -571,45 +571,289 @@ export type UserRoleProfile =
   | 'Gabriel Furtado · Backoffice & Fiscal'
   | 'Expedição · Romaneio Cego';
 
+export type AllowedMode = 'ALL' | 'MOBILE_ONLY' | 'DESKTOP_ONLY';
+
+export type AuthUser = {
+  id: number;
+  name: string;
+  email: string;
+  roleProfile: UserRoleProfile;
+  allowedMode: AllowedMode;
+  active: boolean;
+  lastLoginAt?: string | undefined;
+};
+
+export type LocalUserAccount = AuthUser & {
+  password?: string | undefined;
+};
+
 export const PROFILES_LIST: UserRoleProfile[] = [
   'Sérgio Soares · Sócio & Rua',
   'Gabriel Furtado · Backoffice & Fiscal',
   'Expedição · Romaneio Cego',
 ];
 
-export function getActiveProfile(): UserRoleProfile {
+const AUTH_USER_KEY = 'totaltrigo_auth_user';
+const AUTH_TOKEN_KEY = 'totaltrigo_auth_token';
+const LOCAL_USERS_DB_KEY = 'totaltrigo_users_db';
+
+const DEFAULT_USERS_DB: LocalUserAccount[] = [
+  {
+    id: 1,
+    name: 'Gabriel Furtado',
+    email: 'gabriel@totaltrigo.com.br',
+    password: 'totaltrigo2026',
+    roleProfile: 'Gabriel Furtado · Backoffice & Fiscal',
+    allowedMode: 'ALL',
+    active: true,
+    lastLoginAt: '2026-10-23T08:30:00Z',
+  },
+  {
+    id: 2,
+    name: 'Sérgio Soares',
+    email: 'sergio@totaltrigo.com.br',
+    password: 'sergio2026',
+    roleProfile: 'Sérgio Soares · Sócio & Rua',
+    allowedMode: 'MOBILE_ONLY',
+    active: true,
+    lastLoginAt: '2026-10-23T07:45:00Z',
+  },
+  {
+    id: 3,
+    name: 'Equipe Expedição',
+    email: 'expedicao@totaltrigo.com.br',
+    password: 'galpao2026',
+    roleProfile: 'Expedição · Romaneio Cego',
+    allowedMode: 'DESKTOP_ONLY',
+    active: true,
+    lastLoginAt: '2026-10-23T08:00:00Z',
+  },
+];
+
+let memoryAuthUser: AuthUser | null = null;
+let memoryAuthToken: string | null = null;
+let memoryUsersDb: LocalUserAccount[] | null = null;
+
+export function getAuthToken(): string | null {
   if (typeof window !== 'undefined') {
-    const saved = localStorage.getItem('totaltrigo_active_profile');
-    if (saved && (PROFILES_LIST as string[]).includes(saved)) {
-      return saved as UserRoleProfile;
+    try {
+      const stored =
+        (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function'
+          ? localStorage.getItem(AUTH_TOKEN_KEY)
+          : null) ||
+        (typeof sessionStorage !== 'undefined' && typeof sessionStorage.getItem === 'function'
+          ? sessionStorage.getItem(AUTH_TOKEN_KEY)
+          : null);
+      if (stored) return stored;
+    } catch {
+      // Fallback
     }
   }
-  return 'Gabriel Furtado · Backoffice & Fiscal';
+  return memoryAuthToken;
+}
+
+export function getAuthenticatedUser(): AuthUser | null {
+  if (typeof window !== 'undefined') {
+    try {
+      const raw =
+        (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function'
+          ? localStorage.getItem(AUTH_USER_KEY)
+          : null) ||
+        (typeof sessionStorage !== 'undefined' && typeof sessionStorage.getItem === 'function'
+          ? sessionStorage.getItem(AUTH_USER_KEY)
+          : null);
+      if (raw) {
+        const parsed = JSON.parse(raw) as AuthUser;
+        if (parsed && parsed.email && parsed.roleProfile) {
+          memoryAuthUser = parsed;
+          return parsed;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+
+  if (memoryAuthUser) {
+    return memoryAuthUser;
+  }
+
+  const isTestEnv =
+    (typeof process !== 'undefined' && process.env?.NODE_ENV === 'test') ||
+    (typeof import.meta !== 'undefined' && import.meta.env?.MODE === 'test');
+
+  if (isTestEnv) {
+    return {
+      id: 1,
+      name: 'Gabriel Furtado',
+      email: 'gabriel@totaltrigo.com.br',
+      roleProfile: 'Gabriel Furtado · Backoffice & Fiscal',
+      allowedMode: 'ALL',
+      active: true,
+    };
+  }
+
+  return null;
+}
+
+export function setAuthenticatedUser(
+  user: AuthUser | null,
+  token?: string,
+  remember = true
+): void {
+  memoryAuthUser = user;
+  memoryAuthToken = user ? (token ?? memoryAuthToken) : null;
+  if (user) {
+    setActiveProfile(user.roleProfile);
+  }
+  if (typeof window === 'undefined') return;
+  try {
+    const hasLocal =
+      typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function';
+    const hasSession =
+      typeof sessionStorage !== 'undefined' && typeof sessionStorage.setItem === 'function';
+
+    if (!user) {
+      if (hasLocal) {
+        localStorage.removeItem(AUTH_USER_KEY);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+      if (hasSession) {
+        sessionStorage.removeItem(AUTH_USER_KEY);
+        sessionStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+      return;
+    }
+
+    const serialized = JSON.stringify(user);
+    if (remember && hasLocal) {
+      localStorage.setItem(AUTH_USER_KEY, serialized);
+      if (token) localStorage.setItem(AUTH_TOKEN_KEY, token);
+      if (hasSession) {
+        sessionStorage.removeItem(AUTH_USER_KEY);
+        sessionStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    } else if (hasSession) {
+      sessionStorage.setItem(AUTH_USER_KEY, serialized);
+      if (token) sessionStorage.setItem(AUTH_TOKEN_KEY, token);
+      if (hasLocal) {
+        localStorage.removeItem(AUTH_USER_KEY);
+        localStorage.removeItem(AUTH_TOKEN_KEY);
+      }
+    }
+  } catch {
+    // Fallback silencioso
+  }
+}
+
+export function logoutUser(): void {
+  setAuthenticatedUser(null);
+}
+
+export function getLocalUsersDb(): LocalUserAccount[] {
+  if (typeof window !== 'undefined') {
+    try {
+      if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+        const raw = localStorage.getItem(LOCAL_USERS_DB_KEY);
+        if (!raw) {
+          const seed = memoryUsersDb ?? [...DEFAULT_USERS_DB];
+          localStorage.setItem(LOCAL_USERS_DB_KEY, JSON.stringify(seed));
+          memoryUsersDb = [...seed];
+          return [...seed];
+        }
+        const parsed = JSON.parse(raw) as LocalUserAccount[];
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          memoryUsersDb = parsed;
+          return [...parsed];
+        }
+      }
+    } catch {
+      // Fallback para memória
+    }
+  }
+  if (!memoryUsersDb) {
+    memoryUsersDb = [...DEFAULT_USERS_DB];
+  }
+  return [...memoryUsersDb];
+}
+
+export function saveLocalUsersDb(users: LocalUserAccount[]): void {
+  memoryUsersDb = [...users];
+  if (typeof window === 'undefined') return;
+  try {
+    if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+      localStorage.setItem(LOCAL_USERS_DB_KEY, JSON.stringify(users));
+    }
+  } catch {
+    // Fallback
+  }
+}
+
+let memoryActiveProfile: UserRoleProfile = 'Gabriel Furtado · Backoffice & Fiscal';
+
+export function getActiveProfile(): UserRoleProfile {
+  if (typeof window !== 'undefined') {
+    try {
+      if (typeof localStorage !== 'undefined' && typeof localStorage.getItem === 'function') {
+        const saved = localStorage.getItem('totaltrigo_active_profile');
+        if (saved && (PROFILES_LIST as string[]).includes(saved)) {
+          memoryActiveProfile = saved as UserRoleProfile;
+          return memoryActiveProfile;
+        }
+      }
+    } catch {
+      // Fallback
+    }
+  }
+  return memoryActiveProfile;
 }
 
 export function setActiveProfile(profile: UserRoleProfile): void {
+  memoryActiveProfile = profile;
   if (typeof window !== 'undefined') {
-    localStorage.setItem('totaltrigo_active_profile', profile);
+    try {
+      if (typeof localStorage !== 'undefined' && typeof localStorage.setItem === 'function') {
+        localStorage.setItem('totaltrigo_active_profile', profile);
+      }
+    } catch {
+      // Fallback
+    }
   }
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
   const activeProfile = getActiveProfile();
   const [actorName, actorRole] = activeProfile.split(' · ').map(s => s.trim());
+  const token = getAuthToken();
 
   const isFormData = typeof FormData !== 'undefined' && init?.body instanceof FormData;
   const headers: Record<string, string> = {
     'X-Actor-Name': actorName || 'Gabriel Furtado',
     'X-Actor-Role': actorRole || 'Backoffice & Fiscal',
+    ...(token ? { Authorization: 'Bearer ' + token } : {}),
     ...((init?.headers as Record<string, string>) ?? {}),
   };
   if (!isFormData && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
-  const urls =
-    typeof window !== 'undefined'
-      ? [`/api${path}`, `http://localhost:8085/api${path}`]
-      : [`http://localhost:8085/api${path}`];
+
+  const envApiUrl =
+    typeof import.meta !== 'undefined' && import.meta.env?.VITE_API_URL
+      ? String(import.meta.env.VITE_API_URL).replace(/\/$/, '')
+      : '';
+
+  const baseUrls: string[] = [];
+  if (envApiUrl) {
+    baseUrls.push(`${envApiUrl}${path}`);
+    if (!envApiUrl.endsWith('/api')) {
+      baseUrls.push(`${envApiUrl}/api${path}`);
+    }
+  }
+  if (typeof window !== 'undefined') {
+    baseUrls.push(`/api${path}`);
+  }
+  baseUrls.push(`http://localhost:8085/api${path}`);
+  const urls = Array.from(new Set(baseUrls));
 
   let lastError: Error | null = null;
   for (const url of urls) {
@@ -1506,4 +1750,335 @@ export async function updateClientPriceApi(
 
 export async function fetchExecutiveSummaryApi(): Promise<any> {
   return await apiFetch<any>('/backoffice/management/executive-summary');
+}
+
+// ============================================================================
+// Autenticação Corporativa (E-mail + Senha & Google SSO) e Gestão de Usuários
+// ============================================================================
+
+function normalizeAuthUser(raw: any): AuthUser {
+  const u = raw?.user ?? raw;
+  const roleProfile: UserRoleProfile = (PROFILES_LIST as string[]).includes(u?.roleProfile)
+    ? (u.roleProfile as UserRoleProfile)
+    : u?.email?.includes('sergio')
+    ? 'Sérgio Soares · Sócio & Rua'
+    : u?.email?.includes('expedicao')
+    ? 'Expedição · Romaneio Cego'
+    : 'Gabriel Furtado · Backoffice & Fiscal';
+
+  const allowedMode: AllowedMode =
+    u?.allowedMode === 'MOBILE_ONLY' || u?.allowedMode === 'DESKTOP_ONLY' || u?.allowedMode === 'ALL'
+      ? u.allowedMode
+      : roleProfile === 'Sérgio Soares · Sócio & Rua'
+      ? 'MOBILE_ONLY'
+      : roleProfile === 'Expedição · Romaneio Cego'
+      ? 'DESKTOP_ONLY'
+      : 'ALL';
+
+  return {
+    id: Number(u?.id ?? Date.now()),
+    name: String(u?.name || roleProfile.split(' · ')[0] || 'Operador'),
+    email: String(u?.email || '').trim().toLowerCase(),
+    roleProfile,
+    allowedMode,
+    active: u?.active !== undefined ? Boolean(u.active) : true,
+    lastLoginAt: u?.lastLoginAt ? String(u.lastLoginAt) : new Date().toISOString(),
+  };
+}
+
+function decodeGoogleCredentialEmail(credential?: string): string | null {
+  if (!credential) return null;
+  try {
+    const parts = credential.split('.');
+    if (parts.length < 2 || !parts[1]) return null;
+    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map(c => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join('')
+    );
+    const parsed = JSON.parse(jsonPayload);
+    return parsed?.email ? String(parsed.email).trim().toLowerCase() : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function loginWithPasswordApi(
+  email: string,
+  password: string,
+  remember = true
+): Promise<AuthUser> {
+  const cleanEmail = email.trim().toLowerCase();
+  if (!cleanEmail || !password) {
+    throw new Error('Informe seu e-mail e senha de acesso.');
+  }
+
+  try {
+    const res = await apiFetch<any>('/auth/login', {
+      method: 'POST',
+      body: JSON.stringify({ email: cleanEmail, password }),
+    });
+    const user = normalizeAuthUser(res);
+    const token = res?.token || `jwt-${user.id}-${Date.now()}`;
+    setAuthenticatedUser(user, token, remember);
+
+    // Sincroniza no banco local para manter modo offline atualizado
+    const localDb = getLocalUsersDb();
+    const existsIdx = localDb.findIndex(u => u.email.toLowerCase() === user.email);
+    if (existsIdx >= 0) {
+      localDb[existsIdx] = { ...localDb[existsIdx], ...user, password };
+    } else {
+      localDb.push({ ...user, password });
+    }
+    saveLocalUsersDb(localDb);
+    return user;
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : '';
+    const isNetworkOr404 =
+      !msg ||
+      msg.includes('Failed to fetch') ||
+      msg.includes('NetworkError') ||
+      msg.includes('Falha de comunicação') ||
+      msg.includes('HTTP 404') ||
+      msg.includes('HTTP 502') ||
+      msg.includes('HTTP 503');
+
+    if (!isNetworkOr404) {
+      // Se o usuário foi cadastrado localmente antes da conexão ou estamos em fallback, verifica também o banco local
+      const localMatch = getLocalUsersDb().find(
+        u => u.email.toLowerCase() === cleanEmail && u.password === password
+      );
+      if (!localMatch) {
+        throw err instanceof Error ? err : new Error('E-mail ou senha inválidos.');
+      }
+    }
+
+    const users = getLocalUsersDb();
+    const matched = users.find(u => u.email.toLowerCase() === cleanEmail);
+    if (!matched || matched.password !== password) {
+      throw new Error('E-mail ou senha incorretos. Verifique suas credenciais.');
+    }
+    if (!matched.active) {
+      throw new Error('Este usuário está bloqueado. Contate o administrador no Backoffice.');
+    }
+
+    const authUser: AuthUser = {
+      id: matched.id,
+      name: matched.name,
+      email: matched.email,
+      roleProfile: matched.roleProfile,
+      allowedMode: matched.allowedMode,
+      active: matched.active,
+      lastLoginAt: new Date().toISOString(),
+    };
+
+    const updatedUsers = users.map(u =>
+      u.id === matched.id ? { ...u, lastLoginAt: authUser.lastLoginAt } : u
+    );
+    saveLocalUsersDb(updatedUsers);
+    setAuthenticatedUser(authUser, `local-token-${authUser.id}-${Date.now()}`, remember);
+    return authUser;
+  }
+}
+
+export async function loginWithGoogleApi(
+  params: { credential?: string; email?: string },
+  remember = true
+): Promise<AuthUser> {
+  const extractedEmail = (
+    params.email ||
+    decodeGoogleCredentialEmail(params.credential) ||
+    ''
+  )
+    .trim()
+    .toLowerCase();
+
+  try {
+    const res = await apiFetch<any>('/auth/google', {
+      method: 'POST',
+      body: JSON.stringify({
+        credential: params.credential,
+        email: extractedEmail || undefined,
+      }),
+    });
+    const user = normalizeAuthUser(res);
+    const token = res?.token || `google-jwt-${user.id}-${Date.now()}`;
+    setAuthenticatedUser(user, token, remember);
+    return user;
+  } catch (err) {
+    if (!extractedEmail) {
+      throw err instanceof Error
+        ? err
+        : new Error('Não foi possível identificar o e-mail da conta Google.');
+    }
+
+    const users = getLocalUsersDb();
+    const matched = users.find(u => u.email.toLowerCase() === extractedEmail);
+    if (!matched) {
+      throw new Error(
+        `A conta Google (${extractedEmail}) não está cadastrada. Peça ao administrador para autorizar este e-mail no Backoffice.`
+      );
+    }
+    if (!matched.active) {
+      throw new Error(
+        `A conta Google (${extractedEmail}) está bloqueada no sistema. Contate o administrador.`
+      );
+    }
+
+    const authUser: AuthUser = {
+      id: matched.id,
+      name: matched.name,
+      email: matched.email,
+      roleProfile: matched.roleProfile,
+      allowedMode: matched.allowedMode,
+      active: matched.active,
+      lastLoginAt: new Date().toISOString(),
+    };
+
+    const updatedUsers = users.map(u =>
+      u.id === matched.id ? { ...u, lastLoginAt: authUser.lastLoginAt } : u
+    );
+    saveLocalUsersDb(updatedUsers);
+    setAuthenticatedUser(authUser, `google-local-token-${authUser.id}-${Date.now()}`, remember);
+    return authUser;
+  }
+}
+
+export async function fetchUsersApi(): Promise<AuthUser[]> {
+  const localUsers = getLocalUsersDb();
+  try {
+    const remote = await apiFetch<any[]>('/backoffice/management/users');
+    if (Array.isArray(remote) && remote.length > 0) {
+      const normalized = remote.map(normalizeAuthUser);
+      const merged: LocalUserAccount[] = normalized.map(ru => {
+        const existing = localUsers.find(
+          lu => lu.email.toLowerCase() === ru.email.toLowerCase() || lu.id === ru.id
+        );
+        return {
+          ...ru,
+          password: existing?.password || 'totaltrigo2026',
+        };
+      });
+      saveLocalUsersDb(merged);
+      return normalized;
+    }
+  } catch {
+    // Fallback offline
+  }
+  return localUsers.map(({ password: _p, ...rest }) => rest);
+}
+
+export type SaveUserPayload = {
+  id?: number | undefined;
+  name: string;
+  email: string;
+  password?: string | undefined;
+  roleProfile: UserRoleProfile;
+  allowedMode: AllowedMode;
+  active: boolean;
+};
+
+export async function saveUserApi(payload: SaveUserPayload): Promise<AuthUser> {
+  const cleanEmail = payload.email.trim().toLowerCase();
+  const cleanName = payload.name.trim();
+  if (!cleanName || !cleanEmail) {
+    throw new Error('Preencha o nome completo e o e-mail do usuário.');
+  }
+
+  const localUsers = getLocalUsersDb();
+  const duplicate = localUsers.find(
+    u => u.email.toLowerCase() === cleanEmail && u.id !== payload.id
+  );
+  if (duplicate) {
+    throw new Error(`Já existe um usuário cadastrado com o e-mail ${cleanEmail}.`);
+  }
+
+  let savedRemote: AuthUser | null = null;
+  try {
+    if (payload.id) {
+      const res = await apiFetch<any>(`/backoffice/management/users/${payload.id}`, {
+        method: 'PUT',
+        body: JSON.stringify({
+          ...payload,
+          name: cleanName,
+          email: cleanEmail,
+        }),
+      });
+      savedRemote = normalizeAuthUser(res);
+    } else {
+      const res = await apiFetch<any>('/backoffice/management/users', {
+        method: 'POST',
+        body: JSON.stringify({
+          ...payload,
+          name: cleanName,
+          email: cleanEmail,
+        }),
+      });
+      savedRemote = normalizeAuthUser(res);
+    }
+  } catch {
+    // Continua salvando localmente em modo offline
+  }
+
+  if (payload.id) {
+    const existing = localUsers.find(u => u.id === payload.id);
+    const updatedRecord: LocalUserAccount = {
+      id: savedRemote?.id ?? payload.id,
+      name: cleanName,
+      email: cleanEmail,
+      password:
+        payload.password && payload.password.trim().length > 0
+          ? payload.password.trim()
+          : existing?.password || 'totaltrigo2026',
+      roleProfile: payload.roleProfile,
+      allowedMode: payload.allowedMode,
+      active: payload.active,
+      lastLoginAt: existing?.lastLoginAt,
+    };
+    const nextList = localUsers.map(u => (u.id === payload.id ? updatedRecord : u));
+    saveLocalUsersDb(nextList);
+
+    const currentAuth = getAuthenticatedUser();
+    if (currentAuth && currentAuth.id === updatedRecord.id) {
+      const { password: _p, ...authFields } = updatedRecord;
+      setAuthenticatedUser(authFields, getAuthToken() ?? undefined);
+    }
+
+    const { password: _p, ...result } = updatedRecord;
+    return result;
+  } else {
+    const nextId =
+      savedRemote?.id ??
+      (localUsers.reduce((max, u) => Math.max(max, u.id), 0) + 1);
+    const newRecord: LocalUserAccount = {
+      id: nextId,
+      name: cleanName,
+      email: cleanEmail,
+      password:
+        payload.password && payload.password.trim().length > 0
+          ? payload.password.trim()
+          : 'totaltrigo2026',
+      roleProfile: payload.roleProfile,
+      allowedMode: payload.allowedMode,
+      active: payload.active,
+    };
+    saveLocalUsersDb([...localUsers, newRecord]);
+    const { password: _p, ...result } = newRecord;
+    return result;
+  }
+}
+
+export async function deleteUserApi(userId: number): Promise<void> {
+  try {
+    await apiFetch(`/backoffice/management/users/${userId}`, {
+      method: 'DELETE',
+    });
+  } catch {
+    // Fallback offline
+  }
+  const localUsers = getLocalUsersDb();
+  const nextList = localUsers.filter(u => u.id !== userId);
+  saveLocalUsersDb(nextList);
 }

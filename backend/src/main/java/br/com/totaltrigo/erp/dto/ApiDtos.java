@@ -422,5 +422,43 @@ public class ApiDtos {
             List<String> warnings,
             String message
     ) {}
+
+    public record AppUserDto(
+            Long id,
+            String name,
+            String email,
+            String roleProfile,
+            String allowedMode,
+            Boolean active,
+            String googleEmail,
+            LocalDateTime lastLoginAt,
+            LocalDateTime createdAt
+    ) {}
+
+    public record LoginRequest(
+            @NotBlank String email,
+            @NotBlank String password
+    ) {}
+
+    public record GoogleAuthRequest(
+            String credential,
+            String email,
+            String name
+    ) {}
+
+    public record AuthResponse(
+            String token,
+            AppUserDto user
+    ) {}
+
+    public record SaveAppUserRequest(
+            @NotBlank String name,
+            @NotBlank String email,
+            String password,
+            String roleProfile,
+            String allowedMode,
+            Boolean active,
+            String googleEmail
+    ) {}
 }
 

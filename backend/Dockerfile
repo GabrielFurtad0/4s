@@ -1,44 +1,31 @@
-# ==========================================
-# TotalTrigo ERP Backend - Multi-stage Build
-# ==========================================
+# ==============================================================================
+# Stage 1: Build (Maven + Java 21 Alpine)
+# ==============================================================================
+FROM maven:3.9.9-eclipse-temurin-21-alpine AS build
+WORKDIR /build
 
-# Stage 1: Build stage with JDK 21 Alpine
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# 1. Copia apenas o pom.xml primeiro para aproveitar o cache de camadas do Docker
+COPY pom.xml .
+RUN mvn dependency:go-offline -B
+
+# 2. Copia o código-fonte e gera o artefato .jar otimizado para produção
+COPY src ./src
+RUN mvn clean package -DskipTests -B
+
+# ==============================================================================
+# Stage 2: Runtime (Eclipse Temurin 21 JRE Alpine - Leve e Seguro)
+# ==============================================================================
+FROM eclipse-temurin:21-jre-alpine AS runtime
 WORKDIR /app
 
-# Copy Maven wrapper files and pom.xml
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
+# Cria diretório de dados persistentes caso use fallback local / logs
+RUN mkdir -p /app/data
 
-# Ensure Unix line endings and execute permissions on mvnw
-RUN sed -i 's/\r$//' mvnw && chmod +x mvnw
+# Copia o .jar executável gerado no stage de build
+COPY --from=build /build/target/*.jar app.jar
 
-# Resolve dependencies in a separate layer for faster rebuilds
-RUN ./mvnw dependency:go-offline -B || true
-
-# Copy source code and build production jar
-COPY src/ src/
-RUN ./mvnw clean package -DskipTests -B
-
-# Stage 2: Minimal, secure runtime stage with JRE 21 Alpine
-FROM eclipse-temurin:21-jre-alpine AS runner
-WORKDIR /app
-
-# Create non-root user and group
-RUN addgroup -S appgroup && adduser -S appuser -G appgroup
-
-# Copy built JAR artifact from builder stage
-COPY --from=builder /app/target/*.jar app.jar
-
-# Adjust file ownership
-RUN chown -R appuser:appgroup /app
-
-USER appuser
-
-# Default environment configuration (overrideable at runtime)
-ENV SPRING_PROFILES_ACTIVE=prod
-ENV PORT=8085
-
+# Porta padrão do Total Trigo ERP (Google Cloud Run / Railway injetam $PORT)
 EXPOSE 8085
 
-ENTRYPOINT ["java", "-Djava.security.egd=file:/dev/./urandom", "-jar", "app.jar"]
+# Ajuste de memória para containers cloud (Cloud Run / Railway / Render)
+ENTRYPOINT ["sh", "-c", "java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -Dserver.port=${PORT:-8085} -jar app.jar"]

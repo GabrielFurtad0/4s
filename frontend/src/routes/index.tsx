@@ -16,6 +16,8 @@ import { Backoffice } from '@/components/backoffice';
 import { Management } from '@/components/management';
 import { Seller } from '@/components/seller';
 import { OrderSlipSection } from '@/components/order-slip-section';
+import { LoginScreen } from '@/components/login-screen';
+import { UserManagementModal } from '@/components/user-management-modal';
 import { FourSIcon, FourSLogo } from '@/components/logo';
 import {
   createOrderApi,
@@ -23,11 +25,14 @@ import {
   fetchWorkspaceData,
   financials,
   getActiveProfile,
+  getAuthenticatedUser,
+  logoutUser,
   PROFILES_LIST,
   reserveOrder,
   saveOrderToOfflineQueue,
   setActiveProfile,
   type AppData,
+  type AuthUser,
   type Order,
   type UserRoleProfile,
 } from '@/lib/business';
@@ -127,9 +132,20 @@ const modules = [
 ];
 
 function Index() {
+  const [authUser, setAuthUser] = useState<AuthUser | null>(getAuthenticatedUser);
+  const [userManagementOpen, setUserManagementOpen] = useState(false);
   const [data, setData] = useState<AppData>(demoData);
-  const [activeProfile, setActiveProfileState] = useState<UserRoleProfile>(getActiveProfile);
+  const [activeProfile, setActiveProfileState] = useState<UserRoleProfile>(() => {
+    const initialAuth = getAuthenticatedUser();
+    return initialAuth ? initialAuth.roleProfile : getActiveProfile();
+  });
   const [mode, setMode] = useState<'desktop' | 'mobile'>(() => {
+    const initialAuth = getAuthenticatedUser();
+    if (initialAuth) {
+      if (initialAuth.allowedMode === 'MOBILE_ONLY') return 'mobile';
+      if (initialAuth.allowedMode === 'DESKTOP_ONLY') return 'desktop';
+      return initialAuth.roleProfile.includes('Sérgio') ? 'mobile' : 'desktop';
+    }
     const prof = getActiveProfile();
     return prof.includes('Sérgio') ? 'mobile' : 'desktop';
   });
@@ -155,6 +171,31 @@ function Index() {
   const searchRef = useRef<HTMLInputElement>(null);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const notify = (message: string) => { setToast(message); if (toastTimer.current) clearTimeout(toastTimer.current); toastTimer.current = setTimeout(() => setToast(''), 4500); };
+
+  const handleLoginSuccess = (user: AuthUser) => {
+    setAuthUser(user);
+    setActiveProfileState(user.roleProfile);
+    setActiveProfile(user.roleProfile);
+    if (user.allowedMode === 'MOBILE_ONLY') {
+      setMode('mobile');
+    } else if (user.allowedMode === 'DESKTOP_ONLY') {
+      setMode('desktop');
+      setModule('orders');
+    } else {
+      setMode(user.roleProfile.includes('Sérgio') ? 'mobile' : 'desktop');
+    }
+    notify(`Sessão iniciada: ${user.name} (${user.email})`);
+    fetchWorkspaceData(data.reconciled)
+      .then(remote => setData(remote))
+      .catch(() => {});
+  };
+
+  const handleLogout = () => {
+    logoutUser();
+    setAuthUser(null);
+    setInfo(null);
+    setUserManagementOpen(false);
+  };
 
   const handleProfileChange = (newProfile: UserRoleProfile) => {
     setActiveProfileState(newProfile);
@@ -267,6 +308,16 @@ function Index() {
 
   useEffect(() => { const onKey = (e: KeyboardEvent) => { if ((e.metaKey || e.ctrlKey) && e.key === 'k') { e.preventDefault(); setGlobalSearch(v => !v); } }; window.addEventListener('keydown', onKey); return () => window.removeEventListener('keydown', onKey); }, []);
 
+  if (!authUser) {
+    return <LoginScreen onSuccess={handleLoginSuccess} />;
+  }
+
+  const isMobileLocked = authUser.allowedMode === 'MOBILE_ONLY';
+  const effectiveMode = isMobileLocked ? 'mobile' : mode;
+  const canManageUsers =
+    activeProfile === 'Gabriel Furtado · Backoffice & Fiscal' ||
+    authUser.roleProfile === 'Gabriel Furtado · Backoffice & Fiscal';
+
   return (
     <div className={`app-shell font-scale-${fontScale}`}>
       <div className="environment-bar">
@@ -274,14 +325,22 @@ function Index() {
           <FourSIcon size={24} />
           <span className="font-bold text-sm tracking-tight text-foreground ml-1">4S<span className="environment-divider" />ERP</span>
         </div>
-        <div className="environment-switch">
-          <Button variant="ghost" className={mode === 'desktop' ? 'selected' : ''} onClick={() => setMode('desktop')}>
-            <Monitor />Backoffice<span className="mode-person">Gabriel</span>
-          </Button>
-          <Button variant="ghost" className={mode === 'mobile' ? 'selected' : ''} onClick={() => setMode('mobile')}>
-            <Smartphone />Em campo<span className="mode-person">Sérgio</span>
-          </Button>
-        </div>
+        {isMobileLocked ? (
+          <div className="environment-switch">
+            <Button variant="ghost" className="selected" onClick={() => setMode('mobile')}>
+              <Smartphone />Em campo<span className="mode-person">{authUser.name.split(' ')[0]}</span>
+            </Button>
+          </div>
+        ) : (
+          <div className="environment-switch">
+            <Button variant="ghost" className={effectiveMode === 'desktop' ? 'selected' : ''} onClick={() => setMode('desktop')}>
+              <Monitor />Backoffice<span className="mode-person">Gabriel</span>
+            </Button>
+            <Button variant="ghost" className={effectiveMode === 'mobile' ? 'selected' : ''} onClick={() => setMode('mobile')}>
+              <Smartphone />Em campo<span className="mode-person">Sérgio</span>
+            </Button>
+          </div>
+        )}
         <div className="environment-right">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -289,7 +348,7 @@ function Index() {
                 type="button"
                 className="flex items-center gap-2 bg-white hover:bg-slate-100 text-slate-900 border border-slate-200/90 rounded-md px-2.5 py-1 text-xs font-semibold transition-colors shadow-2xs cursor-pointer focus:outline-none focus:ring-1 focus:ring-slate-300 select-none"
                 aria-label="Perfil operacional ativo"
-                title="Clique para alternar o perfil operacional"
+                title="Conta conectada e perfil operacional"
               >
                 <span className="flex items-center justify-center size-4.5 rounded-full bg-primary/15 text-primary text-[10px] font-bold shrink-0">
                   {getProfileInitials(activeProfile)}
@@ -309,56 +368,83 @@ function Index() {
               <div className="px-2.5 py-2">
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-bold tracking-wider uppercase text-muted-foreground">
-                    Perfil Operacional Ativo
+                    Sessão Autenticada · 4S ERP
                   </span>
-                  <span className="text-[10px] text-primary font-medium">Troca rápida</span>
+                  <span className="text-[10px] text-primary font-medium truncate max-w-[130px]">
+                    {authUser.email}
+                  </span>
                 </div>
                 <p className="text-[11px] text-muted-foreground mt-0.5">
-                  Alterna permissões, visibilidade de custos e assinatura de auditoria.
+                  {isMobileLocked
+                    ? `Dispositivo dedicado ao App de Rua (${authUser.name}).`
+                    : 'Alterna permissões, visibilidade de custos e assinatura de auditoria.'}
                 </p>
               </div>
 
               <DropdownMenuSeparator className="my-1 bg-border/70" />
 
-              <div className="space-y-1">
-                {PROFILES_CONFIG.map(p => {
-                  const isSelected = activeProfile === p.id;
-                  const Icon = p.icon;
-                  return (
-                    <DropdownMenuItem
-                      key={p.id}
-                      onSelect={() => handleProfileChange(p.id)}
-                      className={`flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition-all ${
-                        isSelected
-                          ? 'bg-primary/10 border border-primary/30 text-foreground'
-                          : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground border border-transparent'
-                      }`}
-                    >
-                      <div className={`flex items-center justify-center size-8 rounded-lg shrink-0 mt-0.5 ${p.colorClasses.avatar}`}>
-                        <Icon size={16} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-1.5">
-                          <span className="font-semibold text-xs text-foreground truncate">
-                            {p.name}
-                          </span>
-                          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${p.colorClasses.badge}`}>
-                            {p.badge}
-                          </span>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
-                          {p.description}
-                        </p>
-                      </div>
-                      {isSelected && (
-                        <div className="flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground shrink-0 mt-1">
-                          <Check size={11} strokeWidth={3} />
-                        </div>
-                      )}
-                    </DropdownMenuItem>
-                  );
-                })}
-              </div>
+              {!isMobileLocked && (
+                <>
+                  <div className="space-y-1">
+                    {PROFILES_CONFIG.map(p => {
+                      const isSelected = activeProfile === p.id;
+                      const Icon = p.icon;
+                      return (
+                        <DropdownMenuItem
+                          key={p.id}
+                          onSelect={() => handleProfileChange(p.id)}
+                          className={`flex items-start gap-3 p-2.5 rounded-lg cursor-pointer transition-all ${
+                            isSelected
+                              ? 'bg-primary/10 border border-primary/30 text-foreground'
+                              : 'hover:bg-muted/60 text-muted-foreground hover:text-foreground border border-transparent'
+                          }`}
+                        >
+                          <div className={`flex items-center justify-center size-8 rounded-lg shrink-0 mt-0.5 ${p.colorClasses.avatar}`}>
+                            <Icon size={16} />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-1.5">
+                              <span className="font-semibold text-xs text-foreground truncate">
+                                {p.name}
+                              </span>
+                              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider shrink-0 ${p.colorClasses.badge}`}>
+                                {p.badge}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-2 leading-snug">
+                              {p.description}
+                            </p>
+                          </div>
+                          {isSelected && (
+                            <div className="flex items-center justify-center size-4 rounded-full bg-primary text-primary-foreground shrink-0 mt-1">
+                              <Check size={11} strokeWidth={3} />
+                            </div>
+                          )}
+                        </DropdownMenuItem>
+                      );
+                    })}
+                  </div>
+                  <DropdownMenuSeparator className="my-1 bg-border/70" />
+                </>
+              )}
+
+              {canManageUsers && !isMobileLocked && (
+                <DropdownMenuItem
+                  onSelect={() => setUserManagementOpen(true)}
+                  className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-foreground hover:bg-muted cursor-pointer"
+                >
+                  <Users size={15} className="text-primary" />
+                  <span>Gerenciar Usuários & Logins (SSO)</span>
+                </DropdownMenuItem>
+              )}
+
+              <DropdownMenuItem
+                onSelect={handleLogout}
+                className="flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-xs font-semibold text-rose-500 hover:bg-rose-500/10 hover:text-rose-500 cursor-pointer"
+              >
+                <LogOut size={15} />
+                <span>Sair da Conta (Logout)</span>
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
           <div className="font-scale-control" role="group" aria-label="Tamanho da letra (Conforto visual)">
@@ -396,13 +482,26 @@ function Index() {
               A++
             </Button>
           </div>
+          {isMobileLocked && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={handleLogout}
+              className="h-7 px-2 text-xs text-rose-400 hover:text-rose-300 hover:bg-rose-500/15 gap-1 cursor-pointer"
+              title="Sair da conta"
+            >
+              <LogOut size={13} />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          )}
           <div className="environment-live">
             <span className="online-dot" />{data.backendConnected ? 'API conectada · Tempo real' : 'Demonstração interativa'}
           </div>
         </div>
       </div>
 
-      {mode === 'desktop' ? (
+      {effectiveMode === 'desktop' ? (
         <div className="desktop-shell">
           <aside className={`app-sidebar ${collapsed ? 'collapsed' : ''} ${mobileMenu ? 'mobile-open' : ''}`}>
             <div className="workspace-picker">
@@ -768,6 +867,9 @@ function Index() {
                   initialClientSearch={clientSearchQuery}
                   targetOrderId={targetOrderId}
                   onClearTargetOrderId={() => setTargetOrderId(null)}
+                  onOpenUserManagement={
+                    canManageUsers ? () => setUserManagementOpen(true) : undefined
+                  }
                 />
               ) : (
                 <Management {...shared} module={module} userProfile={activeProfile} />
@@ -905,9 +1007,40 @@ function Index() {
                   );
                 })}
               </div>
-              <div className="pt-2 border-t border-border/60 flex items-center justify-between text-xs text-muted-foreground">
-                <span>Operador conectado: <strong className="text-foreground">{activeProfile.split(' · ')[0]}</strong></span>
-                <span className="font-mono text-[11px]">Sessão 4S Segura</span>
+              <div className="pt-3 border-t border-border/60 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+                <span>
+                  Operador conectado:{' '}
+                  <strong className="text-foreground">
+                    {authUser.name} ({authUser.email})
+                  </strong>
+                </span>
+                <div className="flex items-center gap-2">
+                  {canManageUsers && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="h-8 text-xs gap-1.5"
+                      onClick={() => {
+                        setInfo(null);
+                        setUserManagementOpen(true);
+                      }}
+                    >
+                      <Users size={13} />
+                      <span>Usuários & SSO</span>
+                    </Button>
+                  )}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="h-8 text-xs gap-1.5 text-rose-500 border-rose-500/30 hover:bg-rose-500/10"
+                    onClick={handleLogout}
+                  >
+                    <LogOut size={13} />
+                    <span>Sair da Conta</span>
+                  </Button>
+                </div>
               </div>
             </div>
           ) : info === 'settings' ? (
@@ -948,6 +1081,10 @@ function Index() {
                 </div>
               </div>
               <div className="settings-row">
+                <span>Conta Autenticada</span>
+                <strong>{authUser.email}</strong>
+              </div>
+              <div className="settings-row">
                 <span>Moeda</span>
                 <strong>Real brasileiro · BRL</strong>
               </div>
@@ -959,23 +1096,47 @@ function Index() {
                 <span>Backend API</span>
                 <strong>{data.backendConnected ? 'Conectado (Spring Boot :8085)' : 'Sessão local'}</strong>
               </div>
-              <Button
-                variant="outline"
-                onClick={async () => {
-                  try {
-                    const fresh = await fetchWorkspaceData([]);
-                    setData(fresh);
+              {canManageUsers && (
+                <Button
+                  variant="outline"
+                  className="gap-2 justify-center"
+                  onClick={() => {
                     setInfo(null);
-                    notify('Dados recarregados do servidor.');
-                  } catch {
-                    setData(demoData());
-                    setInfo(null);
-                    notify('Demonstração reiniciada.');
-                  }
-                }}
-              >
-                Sincronizar com o servidor
-              </Button>
+                    setUserManagementOpen(true);
+                  }}
+                >
+                  <Users size={15} />
+                  <span>Gerenciar Usuários & Logins (SSO)</span>
+                </Button>
+              )}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      const fresh = await fetchWorkspaceData([]);
+                      setData(fresh);
+                      setInfo(null);
+                      notify('Dados recarregados do servidor.');
+                    } catch {
+                      setData(demoData());
+                      setInfo(null);
+                      notify('Demonstração reiniciada.');
+                    }
+                  }}
+                >
+                  Sincronizar com o servidor
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-1.5 text-rose-500 border-rose-500/30 hover:bg-rose-500/10"
+                  onClick={handleLogout}
+                >
+                  <LogOut size={14} />
+                  <span>Sair da Conta</span>
+                </Button>
+              </div>
             </>
           ) : (
             <>
@@ -989,6 +1150,18 @@ function Index() {
           )}
         </DialogContent>
       </Dialog>
+
+      <UserManagementModal
+        open={userManagementOpen}
+        onOpenChange={setUserManagementOpen}
+        currentUser={authUser}
+        onUserUpdated={updated => {
+          setAuthUser(updated);
+          setActiveProfileState(updated.roleProfile);
+          setActiveProfile(updated.roleProfile);
+        }}
+        notify={notify}
+      />
     </div>
   );
 }
