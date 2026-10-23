@@ -3380,6 +3380,7 @@ function RegistrationsSection({
 function AuditSection({ notify, userProfile }: { notify: (message: string) => void; userProfile?: string | undefined }) {
   const [logs, setLogs] = useState<AuditLog[]>([]);
   const [loading, setLoading] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'FISCAL' | 'FINANCEIRO' | 'VENDAS' | 'CADASTROS'>('ALL');
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
@@ -3404,29 +3405,99 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
   const getActionBadge = (actionType: string) => {
     switch (actionType) {
       case 'EMISSAO_NFE':
-        return <span className="status-badge success">NF-e Emitida</span>;
+        return <span className="status-badge success"><CheckCircle2 size={11} className="mr-1" /> NF-e Emitida</span>;
       case 'REVISAO_PRE_NOTA':
-        return <span className="status-badge warning">Pré-Nota Revisada</span>;
+        return <span className="status-badge warning"><Edit size={11} className="mr-1" /> Pré-Nota Revisada</span>;
       case 'BAIXA_BOLETO':
-        return <span className="status-badge success">Baixa de Boleto</span>;
+        return <span className="status-badge success"><CheckCheck size={11} className="mr-1" /> Baixa de Boleto</span>;
+      case 'GERACAO_BOLETOS_BQ':
+        return <span className="status-badge neutral"><Barcode size={11} className="mr-1" /> Boletos Gerados</span>;
+      case 'CANCELAMENTO_BOLETOS':
+        return <span className="status-badge danger"><XCircle size={11} className="mr-1" /> Boletos Cancelados</span>;
       case 'CANCELAMENTO_PEDIDO':
-        return <span className="status-badge danger">Pedido Cancelado</span>;
+        return <span className="status-badge danger"><AlertTriangle size={11} className="mr-1" /> Pedido Cancelado</span>;
+      case 'ENTREGA_PEDIDO':
+        return <span className="status-badge success"><Truck size={11} className="mr-1" /> Entrega Confirmada</span>;
+      case 'CRIACAO_PRE_NOTA':
+      case 'PEDIDO_NOVO':
+        return <span className="status-badge neutral"><Plus size={11} className="mr-1" /> Novo Pedido</span>;
       case 'ENTRADA_LOTE_IMPORTACAO':
-        return <span className="status-badge neutral">Lote Nacionalizado</span>;
+        return <span className="status-badge neutral"><Package size={11} className="mr-1" /> Lote Nacionalizado</span>;
       case 'AJUSTE_ESTOQUE_PRODUTO':
-        return <span className="status-badge warning">Ajuste de Estoque</span>;
+        return <span className="status-badge warning"><RefreshCw size={11} className="mr-1" /> Ajuste de Estoque</span>;
+      case 'CRIACAO_CLIENTE':
+        return <span className="status-badge success"><Users size={11} className="mr-1" /> Novo Cliente</span>;
+      case 'ATUALIZACAO_CLIENTE':
+        return <span className="status-badge neutral"><Edit size={11} className="mr-1" /> Cliente Atualizado</span>;
+      case 'ATUALIZACAO_PRECO_CLIENTE':
+        return <span className="status-badge warning"><Tag size={11} className="mr-1" /> Preço Acordado</span>;
+      case 'IMPORTACAO_XML_CLIENTES':
+        return <span className="status-badge success"><FileUp size={11} className="mr-1" /> Importação XML</span>;
       default:
         return <span className="status-badge neutral">{actionType}</span>;
     }
   };
 
+  const formatTarget = (entity?: string, id?: string) => {
+    if (!entity) return id ? `#${id}` : '-';
+    let translated = entity;
+    switch (entity) {
+      case 'Order':
+        translated = 'Pedido';
+        break;
+      case 'ReceivableTitle':
+        translated = 'Boleto';
+        break;
+      case 'Product':
+        translated = 'Produto';
+        break;
+      case 'Client':
+        translated = 'Cliente';
+        break;
+      case 'ImportBatch':
+        translated = 'Lote';
+        break;
+      case 'ClientSkuPrice':
+        translated = 'Preço';
+        break;
+    }
+    return `${translated} #${id || ''}`;
+  };
+
+  const matchesCategory = (action: string, category: typeof categoryFilter) => {
+    if (category === 'ALL') return true;
+    if (category === 'FISCAL') {
+      return action === 'EMISSAO_NFE' || action === 'REVISAO_PRE_NOTA';
+    }
+    if (category === 'FINANCEIRO') {
+      return action === 'BAIXA_BOLETO' || action === 'GERACAO_BOLETOS_BQ' || action === 'CANCELAMENTO_BOLETOS';
+    }
+    if (category === 'VENDAS') {
+      return action === 'CRIACAO_PRE_NOTA' || action === 'PEDIDO_NOVO' || action === 'ENTREGA_PEDIDO' || action === 'CANCELAMENTO_PEDIDO';
+    }
+    if (category === 'CADASTROS') {
+      return (
+        action === 'CRIACAO_CLIENTE' ||
+        action === 'ATUALIZACAO_CLIENTE' ||
+        action === 'ATUALIZACAO_PRECO_CLIENTE' ||
+        action === 'AJUSTE_ESTOQUE_PRODUTO' ||
+        action === 'ENTRADA_LOTE_IMPORTACAO' ||
+        action === 'IMPORTACAO_XML_CLIENTES'
+      );
+    }
+    return true;
+  };
+
   const filteredLogs = logs.filter(l => {
+    if (!matchesCategory(l.actionType, categoryFilter)) return false;
+    if (!search) return true;
     const q = search.toLowerCase();
     return (
       l.actorName.toLowerCase().includes(q) ||
       l.summary.toLowerCase().includes(q) ||
       l.actionType.toLowerCase().includes(q) ||
-      (l.targetEntity && l.targetEntity.toLowerCase().includes(q))
+      (l.targetEntity && l.targetEntity.toLowerCase().includes(q)) ||
+      (l.targetId && String(l.targetId).includes(q))
     );
   });
 
@@ -3460,7 +3531,22 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
       </div>
 
       <section className="orders-section">
-        <div className="orders-toolbar">
+        <div className="orders-toolbar flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 p-3">
+          <SlidingTabs
+            tabs={[
+              { id: 'ALL', label: 'Todos', count: logs.length },
+              { id: 'FISCAL', label: 'Fiscal & NF-e', count: logs.filter(l => matchesCategory(l.actionType, 'FISCAL')).length },
+              { id: 'FINANCEIRO', label: 'Boletos & Bancos', count: logs.filter(l => matchesCategory(l.actionType, 'FINANCEIRO')).length },
+              { id: 'VENDAS', label: 'Vendas & Entregas', count: logs.filter(l => matchesCategory(l.actionType, 'VENDAS')).length },
+              { id: 'CADASTROS', label: 'Cadastros & Estoque', count: logs.filter(l => matchesCategory(l.actionType, 'CADASTROS')).length },
+            ]}
+            activeTab={categoryFilter}
+            onChange={t => {
+              setCategoryFilter(t as any);
+              setPage(1);
+            }}
+          />
+
           <div className="table-search flex-1 max-w-sm">
             <Search size={16} />
             <input
@@ -3472,10 +3558,20 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
               placeholder="Buscar por ator, ação ou resumo..."
               aria-label="Buscar auditoria"
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch('');
+                  setPage(1);
+                }}
+                className="text-muted-foreground hover:text-foreground p-0.5 rounded cursor-pointer"
+                title="Limpar busca"
+              >
+                <X size={14} />
+              </button>
+            )}
           </div>
-          <span className="text-xs text-muted-foreground">
-            {filteredLogs.length} eventos registrados
-          </span>
         </div>
 
         <div className="table-scroll max-h-[calc(100vh-310px)] overflow-y-auto">
@@ -3498,13 +3594,13 @@ function AuditSection({ notify, userProfile }: { notify: (message: string) => vo
                     </span>
                   </td>
                   <td>
-                    <strong>{l.actorName}</strong>
+                    <strong className="text-foreground">{l.actorName}</strong>
                     <p className="text-[11px] text-muted-foreground">{l.actorRole}</p>
                   </td>
                   <td>{getActionBadge(l.actionType)}</td>
                   <td>
-                    <span className="font-mono text-xs font-semibold">
-                      {l.targetEntity} #{l.targetId}
+                    <span className="font-mono text-xs font-semibold text-foreground">
+                      {formatTarget(l.targetEntity, l.targetId)}
                     </span>
                   </td>
                   <td>
