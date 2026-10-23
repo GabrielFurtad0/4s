@@ -4,6 +4,10 @@ Registro automatizado e sincronizado pelo **Doc Sentinel** a cada commit relevan
 
 ---
 
+### [fa4f164] — 22/10/2026 às 22:39 (🔴 Estrutural / Crítico)
+
+- Implementação de filtros por categoria (Vendas, Financeiro, Fiscal e Cadastros)
+
 ### [5e9fcb5] — 22/10/2026 às 22:35 (🔴 Estrutural / Crítico)
 
 - Implementação de mecanismo de resiliência offline para o cadastro de clientes, garantindo a continuidade operacional via
